@@ -22,8 +22,6 @@ button { color: inherit; }
 
 .splash-shell { width: min(1560px, calc(100vw - 48px)); min-height: calc(100vh - 48px); margin: 24px auto; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 30px; color: #fff; background: #0a0a0b; box-shadow: 0 28px 80px rgba(34,26,20,.2); }
 .splash-nav { min-height: 76px; display: flex; align-items: center; justify-content: space-between; padding: 0 34px; border-bottom: 1px solid rgba(255,255,255,.07); }
-.splash-nav-button { height: 40px; display: inline-flex; align-items: center; gap: 8px; padding: 0 17px; border: 1px solid rgba(255,255,255,.12); border-radius: 11px; color: #fff; background: rgba(255,255,255,.035); font-size: 11px; font-weight: 680; cursor: pointer; transition: .18s ease; }
-.splash-nav-button:hover { border-color: rgba(255,118,36,.55); background: rgba(255,118,36,.08); }
 .splash-hero { min-height: calc(100vh - 226px); display: grid; grid-template-columns: minmax(350px, .82fr) minmax(520px, 1.18fr); align-items: center; gap: clamp(40px, 7vw, 110px); padding: clamp(55px, 7vw, 108px); background: radial-gradient(circle at 78% 42%, rgba(255,102,25,.13), transparent 33%), radial-gradient(circle at 5% 80%, rgba(255,255,255,.035), transparent 26%); }
 .splash-copy { position: relative; z-index: 2; }
 .splash-kicker { display: flex; align-items: center; gap: 9px; margin-bottom: 22px; color: #c5c5c8; font-size: 10px; font-weight: 720; letter-spacing: .15em; text-transform: uppercase; }
@@ -215,7 +213,6 @@ h1, h2, h3, p { margin-top: 0; }
   html, body { background: var(--ink); }
   .splash-shell { width: 100%; min-height: 100vh; margin: 0; border: 0; border-radius: 0; }
   .splash-nav { padding: 0 20px; }
-  .splash-nav-button { padding: 0 12px; }
   .splash-hero { grid-template-columns: 1fr; gap: 44px; padding: 62px 22px 46px; }
   .splash-copy h1 { font-size: clamp(50px, 17vw, 76px); }
   .splash-actions { align-items: flex-start; flex-direction: column; }

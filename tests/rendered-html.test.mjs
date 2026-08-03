@@ -24,6 +24,7 @@ test("server-renders the Shadowframe AI introduction", async () => {
   assert.match(html, /<title>Shadowframe AI · Create Without Limits<\/title>/i);
   assert.match(html, /SHADOWFRAME AI/);
   assert.match(html, /Generate Now/);
+  assert.doesNotMatch(html, /Open studio/);
   assert.match(html, /WAI-ANIMA/);
   assert.match(html, /Wan 2\.2/);
   assert.match(html, /Your work stays on your PC/);

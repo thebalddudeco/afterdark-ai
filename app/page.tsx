@@ -481,7 +481,6 @@ export default function Home() {
             <span className="brand-mark">S</span>
             <span>SHADOWFRAME AI</span>
           </a>
-          <button className="splash-nav-button" type="button" onClick={enterGenerator}>Open studio <ArrowRight size={15} /></button>
         </header>
 
         <section className="splash-hero" id="top">
