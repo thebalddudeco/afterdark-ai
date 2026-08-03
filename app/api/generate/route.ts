@@ -3,6 +3,7 @@ import textVideoWorkflowTemplate from "../../lib/txt-video-workflow.json";
 import animaImageWorkflowTemplate from "../../lib/anima-image-workflow.json";
 import animaImageEditWorkflowTemplate from "../../lib/anima-img-image-workflow.json";
 import { STYLE_PRESETS } from "../../lib/style-presets";
+import { authorizeBridgeRequest, bridgeJson, bridgeOptions } from "../../lib/bridge-security";
 
 const COMFYUI_URL = process.env.COMFYUI_URL || "http://127.0.0.1:8188";
 
@@ -21,6 +22,9 @@ function prohibitedPromptReason(prompt: string) {
 }
 
 export async function POST(request: Request) {
+  const authorizationError = authorizeBridgeRequest(request);
+  if (authorizationError) return authorizationError;
+  const respond = (body: unknown, init?: ResponseInit) => bridgeJson(request, body, init);
   try {
     const body = await request.json() as {
       imageName?: string;
@@ -39,11 +43,11 @@ export async function POST(request: Request) {
     const mode = body.mode || "img-vid";
     const needsImage = mode === "img-vid" || mode === "img-img";
     if (!body.positivePrompt || (needsImage && !body.imageName)) {
-      return Response.json({ error: needsImage ? "An image and positive prompt are required." : "A positive prompt is required." }, { status: 400 });
+      return respond({ error: needsImage ? "An image and positive prompt are required." : "A positive prompt is required." }, { status: 400 });
     }
     const prohibitedReason = prohibitedPromptReason(body.positivePrompt);
     if (prohibitedReason) {
-      return Response.json({ error: prohibitedReason }, { status: 400 });
+      return respond({ error: prohibitedReason }, { status: 400 });
     }
 
     const defaultBaseModel = mode === "txt-img" || mode === "img-img" ? "anima-aesthetic" : mode === "txt-vid" ? "wan22-t2v" : "wan22-i2v";
@@ -55,16 +59,16 @@ export async function POST(request: Request) {
       "txt-vid": ["wan22-t2v"],
     };
     if (!supportedBaseModels[mode].includes(baseModelId)) {
-      return Response.json({ error: "The selected base model workflow is not installed yet." }, { status: 400 });
+      return respond({ error: "The selected base model workflow is not installed yet." }, { status: 400 });
     }
     const isWaiAnima = baseModelId === "wai-anima";
     const isAnimaFamily = (mode === "txt-img" || mode === "img-img") && (isWaiAnima || baseModelId === "anima-aesthetic");
     const selectedStyle = STYLE_PRESETS.find((style) => style.id === (body.styleId || "original"));
     if (!selectedStyle || (selectedStyle.id !== "original" && !selectedStyle.baseModelIds.includes(baseModelId))) {
-      return Response.json({ error: "The selected LoRA is not compatible with this base model." }, { status: 400 });
+      return respond({ error: "The selected LoRA is not compatible with this base model." }, { status: 400 });
     }
     if (selectedStyle.id !== "original" && !isAnimaFamily) {
-      return Response.json({ error: "This LoRA workflow is not installed yet." }, { status: 400 });
+      return respond({ error: "This LoRA workflow is not installed yet." }, { status: 400 });
     }
     const selectedTemplate = isAnimaFamily
       ? mode === "img-img" ? animaImageEditWorkflowTemplate : animaImageWorkflowTemplate
@@ -158,13 +162,15 @@ export async function POST(request: Request) {
     });
     const result = await upstream.json() as Record<string, unknown>;
     if (!upstream.ok) {
-      return Response.json({ error: "ComfyUI rejected the workflow.", details: result }, { status: upstream.status });
+      return respond({ error: "ComfyUI rejected the workflow.", details: result }, { status: upstream.status });
     }
-    return Response.json(result);
+    return respond(result);
   } catch (error) {
-    return Response.json(
+    return respond(
       { error: error instanceof Error ? error.message : "Unable to start generation." },
       { status: 503 },
     );
   }
 }
+
+export async function OPTIONS(request: Request) { return bridgeOptions(request); }

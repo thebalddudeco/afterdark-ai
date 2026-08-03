@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { createServer } from "node:http";
 import test from "node:test";
 
 async function render() {
@@ -50,4 +51,76 @@ test("includes Anima image workflow templates and route bindings", async () => {
   assert.match(route, /mode === "img-img"/);
   assert.match(route, /baseModelId === "wai-anima"/);
   assert.doesNotMatch(presets, /id: "(?:perfeczion|qwen-edit|flux-klein|krea2|sd15|illustrious|pony)"/i);
+});
+
+test("protects the local bridge and permits the Shadowframe website origin", async () => {
+  const mockComfy = createServer((request, response) => {
+    if (request.url === "/system_stats") {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({ system: { os: "mock" } }));
+      return;
+    }
+    response.writeHead(404, { "content-type": "application/json" });
+    response.end(JSON.stringify({ error: "not found" }));
+  });
+  await new Promise((resolve, reject) => {
+    mockComfy.once("error", reject);
+    mockComfy.listen(18188, "127.0.0.1", resolve);
+  });
+
+  process.env.COMFYUI_URL = "http://127.0.0.1:18188";
+  process.env.SHADOWFRAME_BRIDGE_TOKEN = "integration-test-key";
+  process.env.SHADOWFRAME_ALLOWED_ORIGINS = "https://shadowframe.tech";
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("bridge-test", `${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const env = { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } };
+  const context = { waitUntil() {}, passThroughOnException() {} };
+
+  try {
+    const unauthorized = await worker.fetch(
+      new Request("http://localhost/api/comfy?path=/system_stats", { headers: { origin: "https://shadowframe.tech" } }),
+      env,
+      context,
+    );
+    assert.equal(unauthorized.status, 401);
+    assert.equal(unauthorized.headers.get("access-control-allow-origin"), "https://shadowframe.tech");
+
+    const forbiddenOrigin = await worker.fetch(
+      new Request("http://localhost/api/comfy?path=/system_stats", {
+        headers: { authorization: "Bearer integration-test-key", origin: "https://example.com" },
+      }),
+      env,
+      context,
+    );
+    assert.equal(forbiddenOrigin.status, 403);
+    assert.equal(forbiddenOrigin.headers.get("access-control-allow-origin"), null);
+
+    const preflight = await worker.fetch(
+      new Request("http://localhost/api/comfy", {
+        method: "OPTIONS",
+        headers: { origin: "https://shadowframe.tech", "access-control-request-method": "POST" },
+      }),
+      env,
+      context,
+    );
+    assert.equal(preflight.status, 204);
+    assert.match(preflight.headers.get("access-control-allow-methods") || "", /POST/);
+
+    const authorized = await worker.fetch(
+      new Request("http://localhost/api/comfy?path=/system_stats", {
+        headers: { authorization: "Bearer integration-test-key", origin: "https://shadowframe.tech" },
+      }),
+      env,
+      context,
+    );
+    assert.equal(authorized.status, 200);
+    assert.equal(authorized.headers.get("access-control-allow-origin"), "https://shadowframe.tech");
+    assert.deepEqual(await authorized.json(), { system: { os: "mock" } });
+  } finally {
+    await new Promise((resolve) => mockComfy.close(resolve));
+    delete process.env.COMFYUI_URL;
+    delete process.env.SHADOWFRAME_BRIDGE_TOKEN;
+    delete process.env.SHADOWFRAME_ALLOWED_ORIGINS;
+  }
 });

@@ -6,7 +6,17 @@ A focused local interface for running creative generation workflows through Comf
 
 Public interface: https://shadowframe.tech/
 
-The GitHub Pages build is a free static presentation of the interface. Generation requires the local app or a separately configured ComfyUI bridge because GitHub Pages cannot run server APIs.
+The GitHub Pages interface connects to ComfyUI through the authenticated Shadowframe Bridge running on your PC. GitHub never receives model files, prompts, generated media, or the private bridge access key.
+
+## Shadowframe Bridge
+
+1. Start ComfyUI and confirm it is available at `http://127.0.0.1:8188`.
+2. Install Cloudflare Tunnel once with `winget install --id Cloudflare.cloudflared`.
+3. Double-click `Start Shadowframe Bridge.cmd`.
+4. The launcher builds the local bridge, creates a new private access key, starts a secure temporary tunnel, and opens `shadowframe.tech` already paired to it.
+5. Keep ComfyUI and the bridge running while generating. Double-click `Stop Shadowframe Bridge.cmd` when finished.
+
+The bridge listens only on `127.0.0.1`, accepts requests only from Shadowframe's approved website origins, requires a fresh bearer key, and exposes only the ComfyUI endpoints needed by the application. The key is transferred in the URL fragment, which browsers do not send to GitHub, and is kept in session storage rather than committed to the repository.
 
 ## Generator modes
 

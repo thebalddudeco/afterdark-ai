@@ -1,6 +1,8 @@
+import { authorizeBridgeRequest, bridgeJson, bridgeOptions, withBridgeCors } from "../../lib/bridge-security";
+
 const COMFYUI_URL = process.env.COMFYUI_URL || "http://127.0.0.1:8188";
 
-const ALLOWED_PATHS = ["/system_stats", "/upload/image", "/history", "/view", "/interrupt", "/queue"];
+const ALLOWED_PATHS = ["/system_stats", "/models/loras", "/upload/image", "/history", "/view", "/interrupt", "/queue"];
 
 function upstreamFor(request: Request) {
   const incoming = new URL(request.url);
@@ -16,6 +18,8 @@ function upstreamFor(request: Request) {
 }
 
 async function proxy(request: Request) {
+  const authorizationError = authorizeBridgeRequest(request);
+  if (authorizationError) return authorizationError;
   try {
     const upstream = upstreamFor(request);
     const headers = new Headers();
@@ -33,9 +37,10 @@ async function proxy(request: Request) {
       if (value) responseHeaders.set(name, value);
     }
     responseHeaders.set("cache-control", "no-store");
-    return new Response(response.body, { status: response.status, headers: responseHeaders });
+    return withBridgeCors(request, new Response(response.body, { status: response.status, headers: responseHeaders }));
   } catch (error) {
-    return Response.json(
+    return bridgeJson(
+      request,
       { error: error instanceof Error ? error.message : "Unable to reach ComfyUI." },
       { status: 503 },
     );
@@ -44,3 +49,4 @@ async function proxy(request: Request) {
 
 export async function GET(request: Request) { return proxy(request); }
 export async function POST(request: Request) { return proxy(request); }
+export async function OPTIONS(request: Request) { return bridgeOptions(request); }

@@ -6,6 +6,7 @@ import {
   Download,
   Film,
   Image as ImageIcon,
+  KeyRound,
   LoaderCircle,
   Play,
   RotateCcw,
@@ -78,7 +79,7 @@ function findMedia(value: unknown): MediaOutput | null {
   return null;
 }
 
-function mediaUrlFor(media: MediaOutput) {
+function mediaPathFor(media: MediaOutput) {
   const query = new URLSearchParams({
     path: "/view",
     filename: media.filename,
@@ -86,6 +87,17 @@ function mediaUrlFor(media: MediaOutput) {
     type: media.type ?? "output",
   });
   return `/api/comfy?${query.toString()}`;
+}
+
+function normalizeBridgeUrl(value: string) {
+  return value.trim().replace(/\/+$/, "");
+}
+
+function bridgeRequest(path: string, bridgeUrl: string, bridgeToken: string, init: RequestInit = {}) {
+  const url = bridgeUrl ? new URL(path, `${bridgeUrl}/`).toString() : path;
+  const headers = new Headers(init.headers);
+  if (bridgeToken) headers.set("Authorization", `Bearer ${bridgeToken}`);
+  return fetch(url, { ...init, headers });
 }
 
 export default function Home() {
@@ -106,6 +118,14 @@ export default function Home() {
   const [status, setStatus] = useState<RunStatus>("idle");
   const [error, setError] = useState("");
   const [comfyOnline, setComfyOnline] = useState<boolean | null>(null);
+  const [bridgeUrl, setBridgeUrl] = useState("");
+  const [bridgeToken, setBridgeToken] = useState("");
+  const [bridgeUrlInput, setBridgeUrlInput] = useState("");
+  const [bridgeTokenInput, setBridgeTokenInput] = useState("");
+  const [bridgeInitialized, setBridgeInitialized] = useState(false);
+  const [connectionOpen, setConnectionOpen] = useState(false);
+  const [connectionTesting, setConnectionTesting] = useState(false);
+  const [connectionError, setConnectionError] = useState("");
   const [installedLoras, setInstalledLoras] = useState<string[]>([]);
   const [result, setResult] = useState<SessionOutput | null>(null);
   const [sessionOutputs, setSessionOutputs] = useState<SessionOutput[]>([]);
@@ -136,6 +156,7 @@ export default function Home() {
         ? Math.min(96, 32 + (timeProgress * 0.64))
         : status === "complete" ? 100 : 0;
   const remainingSeconds = Math.max(0, estimatedTotalSeconds - elapsedSeconds);
+  const isLocalPage = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
   const aspectLabel = useMemo(() => {
     const divisor = (a: number, b: number): number => (b === 0 ? a : divisor(b, a % b));
@@ -144,13 +165,40 @@ export default function Home() {
   }, [width, height]);
 
   useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const pairedUrl = normalizeBridgeUrl(hash.get("bridge") || "");
+    const pairedToken = hash.get("token") || "";
+    const storedUrl = sessionStorage.getItem("shadowframe.bridge.url") || "";
+    const storedToken = sessionStorage.getItem("shadowframe.bridge.token") || "";
+    const initialUrl = pairedUrl || storedUrl;
+    const initialToken = pairedToken || storedToken;
+
+    if (pairedUrl && pairedToken) {
+      sessionStorage.setItem("shadowframe.bridge.url", pairedUrl);
+      sessionStorage.setItem("shadowframe.bridge.token", pairedToken);
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    }
+
+    setBridgeUrl(initialUrl);
+    setBridgeToken(initialToken);
+    setBridgeUrlInput(initialUrl);
+    setBridgeTokenInput(initialToken);
+    setBridgeInitialized(true);
+    if (!["localhost", "127.0.0.1"].includes(window.location.hostname) && (!initialUrl || !initialToken)) {
+      setConnectionOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!bridgeInitialized) return;
     let active = true;
     const checkComfy = async () => {
       try {
-        const response = await fetch("/api/comfy?path=/system_stats", { cache: "no-store" });
+        if (!isLocalPage && (!bridgeUrl || !bridgeToken)) throw new Error("Bridge not paired");
+        const response = await bridgeRequest("/api/comfy?path=/system_stats", bridgeUrl, bridgeToken, { cache: "no-store" });
         if (active) setComfyOnline(response.ok);
         if (response.ok) {
-          const loraResponse = await fetch("/api/comfy?path=/models/loras", { cache: "no-store" });
+          const loraResponse = await bridgeRequest("/api/comfy?path=/models/loras", bridgeUrl, bridgeToken, { cache: "no-store" });
           if (active && loraResponse.ok) setInstalledLoras(await loraResponse.json() as string[]);
         }
       } catch {
@@ -163,7 +211,7 @@ export default function Home() {
       active = false;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [bridgeInitialized, bridgeToken, bridgeUrl, isLocalPage]);
 
   useEffect(() => {
     return () => {
@@ -211,6 +259,40 @@ export default function Home() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const saveBridgeConnection = async () => {
+    const nextUrl = normalizeBridgeUrl(bridgeUrlInput);
+    const nextToken = bridgeTokenInput.trim();
+    if (!isLocalPage && !/^https:\/\//i.test(nextUrl)) {
+      setConnectionError("Enter the secure https:// tunnel address shown by the Shadowframe Bridge launcher.");
+      return;
+    }
+    if (!isLocalPage && !nextToken) {
+      setConnectionError("Enter the private access key shown by the Shadowframe Bridge launcher.");
+      return;
+    }
+
+    setConnectionTesting(true);
+    setConnectionError("");
+    try {
+      const response = await bridgeRequest("/api/comfy?path=/system_stats", nextUrl, nextToken, { cache: "no-store" });
+      if (!response.ok) {
+        const details = await response.json().catch(() => ({})) as { error?: string };
+        throw new Error(details.error || "The bridge answered, but ComfyUI is not ready.");
+      }
+      sessionStorage.setItem("shadowframe.bridge.url", nextUrl);
+      sessionStorage.setItem("shadowframe.bridge.token", nextToken);
+      setBridgeUrl(nextUrl);
+      setBridgeToken(nextToken);
+      setComfyOnline(true);
+      setConnectionOpen(false);
+      setError("");
+    } catch (caught) {
+      setConnectionError(caught instanceof Error ? caught.message : "Unable to connect to the Shadowframe Bridge.");
+    } finally {
+      setConnectionTesting(false);
+    }
+  };
+
   const selectMode = (nextMode: GeneratorMode) => {
     setMode(nextMode);
     setBaseModelId(DEFAULT_BASE_MODEL[nextMode]);
@@ -246,6 +328,12 @@ export default function Home() {
   };
 
   const generate = async () => {
+    if (!comfyOnline) {
+      setError("Start and connect the Shadowframe Bridge before generating.");
+      setStatus("error");
+      setConnectionOpen(true);
+      return;
+    }
     if (!selectedBaseModel.ready) {
       setError(`${selectedBaseModel.name} still needs its base workflow and model files before it can generate.`);
       setStatus("error");
@@ -286,7 +374,7 @@ export default function Home() {
         uploadBody.append("image", file);
         uploadBody.append("type", "input");
         uploadBody.append("overwrite", "true");
-        const uploadResponse = await fetch("/api/comfy?path=/upload/image", {
+        const uploadResponse = await bridgeRequest("/api/comfy?path=/upload/image", bridgeUrl, bridgeToken, {
           method: "POST",
           body: uploadBody,
         });
@@ -296,7 +384,7 @@ export default function Home() {
       }
 
       setStatus("queued");
-      const generationResponse = await fetch("/api/generate", {
+      const generationResponse = await bridgeRequest("/api/generate", bridgeUrl, bridgeToken, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -323,7 +411,7 @@ export default function Home() {
       for (let attempt = 0; attempt < 1800; attempt += 1) {
         if (runTokenRef.current !== runToken) return;
         await sleep(2000);
-        const historyResponse = await fetch(`/api/comfy?path=${encodeURIComponent(`/history/${generation.prompt_id}`)}`, {
+        const historyResponse = await bridgeRequest(`/api/comfy?path=${encodeURIComponent(`/history/${generation.prompt_id}`)}`, bridgeUrl, bridgeToken, {
           cache: "no-store",
         });
         if (!historyResponse.ok) continue;
@@ -331,10 +419,13 @@ export default function Home() {
         const entry = history[generation.prompt_id];
         const media = findMedia(entry);
         if (media) {
+          const mediaResponse = await bridgeRequest(mediaPathFor(media), bridgeUrl, bridgeToken, { cache: "no-store" });
+          if (!mediaResponse.ok) throw new Error("The generated file could not be downloaded from ComfyUI.");
+          const mediaUrl = URL.createObjectURL(await mediaResponse.blob());
           const completed: SessionOutput = {
             ...media,
             id: generation.prompt_id,
-            url: mediaUrlFor(media),
+            url: mediaUrl,
             prompt: positivePrompt.trim(),
           };
           setResult(completed);
@@ -354,14 +445,15 @@ export default function Home() {
     } catch (caught) {
       setStatus("error");
       setRunStartedAt(null);
-      setError(caught instanceof Error ? caught.message : "Something went wrong.");
+      const message = caught instanceof Error ? caught.message : "Something went wrong.";
+      setError(/failed to fetch/i.test(message) ? "The Shadowframe Bridge is unreachable. Start the launcher and reconnect." : message);
       setComfyOnline(false);
     }
   };
 
   const cancelGeneration = async () => {
     runTokenRef.current += 1;
-    await fetch("/api/comfy?path=/interrupt", { method: "POST" }).catch(() => undefined);
+    await bridgeRequest("/api/comfy?path=/interrupt", bridgeUrl, bridgeToken, { method: "POST" }).catch(() => undefined);
     setStatus("idle");
     setRunStartedAt(null);
     setElapsedSeconds(0);
@@ -381,11 +473,30 @@ export default function Home() {
           <button className={`mode-button ${mode === "img-vid" ? "active" : ""}`} type="button" onClick={() => selectMode("img-vid")}><Video size={15} /> Image → Video</button>
           <button className={`mode-button ${mode === "txt-vid" ? "active" : ""}`} type="button" onClick={() => selectMode("txt-vid")}><Film size={15} /> Text → Video</button>
         </nav>
-        <div className={`connection ${comfyOnline ? "online" : "offline"}`}>
+        <button className={`connection ${comfyOnline ? "online" : "offline"}`} type="button" onClick={() => { setConnectionError(""); setConnectionOpen(true); }}>
           {comfyOnline ? <Wifi size={15} /> : <WifiOff size={15} />}
-          <span>{comfyOnline === null ? "Checking ComfyUI" : comfyOnline ? "ComfyUI connected" : "ComfyUI offline"}</span>
-        </div>
+          <span>{comfyOnline === null ? "Checking bridge" : comfyOnline ? "ComfyUI connected" : bridgeUrl ? "Bridge offline" : "Connect bridge"}</span>
+        </button>
       </header>
+
+      {connectionOpen && (
+        <div className="connection-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setConnectionOpen(false); }}>
+          <section className="connection-dialog" role="dialog" aria-modal="true" aria-labelledby="bridge-title">
+            <button className="dialog-close" type="button" aria-label="Close bridge settings" onClick={() => setConnectionOpen(false)}><X size={17} /></button>
+            <span className="dialog-icon"><KeyRound size={21} /></span>
+            <p className="eyebrow">Private GPU connection</p>
+            <h2 id="bridge-title">Connect Shadowframe Bridge</h2>
+            <p className="dialog-copy">Run the bridge launcher on your ComfyUI PC, then enter the secure tunnel address and private access key it provides.</p>
+            <label>Bridge address<input type="url" value={bridgeUrlInput} placeholder="https://example.trycloudflare.com" onChange={(event) => setBridgeUrlInput(event.target.value)} /></label>
+            <label>Private access key<input type="password" value={bridgeTokenInput} autoComplete="off" placeholder="Paste your access key" onChange={(event) => setBridgeTokenInput(event.target.value)} /></label>
+            {connectionError && <div className="connection-error">{connectionError}</div>}
+            <button className="connect-button" type="button" disabled={connectionTesting} onClick={saveBridgeConnection}>
+              {connectionTesting ? <><LoaderCircle className="spinner" size={16} /> Testing connection</> : <><Wifi size={16} /> Save and connect</>}
+            </button>
+            <small>The key is kept only in this browser session and is never saved to GitHub.</small>
+          </section>
+        </div>
+      )}
 
       <section className="workspace">
         <aside className="control-panel">
@@ -492,7 +603,7 @@ export default function Home() {
           {error && <div className="error-message">{error}</div>}
 
           <button className="generate-button" type="button" onClick={isRunning ? cancelGeneration : generate}>
-            {isRunning ? <><X size={18} /> Cancel generation</> : <><Play size={18} fill="currentColor" /> Generate {createsVideo ? "video" : "image"}</>}
+            {isRunning ? <><X size={18} /> Cancel generation</> : !comfyOnline ? <><WifiOff size={18} /> Connect bridge</> : <><Play size={18} fill="currentColor" /> Generate {createsVideo ? "video" : "image"}</>}
           </button>
         </aside>
 
