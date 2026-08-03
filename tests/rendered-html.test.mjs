@@ -54,6 +54,8 @@ test("includes all generator modes, Anima workflows, and route bindings", async 
   assert.match(route, /baseModelId === "wai-anima"/);
   assert.match(page, /Text → Image/);
   assert.match(page, /Image → Image/);
+  assert.match(page, /Reference fidelity/);
+  assert.match(page, /Balanced — recommended/);
   assert.match(page, /Image → Video/);
   assert.match(page, /Text → Video/);
   assert.match(page, /selectMode\("txt-img"\)/);
@@ -187,6 +189,32 @@ test("protects the local bridge and permits the Shadowframe website origin", asy
     assert.equal((await generation.json()).prompt_id, "trigger-test");
     assert.match(capturedGeneration.prompt["3"].inputs.text, /ripping clothes by others, an adult fashion portrait/);
     assert.doesNotMatch(capturedGeneration.prompt["3"].inputs.text, /ripping clothes by others.*ripping clothes by others/);
+
+    const imageEditGeneration = await worker.fetch(
+      new Request("http://localhost/api/generate", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer integration-test-key",
+          origin: "https://shadowframe.tech",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          mode: "img-img",
+          baseModelId: "anima-aesthetic",
+          styleId: "anima-niji",
+          imageName: "reference.png",
+          positivePrompt: "an adult portrait",
+          referenceFidelity: "high",
+          seed: 84,
+        }),
+      }),
+      env,
+      context,
+    );
+    assert.equal(imageEditGeneration.status, 200);
+    assert.equal(capturedGeneration.prompt["8"].inputs.denoise, 0.35);
+    assert.equal(capturedGeneration.prompt["12"].inputs.strength_model, 0.7);
+    assert.equal(capturedGeneration.prompt["12"].inputs.strength_clip, 0.7);
   } finally {
     await new Promise((resolve) => mockComfy.close(resolve));
     delete process.env.COMFYUI_URL;

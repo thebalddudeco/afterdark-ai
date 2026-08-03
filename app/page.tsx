@@ -27,6 +27,7 @@ import { BASE_MODELS, DEFAULT_BASE_MODEL, STYLE_PRESETS } from "./lib/style-pres
 import type { GeneratorMode } from "./lib/style-presets";
 
 type RunStatus = "idle" | "uploading" | "queued" | "generating" | "complete" | "error";
+type ReferenceFidelity = "high" | "balanced" | "creative";
 
 type MediaOutput = {
   filename: string;
@@ -118,6 +119,7 @@ export default function Home() {
   const [height, setHeight] = useState(1280);
   const [length, setLength] = useState(93);
   const [hiresScale, setHiresScale] = useState(2);
+  const [referenceFidelity, setReferenceFidelity] = useState<ReferenceFidelity>("balanced");
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 900_000_000_000_000));
   const [fastMode, setFastMode] = useState(true);
   const [status, setStatus] = useState<RunStatus>("idle");
@@ -413,6 +415,7 @@ export default function Home() {
           mode,
           styleId,
           baseModelId,
+          referenceFidelity,
         }),
       });
       const generation = (await generationResponse.json()) as { prompt_id?: string; error?: string };
@@ -648,6 +651,15 @@ export default function Home() {
                 <label>Width<input type="number" value={width} step={16} min={256} max={1536} onChange={(event) => setWidth(Number(event.target.value))} /></label>
                 <label>Height<input type="number" value={height} step={16} min={256} max={1536} onChange={(event) => setHeight(Number(event.target.value))} /></label>
               </>}
+              {mode === "img-img" && (
+                <label>Reference fidelity
+                  <select value={referenceFidelity} onChange={(event) => setReferenceFidelity(event.target.value as ReferenceFidelity)}>
+                    <option value="high">High — closest match</option>
+                    <option value="balanced">Balanced — recommended</option>
+                    <option value="creative">Creative — more freedom</option>
+                  </select>
+                </label>
+              )}
               {createsVideo ? <label>Frames<input type="number" value={length} step={4} min={17} max={241} onChange={(event) => setLength(Number(event.target.value))} /></label> : (
                 <label>Output scale<select value={hiresScale} onChange={(event) => setHiresScale(Number(event.target.value))}><option value={1}>1× original</option>{isAnimaBase ? <option value={1.5}>1.5× recommended</option> : <><option value={2}>2× high-res</option><option value={4}>4× ultra-res</option></>}</select></label>
               )}

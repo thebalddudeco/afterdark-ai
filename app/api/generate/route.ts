@@ -9,6 +9,13 @@ const COMFYUI_URL = process.env.COMFYUI_URL || "http://127.0.0.1:8188";
 
 type WorkflowNode = { inputs: Record<string, unknown>; class_type: string };
 type Workflow = Record<string, WorkflowNode>;
+type ReferenceFidelity = "high" | "balanced" | "creative";
+
+const REFERENCE_FIDELITY: Record<ReferenceFidelity, { denoise: number; loraStrength: number }> = {
+  high: { denoise: 0.35, loraStrength: 0.7 },
+  balanced: { denoise: 0.5, loraStrength: 0.85 },
+  creative: { denoise: 0.7, loraStrength: 1 },
+};
 
 const CHILD_CONTENT = /\b(?:child|children|kid|kids|minor|minors|underage|preteen|teenager|schoolgirl|schoolboy|toddler|infant|baby|lolicon|shotacon)\b/i;
 const SEXUAL_VIOLENCE = /\b(?:rape|raped|raping|sexual assault|sexually assault|forced sex|nonconsensual|non-consensual|without consent|sexual violence|sexual coercion)\b/i;
@@ -47,6 +54,7 @@ export async function POST(request: Request) {
       mode?: "txt-img" | "img-img" | "img-vid" | "txt-vid";
       styleId?: string;
       baseModelId?: string;
+      referenceFidelity?: ReferenceFidelity;
     };
     const mode = body.mode || "img-vid";
     const needsImage = mode === "img-vid" || mode === "img-img";
@@ -91,6 +99,10 @@ export async function POST(request: Request) {
     const seed = Math.max(0, Number(body.seed) || 0);
     const supportedScales = isAnimaFamily ? [1, 1.5] : [1, 2, 4];
     const hiresScale = supportedScales.includes(Number(body.hiresScale)) ? Number(body.hiresScale) : (isAnimaFamily ? 1.5 : 2);
+    const referenceFidelity = body.referenceFidelity && body.referenceFidelity in REFERENCE_FIDELITY
+      ? body.referenceFidelity
+      : "balanced";
+    const fidelitySettings = REFERENCE_FIDELITY[referenceFidelity];
 
     if (isAnimaFamily && mode === "img-img") {
       workflow["1"].inputs.image = body.imageName as string;
@@ -98,6 +110,7 @@ export async function POST(request: Request) {
       workflow["5"].inputs.text = `masterpiece, best quality, score_7, ${effectivePositivePrompt}`;
       workflow["6"].inputs.text = body.negativePrompt || "";
       workflow["8"].inputs.seed = seed;
+      workflow["8"].inputs.denoise = fidelitySettings.denoise;
       workflow["10"].inputs.scale_by = hiresScale;
       workflow["11"].inputs.filename_prefix = isWaiAnima ? "image/ShadowframeAI_WAI_ANIMA_i2i" : "image/ShadowframeAI_ANIMA_i2i";
       if (selectedStyle.id !== "original" && selectedStyle.file) {
@@ -107,8 +120,8 @@ export async function POST(request: Request) {
             model: ["2", 0],
             clip: ["3", 0],
             lora_name: selectedStyle.file,
-            strength_model: selectedStyle.strength ?? 1,
-            strength_clip: selectedStyle.strength ?? 1,
+            strength_model: (selectedStyle.strength ?? 1) * fidelitySettings.loraStrength,
+            strength_clip: (selectedStyle.strength ?? 1) * fidelitySettings.loraStrength,
           },
         };
         workflow["5"].inputs.clip = ["12", 1];
