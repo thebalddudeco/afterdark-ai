@@ -12,16 +12,16 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto") || (host.startsWith("localhost") ? "http" : "https");
   const socialImage = `${protocol}://${host}/og.png`;
   return {
-    title: "Afterdark AI · Create Without Limits",
+    title: "Shadowframe AI · Create Without Limits",
     description: "A focused interface for creative image and video generation powered by ComfyUI.",
     openGraph: {
-      title: "Afterdark AI · Create Without Limits",
+      title: "Shadowframe AI · Create Without Limits",
       description: "Text-to-image, image-to-image, image-to-video, and text-to-video in one focused studio.",
-      images: [{ url: socialImage, width: 1536, height: 1024, alt: "Afterdark AI creative generation dashboard" }],
+      images: [{ url: socialImage, width: 1536, height: 1024, alt: "Shadowframe AI creative generation dashboard" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "Afterdark AI · Create Without Limits",
+      title: "Shadowframe AI · Create Without Limits",
       description: "A focused image and video generation studio powered by ComfyUI.",
       images: [socialImage],
     },

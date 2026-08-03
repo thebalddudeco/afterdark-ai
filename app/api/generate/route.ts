@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       workflow["6"].inputs.text = body.negativePrompt || "";
       workflow["8"].inputs.seed = seed;
       workflow["10"].inputs.scale_by = hiresScale;
-      workflow["11"].inputs.filename_prefix = isWaiAnima ? "image/AfterdarkAI_WAI_ANIMA_i2i" : "image/AfterdarkAI_ANIMA_i2i";
+      workflow["11"].inputs.filename_prefix = isWaiAnima ? "image/ShadowframeAI_WAI_ANIMA_i2i" : "image/ShadowframeAI_ANIMA_i2i";
       if (selectedStyle.id !== "original" && selectedStyle.file) {
         workflow["12"] = {
           class_type: "LoraLoader",
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
       workflow["5"].inputs.height = height;
       workflow["6"].inputs.seed = seed;
       workflow["9"].inputs.scale_by = hiresScale;
-      workflow["10"].inputs.filename_prefix = isWaiAnima ? "image/AfterdarkAI_WAI_ANIMA" : "image/AfterdarkAI_ANIMA";
+      workflow["10"].inputs.filename_prefix = isWaiAnima ? "image/ShadowframeAI_WAI_ANIMA" : "image/ShadowframeAI_ANIMA";
       if (selectedStyle.id !== "original" && selectedStyle.file) {
         workflow["11"] = {
           class_type: "LoraLoader",
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       workflow["74"].inputs.height = height;
       workflow["74"].inputs.length = length;
       workflow["81"].inputs.noise_seed = seed;
-      workflow["80"].inputs.filename_prefix = "video/AfterdarkAI_t2v";
+      workflow["80"].inputs.filename_prefix = "video/ShadowframeAI_t2v";
       workflow["80"].inputs.format = "mp4";
       workflow["80"].inputs.codec = "h264";
     } else {
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
       workflow["129:98"].inputs.length = length;
       workflow["129:86"].inputs.noise_seed = seed;
       workflow["129:131"].inputs.value = body.fastMode !== false;
-      workflow["108"].inputs.filename_prefix = "video/AfterdarkAI_i2v";
+      workflow["108"].inputs.filename_prefix = "video/ShadowframeAI_i2v";
     }
 
     const clientId = crypto.randomUUID();

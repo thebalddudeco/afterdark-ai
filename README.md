@@ -1,10 +1,10 @@
-# Afterdark AI
+# Shadowframe AI
 
-![Afterdark AI interface preview](public/og.png)
+![Shadowframe AI interface preview](public/og.png)
 
 A focused local interface for running creative generation workflows through ComfyUI.
 
-Public interface: https://thebalddudeco.github.io/afterdark-ai/
+Public interface: https://shadowframe.tech/
 
 The GitHub Pages build is a free static presentation of the interface. Generation requires the local app or a separately configured ComfyUI bridge because GitHub Pages cannot run server APIs.
 
@@ -33,7 +33,7 @@ Both WAI-ANIMA v1.0 and Anima Aesthetic v1.1 are selectable in Text to Image and
 The interface filters style LoRAs by generator mode and base-model compatibility. Wan video modes show only Wan-compatible styles, while both Anima image bases show their shared Anima styles.
 The base-model selector is mode-aware. The Visual Style area only shows Original plus LoRAs built for the selected checkpoint, preventing incompatible LoRAs from being mixed with the wrong model family.
 
-Afterdark AI passes consensual adult prompts directly to the selected local ComfyUI workflow. The generation endpoint rejects prompts involving minors, sexual violence or coercion, and sexual content involving animals.
+Shadowframe AI passes consensual adult prompts directly to the selected local ComfyUI workflow. The generation endpoint rejects prompts involving minors, sexual violence or coercion, and sexual content involving animals.
 
 ### Anima image models
 
@@ -63,7 +63,7 @@ The Text to Video workflow additionally expects:
 1. Start ComfyUI and confirm it is available at `http://127.0.0.1:8188`.
 2. Install dependencies with `pnpm install`.
 3. Copy `.env.example` to `.env.local` only if your ComfyUI address is different.
-4. Start Afterdark AI with `pnpm dev`.
+4. Start Shadowframe AI with `pnpm dev`.
 5. Open the local address shown in the terminal.
 
 ## Configuration

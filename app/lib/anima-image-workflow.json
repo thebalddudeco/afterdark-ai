@@ -49,7 +49,7 @@
     "_meta": { "title": "Recommended 1.5x Output" }
   },
   "10": {
-    "inputs": { "images": ["9", 0], "filename_prefix": "image/AfterdarkAI_WAI_ANIMA" },
+    "inputs": { "images": ["9", 0], "filename_prefix": "image/ShadowframeAI_WAI_ANIMA" },
     "class_type": "SaveImage",
     "_meta": { "title": "Save WAI-ANIMA Image" }
   }

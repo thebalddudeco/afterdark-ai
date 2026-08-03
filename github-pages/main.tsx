@@ -5,7 +5,7 @@ import "../app/globals.css";
 
 const root = document.getElementById("root");
 
-if (!root) throw new Error("Afterdark AI could not find its page root.");
+if (!root) throw new Error("Shadowframe AI could not find its page root.");
 
 createRoot(root).render(
   <StrictMode>

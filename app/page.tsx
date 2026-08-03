@@ -371,9 +371,9 @@ export default function Home() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <a className="brand" href="#" aria-label="Afterdark AI home">
+        <a className="brand" href="#" aria-label="Shadowframe AI home">
           <span className="brand-mark">A</span>
-          <span>AFTERDARK AI</span>
+          <span>SHADOWFRAME AI</span>
         </a>
         <nav className="mode-switcher" aria-label="Generation mode">
           <button className={`mode-button ${mode === "txt-img" ? "active" : ""}`} type="button" onClick={() => selectMode("txt-img")}><Sparkles size={15} /> Text → Image</button>

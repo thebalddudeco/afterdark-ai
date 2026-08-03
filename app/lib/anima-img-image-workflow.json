@@ -54,7 +54,7 @@
     "_meta": { "title": "High Resolution Output" }
   },
   "11": {
-    "inputs": { "images": ["10", 0], "filename_prefix": "image/AfterdarkAI_ANIMA_i2i" },
+    "inputs": { "images": ["10", 0], "filename_prefix": "image/ShadowframeAI_ANIMA_i2i" },
     "class_type": "SaveImage",
     "_meta": { "title": "Save Anima Image" }
   }

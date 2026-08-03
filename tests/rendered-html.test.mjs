@@ -14,14 +14,14 @@ async function render() {
   );
 }
 
-test("server-renders the Afterdark AI generator", async () => {
+test("server-renders the Shadowframe AI generator", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Afterdark AI · Create Without Limits<\/title>/i);
-  assert.match(html, /AFTERDARK AI/);
+  assert.match(html, /<title>Shadowframe AI · Create Without Limits<\/title>/i);
+  assert.match(html, /SHADOWFRAME AI/);
   assert.match(html, /Text → Image/);
   assert.match(html, /Image → Image/);
   assert.match(html, /Image → Video/);
