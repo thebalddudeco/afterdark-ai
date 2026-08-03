@@ -56,6 +56,9 @@ test("includes all generator modes, Anima workflows, and route bindings", async 
   assert.match(page, /Image → Image/);
   assert.match(page, /Reference fidelity/);
   assert.match(page, /Balanced — recommended/);
+  assert.match(page, /uploadedImageRef\.current\?\.fingerprint === fingerprint/);
+  assert.match(page, /bridgeHealthFailuresRef\.current >= 3/);
+  assert.match(page, /for \(let attempt = 0; attempt < 2 && !bridgeIsOnline/);
   assert.match(page, /Image → Video/);
   assert.match(page, /Text → Video/);
   assert.match(page, /selectMode\("txt-img"\)/);

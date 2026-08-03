@@ -141,6 +141,8 @@ export default function Home() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const runTokenRef = useRef(0);
+  const uploadedImageRef = useRef<{ fingerprint: string; imageName: string } | null>(null);
+  const bridgeHealthFailuresRef = useRef(0);
 
   const isRunning = ["uploading", "queued", "generating"].includes(status);
   const requiresImage = mode.startsWith("img-");
@@ -205,13 +207,21 @@ export default function Home() {
       try {
         if (!isLocalPage && (!bridgeUrl || !bridgeToken)) throw new Error("Bridge not paired");
         const response = await bridgeRequest("/api/comfy?path=/system_stats", bridgeUrl, bridgeToken, { cache: "no-store" });
-        if (active) setComfyOnline(response.ok);
         if (response.ok) {
+          bridgeHealthFailuresRef.current = 0;
+          if (active) setComfyOnline(true);
           const loraResponse = await bridgeRequest("/api/comfy?path=/models/loras", bridgeUrl, bridgeToken, { cache: "no-store" });
           if (active && loraResponse.ok) setInstalledLoras(await loraResponse.json() as string[]);
+        } else if (response.status === 401 || response.status === 403) {
+          bridgeHealthFailuresRef.current = 3;
+          if (active) setComfyOnline(false);
+        } else {
+          bridgeHealthFailuresRef.current += 1;
+          if (active && bridgeHealthFailuresRef.current >= 3) setComfyOnline(false);
         }
       } catch {
-        if (active) setComfyOnline(false);
+        bridgeHealthFailuresRef.current += 1;
+        if (active && bridgeHealthFailuresRef.current >= 3) setComfyOnline(false);
       }
     };
     checkComfy();
@@ -243,6 +253,7 @@ export default function Home() {
       return;
     }
     setFile(nextFile);
+    uploadedImageRef.current = null;
     setImagePreview(URL.createObjectURL(nextFile));
     setResult(null);
     setError("");
@@ -263,6 +274,7 @@ export default function Home() {
 
   const resetImage = () => {
     setFile(null);
+    uploadedImageRef.current = null;
     setImagePreview("");
     setResult(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -290,6 +302,7 @@ export default function Home() {
       }
       sessionStorage.setItem("shadowframe.bridge.url", nextUrl);
       sessionStorage.setItem("shadowframe.bridge.token", nextToken);
+      if (nextUrl !== bridgeUrl || nextToken !== bridgeToken) uploadedImageRef.current = null;
       setBridgeUrl(nextUrl);
       setBridgeToken(nextToken);
       setComfyOnline(true);
@@ -384,18 +397,24 @@ export default function Home() {
     try {
       let imageName = "";
       if (requiresImage && file) {
-        setStatus("uploading");
-        const uploadBody = new FormData();
-        uploadBody.append("image", file);
-        uploadBody.append("type", "input");
-        uploadBody.append("overwrite", "true");
-        const uploadResponse = await bridgeRequest("/api/comfy?path=/upload/image", bridgeUrl, bridgeToken, {
-          method: "POST",
-          body: uploadBody,
-        });
-        if (!uploadResponse.ok) throw new Error("ComfyUI could not accept the source image.");
-        const uploaded = (await uploadResponse.json()) as { name: string; subfolder?: string };
-        imageName = uploaded.subfolder ? `${uploaded.subfolder}/${uploaded.name}` : uploaded.name;
+        const fingerprint = `${file.name}:${file.size}:${file.lastModified}`;
+        if (uploadedImageRef.current?.fingerprint === fingerprint) {
+          imageName = uploadedImageRef.current.imageName;
+        } else {
+          setStatus("uploading");
+          const uploadBody = new FormData();
+          uploadBody.append("image", file);
+          uploadBody.append("type", "input");
+          uploadBody.append("overwrite", "true");
+          const uploadResponse = await bridgeRequest("/api/comfy?path=/upload/image", bridgeUrl, bridgeToken, {
+            method: "POST",
+            body: uploadBody,
+          });
+          if (!uploadResponse.ok) throw new Error("ComfyUI could not accept the source image.");
+          const uploaded = (await uploadResponse.json()) as { name: string; subfolder?: string };
+          imageName = uploaded.subfolder ? `${uploaded.subfolder}/${uploaded.name}` : uploaded.name;
+          uploadedImageRef.current = { fingerprint, imageName };
+        }
       }
 
       setStatus("queued");
@@ -462,8 +481,23 @@ export default function Home() {
       setStatus("error");
       setRunStartedAt(null);
       const message = caught instanceof Error ? caught.message : "Something went wrong.";
-      setError(/failed to fetch/i.test(message) ? "The Shadowframe Bridge is unreachable. Start the launcher and reconnect." : message);
-      setComfyOnline(false);
+      let bridgeIsOnline = false;
+      for (let attempt = 0; attempt < 2 && !bridgeIsOnline; attempt += 1) {
+        try {
+          const response = await bridgeRequest("/api/comfy?path=/system_stats", bridgeUrl, bridgeToken, { cache: "no-store" });
+          bridgeIsOnline = response.ok;
+        } catch {
+          if (attempt === 0) await sleep(500);
+        }
+      }
+      setComfyOnline(bridgeIsOnline);
+      if (bridgeIsOnline) {
+        bridgeHealthFailuresRef.current = 0;
+        setError(message);
+      } else {
+        setError("The Shadowframe Bridge is unreachable. Start the launcher and reconnect.");
+        setConnectionOpen(true);
+      }
     }
   };
 
