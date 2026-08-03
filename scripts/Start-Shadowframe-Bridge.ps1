@@ -1,6 +1,7 @@
 param(
   [switch]$NoBrowser,
-  [switch]$StartComfyUI
+  [switch]$StartComfyUI,
+  [string]$StatusFile = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -19,6 +20,13 @@ $bridgePort = 3001
 $permanentTunnelUrl = "https://bridge.shadowframe.tech"
 
 New-Item -ItemType Directory -Path $stateDirectory -Force | Out-Null
+
+function Write-LauncherStatus([string]$message) {
+  Write-Host $message
+  if ($StatusFile) {
+    Set-Content -LiteralPath $StatusFile -Value $message -Encoding UTF8 -NoNewline
+  }
+}
 
 function Find-Executable([string]$commandName, [string[]]$fallbacks) {
   $command = Get-Command $commandName -ErrorAction SilentlyContinue
@@ -71,10 +79,12 @@ if (!$cloudflaredPath) {
   throw "Cloudflare Tunnel is required. Install it with: winget install --id Cloudflare.cloudflared"
 }
 
+Write-LauncherStatus "Resetting the previous Shadowframe bridge..."
 Stop-RecordedProcesses
 Stop-ProjectBridgeListener
 
 if ($StartComfyUI) {
+  Write-LauncherStatus "Checking legacy ComfyUI..."
   $comfyReady = $false
   try {
     $response = Invoke-WebRequest -Uri "http://127.0.0.1:8188/system_stats" -UseBasicParsing -TimeoutSec 3
@@ -82,6 +92,7 @@ if ($StartComfyUI) {
   } catch {}
 
   if (!$comfyReady) {
+    Write-LauncherStatus "Starting legacy ComfyUI. This can take a minute..."
     $comfyPython = Join-Path $env:USERPROFILE "Documents\ComfyUI\.venv\Scripts\python.exe"
     $comfyMain = Join-Path $env:LOCALAPPDATA "Programs\ComfyUI\resources\ComfyUI\main.py"
     $comfyBase = Join-Path $env:USERPROFILE "Documents\ComfyUI"
@@ -107,6 +118,7 @@ if ($StartComfyUI) {
     }
     if (!$comfyReady) { throw "Legacy ComfyUI did not become ready on port 8188." }
   }
+  Write-LauncherStatus "Legacy ComfyUI is ready. Preparing the bridge..."
 }
 
 $nodeDirectory = Split-Path -Parent $nodePath
@@ -117,6 +129,7 @@ $env:PATH = $runtimePath
 
 Push-Location $projectRoot
 try {
+  Write-LauncherStatus "Preparing the local Shadowframe service..."
   if (!(Test-Path -LiteralPath (Join-Path $projectRoot "node_modules"))) {
     & $pnpmPath install --frozen-lockfile
     if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed." }
@@ -156,6 +169,7 @@ $env:PORT = "$bridgePort"
 $env:PATH = $runtimePath
 
 try {
+  Write-LauncherStatus "Starting the private Shadowframe bridge..."
   $serverProcess = Start-Process -FilePath $pnpmPath -ArgumentList @("start") -WorkingDirectory $projectRoot -WindowStyle Hidden -RedirectStandardOutput $serverLog -RedirectStandardError $serverErrorLog -PassThru
 } finally {
   $env:SHADOWFRAME_BRIDGE_TOKEN = $previousToken
@@ -182,6 +196,7 @@ $serverListener = Get-NetTCPConnection -State Listen -LocalPort $bridgePort -Err
 $serverListenerProcessId = if ($serverListener) { $serverListener.OwningProcess } else { $serverProcess.Id }
 
 $persistentTunnel = Test-Path -LiteralPath $tunnelTokenPath
+Write-LauncherStatus "Creating the secure connection..."
 if ($persistentTunnel) {
   $tunnelToken = (Get-Content -Raw -LiteralPath $tunnelTokenPath).Trim()
   if (!$tunnelToken) { throw "The saved Cloudflare tunnel token is empty." }
@@ -206,6 +221,8 @@ if (!$tunnelUrl) {
   Stop-Process -Id $tunnelProcess.Id -Force -ErrorAction SilentlyContinue
   throw "The secure tunnel did not start. Review $tunnelErrorLog"
 }
+
+Write-LauncherStatus "Secure connection ready. Opening Shadowframe..."
 
 [pscustomobject]@{
   serverProcessId = $serverProcess.Id

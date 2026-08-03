@@ -47,6 +47,7 @@ internal sealed class MainForm : Form
         content.Controls.Add(_webView);
         content.Controls.Add(_loadingPanel);
         Controls.Add(content);
+        Controls.SetChildIndex(content, 1);
 
         Shown += async (_, _) => await StartBridgeAndOpenAsync();
         FormClosing += OnFormClosing;
@@ -189,12 +190,20 @@ internal sealed class MainForm : Form
             }
 
             var launcher = Path.Combine(_projectRoot, "scripts", "Start-Shadowframe-Bridge.ps1");
-            var result = await RunPowerShellAsync(launcher, "-NoBrowser -StartComfyUI");
+            var statusFile = Path.Combine(_projectRoot, ".shadowframe", "desktop-status.txt");
+            Directory.CreateDirectory(Path.GetDirectoryName(statusFile)!);
+            File.Delete(statusFile);
+            var result = await RunPowerShellAsync(
+                launcher,
+                $"-NoBrowser -StartComfyUI -StatusFile \"{statusFile}\"",
+                statusFile,
+                message => _loadingMessage.Text = message);
             if (result.ExitCode != 0)
             {
-                throw new InvalidOperationException(LastUsefulLine(result.Error) ?? LastUsefulLine(result.Output) ?? "The local services could not start.");
+                throw new InvalidOperationException("The local services could not start. Choose Try again, or use the original bridge launcher for detailed diagnostics.");
             }
 
+            _loadingMessage.Text = "Opening the Shadowframe studio...";
             ReadFriendAccess();
             await InitializeWebViewAsync();
             NavigateToShadowframe();
@@ -235,17 +244,19 @@ internal sealed class MainForm : Form
         };
         _webView.NavigationCompleted += (_, eventArgs) =>
         {
-            if (!eventArgs.IsSuccess)
+            if (eventArgs.IsSuccess)
             {
-                _statusLabel.Text = "●  Website unavailable";
-                _statusLabel.ForeColor = Color.FromArgb(255, 126, 108);
+                _statusLabel.Text = "●  ComfyUI connected";
+                _statusLabel.ForeColor = Color.FromArgb(102, 220, 143);
             }
         };
     }
 
     private void NavigateToShadowframe()
     {
-        var pairingUrl = $"https://shadowframe.tech/#bridge={Uri.EscapeDataString(_bridgeAddress!)}&token={Uri.EscapeDataString(_privateKey!)}";
+        // GitHub Pages is still provisioning the custom-domain certificate, so use
+        // the working HTTP endpoint until HTTPS is available for shadowframe.tech.
+        var pairingUrl = $"http://shadowframe.tech/#bridge={Uri.EscapeDataString(_bridgeAddress!)}&token={Uri.EscapeDataString(_privateKey!)}";
         _webView.Source = new Uri(pairingUrl);
     }
 
@@ -336,7 +347,11 @@ internal sealed class MainForm : Form
         return null;
     }
 
-    private static async Task<ProcessResult> RunPowerShellAsync(string scriptPath, string arguments)
+    private static async Task<ProcessResult> RunPowerShellAsync(
+        string scriptPath,
+        string arguments,
+        string? statusFile = null,
+        Action<string>? statusChanged = null)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -344,15 +359,35 @@ internal sealed class MainForm : Form
             Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" {arguments}",
             UseShellExecute = false,
             CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
             WorkingDirectory = Path.GetDirectoryName(Path.GetDirectoryName(scriptPath))!,
         };
         using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Windows could not start the Shadowframe service launcher.");
-        var outputTask = process.StandardOutput.ReadToEndAsync();
-        var errorTask = process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
-        return new ProcessResult(process.ExitCode, await outputTask, await errorTask);
+        var deadline = DateTime.UtcNow.AddMinutes(5);
+        var previousStatus = string.Empty;
+        while (!process.HasExited)
+        {
+            if (DateTime.UtcNow >= deadline)
+            {
+                process.Kill(true);
+                throw new TimeoutException("Shadowframe startup exceeded five minutes. Check that ComfyUI can start normally, then try again.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(statusFile) && File.Exists(statusFile))
+            {
+                try
+                {
+                    var currentStatus = File.ReadAllText(statusFile).Trim();
+                    if (currentStatus.Length > 0 && currentStatus != previousStatus)
+                    {
+                        previousStatus = currentStatus;
+                        statusChanged?.Invoke(currentStatus);
+                    }
+                }
+                catch (IOException) { }
+            }
+            await Task.Delay(250);
+        }
+        return new ProcessResult(process.ExitCode);
     }
 
     private static string MatchLine(string contents, string label)
@@ -361,11 +396,7 @@ internal sealed class MainForm : Form
         return match.Success ? match.Groups[1].Value.Trim() : string.Empty;
     }
 
-    private static string? LastUsefulLine(string value) => value
-        .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-        .LastOrDefault(line => !line.StartsWith("at ", StringComparison.OrdinalIgnoreCase));
-
-    private sealed record ProcessResult(int ExitCode, string Output, string Error);
+    private sealed record ProcessResult(int ExitCode);
 }
 
 internal sealed class FriendAccessForm : Form
