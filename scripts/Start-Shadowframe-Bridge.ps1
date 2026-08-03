@@ -1,3 +1,8 @@
+param(
+  [switch]$NoBrowser,
+  [switch]$StartComfyUI
+)
+
 $ErrorActionPreference = "Stop"
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -7,7 +12,11 @@ $serverLog = Join-Path $stateDirectory "server.log"
 $serverErrorLog = Join-Path $stateDirectory "server-error.log"
 $tunnelLog = Join-Path $stateDirectory "tunnel.log"
 $tunnelErrorLog = Join-Path $stateDirectory "tunnel-error.log"
+$accessKeyPath = Join-Path $stateDirectory "friend-access-key.txt"
+$friendAccessPath = Join-Path $stateDirectory "Friend Access.txt"
+$tunnelTokenPath = Join-Path $stateDirectory "cloudflare-tunnel-token.txt"
 $bridgePort = 3001
+$permanentTunnelUrl = "https://bridge.shadowframe.tech"
 
 New-Item -ItemType Directory -Path $stateDirectory -Force | Out-Null
 
@@ -65,6 +74,41 @@ if (!$cloudflaredPath) {
 Stop-RecordedProcesses
 Stop-ProjectBridgeListener
 
+if ($StartComfyUI) {
+  $comfyReady = $false
+  try {
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:8188/system_stats" -UseBasicParsing -TimeoutSec 3
+    $comfyReady = $response.StatusCode -eq 200
+  } catch {}
+
+  if (!$comfyReady) {
+    $comfyPython = Join-Path $env:USERPROFILE "Documents\ComfyUI\.venv\Scripts\python.exe"
+    $comfyMain = Join-Path $env:LOCALAPPDATA "Programs\ComfyUI\resources\ComfyUI\main.py"
+    $comfyBase = Join-Path $env:USERPROFILE "Documents\ComfyUI"
+    $comfyUiRoot = Join-Path $env:LOCALAPPDATA "Programs\ComfyUI\resources\UI"
+    if (!(Test-Path -LiteralPath $comfyPython) -or !(Test-Path -LiteralPath $comfyMain)) {
+      throw "The legacy ComfyUI installation could not be found."
+    }
+    Start-Process -FilePath $comfyPython -ArgumentList @(
+      $comfyMain,
+      "--base-directory", $comfyBase,
+      "--front-end-root", $comfyUiRoot,
+      "--disable-auto-launch",
+      "--lowvram",
+      "--port", "8188"
+    ) -WorkingDirectory $comfyBase -WindowStyle Hidden | Out-Null
+
+    for ($attempt = 0; $attempt -lt 120; $attempt += 1) {
+      Start-Sleep -Seconds 1
+      try {
+        $response = Invoke-WebRequest -Uri "http://127.0.0.1:8188/system_stats" -UseBasicParsing -TimeoutSec 3
+        if ($response.StatusCode -eq 200) { $comfyReady = $true; break }
+      } catch {}
+    }
+    if (!$comfyReady) { throw "Legacy ComfyUI did not become ready on port 8188." }
+  }
+}
+
 $nodeDirectory = Split-Path -Parent $nodePath
 $pnpmDirectory = Split-Path -Parent $pnpmPath
 $runtimePath = "$nodeDirectory;$pnpmDirectory;$env:PATH"
@@ -84,11 +128,17 @@ try {
   $env:PATH = $previousPath
 }
 
-$tokenBytes = New-Object byte[] 32
-$random = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-$random.GetBytes($tokenBytes)
-$random.Dispose()
-$accessKey = [Convert]::ToBase64String($tokenBytes).TrimEnd("=").Replace("+", "-").Replace("/", "_")
+if (Test-Path -LiteralPath $accessKeyPath) {
+  $accessKey = (Get-Content -Raw -LiteralPath $accessKeyPath).Trim()
+} else {
+  $tokenBytes = New-Object byte[] 32
+  $random = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+  $random.GetBytes($tokenBytes)
+  $random.Dispose()
+  $accessKey = [Convert]::ToBase64String($tokenBytes).TrimEnd("=").Replace("+", "-").Replace("/", "_")
+  Set-Content -LiteralPath $accessKeyPath -Value $accessKey -Encoding ASCII -NoNewline
+  & icacls.exe $accessKeyPath /inheritance:r /grant:r "$($env:USERDOMAIN)\$($env:USERNAME):(F)" | Out-Null
+}
 
 foreach ($log in @($serverLog, $serverErrorLog, $tunnelLog, $tunnelErrorLog)) {
   Remove-Item -LiteralPath $log -Force -ErrorAction SilentlyContinue
@@ -131,15 +181,24 @@ if (!$serverReady) {
 $serverListener = Get-NetTCPConnection -State Listen -LocalPort $bridgePort -ErrorAction SilentlyContinue | Select-Object -First 1
 $serverListenerProcessId = if ($serverListener) { $serverListener.OwningProcess } else { $serverProcess.Id }
 
-$tunnelProcess = Start-Process -FilePath $cloudflaredPath -ArgumentList @("tunnel", "--url", "http://127.0.0.1:$bridgePort", "--no-autoupdate") -WindowStyle Hidden -RedirectStandardOutput $tunnelLog -RedirectStandardError $tunnelErrorLog -PassThru
-
-$tunnelUrl = ""
-for ($attempt = 0; $attempt -lt 60; $attempt += 1) {
-  Start-Sleep -Milliseconds 500
-  $logText = ((Get-Content -Raw -LiteralPath $tunnelLog -ErrorAction SilentlyContinue) + "`n" + (Get-Content -Raw -LiteralPath $tunnelErrorLog -ErrorAction SilentlyContinue))
-  $match = [regex]::Match($logText, "https://[a-z0-9-]+\.trycloudflare\.com")
-  if ($match.Success) { $tunnelUrl = $match.Value; break }
-  if ($tunnelProcess.HasExited) { break }
+$persistentTunnel = Test-Path -LiteralPath $tunnelTokenPath
+if ($persistentTunnel) {
+  $tunnelToken = (Get-Content -Raw -LiteralPath $tunnelTokenPath).Trim()
+  if (!$tunnelToken) { throw "The saved Cloudflare tunnel token is empty." }
+  $tunnelProcess = Start-Process -FilePath $cloudflaredPath -ArgumentList @("tunnel", "--no-autoupdate", "run", "--token", $tunnelToken) -WindowStyle Hidden -RedirectStandardOutput $tunnelLog -RedirectStandardError $tunnelErrorLog -PassThru
+  Start-Sleep -Seconds 3
+  if ($tunnelProcess.HasExited) { throw "The permanent Cloudflare tunnel could not start. Review $tunnelErrorLog" }
+  $tunnelUrl = $permanentTunnelUrl
+} else {
+  $tunnelProcess = Start-Process -FilePath $cloudflaredPath -ArgumentList @("tunnel", "--url", "http://127.0.0.1:$bridgePort", "--no-autoupdate") -WindowStyle Hidden -RedirectStandardOutput $tunnelLog -RedirectStandardError $tunnelErrorLog -PassThru
+  $tunnelUrl = ""
+  for ($attempt = 0; $attempt -lt 60; $attempt += 1) {
+    Start-Sleep -Milliseconds 500
+    $logText = ((Get-Content -Raw -LiteralPath $tunnelLog -ErrorAction SilentlyContinue) + "`n" + (Get-Content -Raw -LiteralPath $tunnelErrorLog -ErrorAction SilentlyContinue))
+    $match = [regex]::Match($logText, "https://[a-z0-9-]+\.trycloudflare\.com")
+    if ($match.Success) { $tunnelUrl = $match.Value; break }
+    if ($tunnelProcess.HasExited) { break }
+  }
 }
 
 if (!$tunnelUrl) {
@@ -153,8 +212,19 @@ if (!$tunnelUrl) {
   serverListenerProcessId = $serverListenerProcessId
   tunnelProcessId = $tunnelProcess.Id
   tunnelUrl = $tunnelUrl
+  persistentTunnel = $persistentTunnel
   startedAt = (Get-Date).ToString("o")
 } | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
+
+@"
+Shadowframe Friend Access
+
+Bridge address: $tunnelUrl
+Private access key: $accessKey
+
+Your PC, ComfyUI, and the Shadowframe Bridge must be running.
+Treat the private access key like a password.
+"@ | Set-Content -LiteralPath $friendAccessPath -Encoding UTF8
 
 $siteBaseUrl = "https://shadowframe.tech/"
 try {
@@ -163,12 +233,14 @@ try {
   $siteBaseUrl = "http://shadowframe.tech/"
 }
 $pairingUrl = "$siteBaseUrl#bridge=$([uri]::EscapeDataString($tunnelUrl))&token=$([uri]::EscapeDataString($accessKey))"
-Start-Process $pairingUrl
+if (!$NoBrowser) { Start-Process $pairingUrl }
 
 Write-Host ""
 Write-Host "Shadowframe Bridge is running." -ForegroundColor Green
-Write-Host "Tunnel: $tunnelUrl"
-Write-Host "Your browser has been paired automatically."
+Write-Host "Bridge address: $tunnelUrl"
+Write-Host "Private access key: $accessKey"
+Write-Host "Friend access details: $friendAccessPath"
+if (!$NoBrowser) { Write-Host "Your browser has been paired automatically." }
 Write-Host "Keep ComfyUI running while you generate."
 Write-Host ""
 Write-Host "Use Stop Shadowframe Bridge.cmd when you are finished."

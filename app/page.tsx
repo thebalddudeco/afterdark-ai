@@ -43,6 +43,7 @@ type SessionOutput = MediaOutput & {
 
 const DEFAULT_NEGATIVE =
   "watermark, text, subtitles, letterbox, pillarbox, frame, border, split screen, noise, artifacts, blur, vignette, worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia, low quality, worst quality, blurry, bad anatomy, extra limbs, deformed, watermark, text, signature, bareness, artifacts, copyrights name, jpeg_artifacts, scan_artifacts, bad hands, missing fingers, extra digit, fewer digits, artistic error, ye-pop, deviantart, logo, patreon logo,monochrome, greyscale,censored, mosaic censoring, 色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走";
+const DEFAULT_BRIDGE_URL = "https://bridge.shadowframe.tech";
 
 const STATUS_COPY: Record<RunStatus, string> = {
   idle: "Ready when you are",
@@ -179,7 +180,7 @@ export default function Home() {
     const pairedToken = hash.get("token") || "";
     const storedUrl = sessionStorage.getItem("shadowframe.bridge.url") || "";
     const storedToken = sessionStorage.getItem("shadowframe.bridge.token") || "";
-    const initialUrl = pairedUrl || storedUrl;
+    const initialUrl = pairedUrl || storedUrl || DEFAULT_BRIDGE_URL;
     const initialToken = pairedToken || storedToken;
 
     if (pairedUrl && pairedToken) {
@@ -545,14 +546,14 @@ export default function Home() {
             <span className="dialog-icon"><KeyRound size={21} /></span>
             <p className="eyebrow">Private GPU connection</p>
             <h2 id="bridge-title">Connect Shadowframe Bridge</h2>
-            <p className="dialog-copy">Run the bridge launcher on your ComfyUI PC, then enter the secure tunnel address and private access key it provides.</p>
-            <label>Bridge address<input type="url" value={bridgeUrlInput} placeholder="https://example.trycloudflare.com" onChange={(event) => setBridgeUrlInput(event.target.value)} /></label>
-            <label>Private access key<input type="password" value={bridgeTokenInput} autoComplete="off" placeholder="Paste your access key" onChange={(event) => setBridgeTokenInput(event.target.value)} /></label>
+            <p className="dialog-copy">Enter the private access key shared by the PC owner. The permanent Shadowframe bridge address is already filled in.</p>
+            <label>Bridge address<input type="url" value={bridgeUrlInput} placeholder={DEFAULT_BRIDGE_URL} onChange={(event) => setBridgeUrlInput(event.target.value)} /></label>
+            <label>Private access key<input type="password" value={bridgeTokenInput} autoComplete="off" placeholder="Enter your private access key" onChange={(event) => setBridgeTokenInput(event.target.value)} /></label>
             {connectionError && <div className="connection-error">{connectionError}</div>}
             <button className="connect-button" type="button" disabled={connectionTesting} onClick={saveBridgeConnection}>
               {connectionTesting ? <><LoaderCircle className="spinner" size={16} /> Testing connection</> : <><Wifi size={16} /> Save and connect</>}
             </button>
-            <small>The key is kept only in this browser session and is never saved to GitHub.</small>
+            <small>The key works like a password. It is kept only in this browser session and is never saved to GitHub.</small>
           </section>
         </div>
       )}

@@ -1,4 +1,3 @@
 @echo off
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Start-Shadowframe-Bridge.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Start-Shadowframe-Bridge.ps1" -StartComfyUI
 if errorlevel 1 pause
-

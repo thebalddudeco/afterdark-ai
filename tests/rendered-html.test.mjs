@@ -56,6 +56,7 @@ test("includes all generator modes, Anima workflows, and route bindings", async 
   assert.match(page, /Image → Video/);
   assert.match(page, /Text → Video/);
   assert.match(page, /selectMode\("txt-img"\)/);
+  assert.match(page, /https:\/\/bridge\.shadowframe\.tech/);
   assert.doesNotMatch(presets, /id: "(?:perfeczion|qwen-edit|flux-klein|krea2|sd15|illustrious|pony)"/i);
 });
 

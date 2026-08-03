@@ -13,10 +13,20 @@ The GitHub Pages interface connects to ComfyUI through the authenticated Shadowf
 1. Start ComfyUI and confirm it is available at `http://127.0.0.1:8188`.
 2. Install Cloudflare Tunnel once with `winget install --id Cloudflare.cloudflared`.
 3. Double-click `Start Shadowframe Bridge.cmd`.
-4. The launcher builds the local bridge, creates a new private access key, starts a secure temporary tunnel, and opens `shadowframe.tech` already paired to it.
+4. The launcher builds the local bridge, reuses a private access key stored only on the PC, starts the secure tunnel, and opens `shadowframe.tech` already paired to it.
 5. Keep ComfyUI and the bridge running while generating. Double-click `Stop Shadowframe Bridge.cmd` when finished.
 
-The bridge listens only on `127.0.0.1`, accepts requests only from Shadowframe's approved website origins, requires a fresh bearer key, and exposes only the ComfyUI endpoints needed by the application. The key is transferred in the URL fragment, which browsers do not send to GitHub, and is kept in session storage rather than committed to the repository.
+The bridge listens only on `127.0.0.1`, accepts requests only from Shadowframe's approved website origins, requires a private bearer key, and exposes only the ComfyUI endpoints needed by the application. The key is transferred in the URL fragment, which browsers do not send to GitHub, and is kept in session storage rather than committed to the repository.
+
+## Persistent friend access
+
+1. In Cloudflare, create a remotely managed tunnel named `Shadowframe`.
+2. Add the public hostname `bridge.shadowframe.tech` with service `http://localhost:3001`.
+3. Copy its tunnel token and run `Configure Permanent Bridge.cmd` once.
+4. Run `Enable Shadowframe Auto-Start.cmd` once so legacy ComfyUI and the bridge start after Windows sign-in.
+5. Run `Show Friend Access.cmd` whenever you need the permanent address and private key to share.
+
+The private key and Cloudflare tunnel token are stored only in the ignored `.shadowframe` folder and are restricted to the current Windows account. Never commit or publicly post either value. Use `Disable Shadowframe Auto-Start.cmd` to remove the startup task.
 
 ## Generator modes
 
