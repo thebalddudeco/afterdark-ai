@@ -45,3 +45,7 @@ next-env.d.ts
 /outputs/
 /work/
 /.shadowframe/
+/release/
+/Shadowframe.exe
+**/bin/
+**/obj/

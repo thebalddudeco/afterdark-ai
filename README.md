@@ -6,6 +6,12 @@ A focused local interface for running creative generation workflows through Comf
 
 Public interface: https://shadowframe.tech/
 
+## Shadowframe for Windows
+
+`Shadowframe.exe` is the recommended daily launcher on Windows. It starts legacy ComfyUI and the private bridge, pairs the connection automatically, and opens the public interface inside a dedicated desktop window. Its toolbar includes Friend Access, Restart Bridge, and Stop & Exit controls.
+
+Build it from source by running `desktop/Build-Shadowframe.ps1`. The build creates a self-contained Windows x64 executable in the project root and a **Shadowframe AI** desktop shortcut. The generated executable and local release folder are intentionally ignored by Git.
+
 The GitHub Pages interface connects to ComfyUI through the authenticated Shadowframe Bridge running on your PC. GitHub never receives model files, prompts, generated media, or the private bridge access key.
 
 ## Shadowframe Bridge
@@ -46,7 +52,7 @@ All four modes are wired to local ComfyUI API workflows. Video generation uses W
 - `models/text_encoders/qwen_3_06b_base.safetensors`
 - `models/vae/qwen_image_vae.safetensors`
 
-Both WAI-ANIMA v1.0 and Anima Aesthetic v1.1 are selectable in Text to Image and Image to Image. The workflows run 25 steps with ER-SDE, CFG 4.5, and a recommended maximum 1.5× output scale. Image to Image starts from the uploaded image with a default denoise strength of 0.75.
+Both WAI-ANIMA v1.0 and Anima Aesthetic v1.1 are selectable in Text to Image and Image to Image. The workflows run 25 steps with ER-SDE, CFG 4.5, and a recommended maximum 1.5× output scale. Image to Image includes High, Balanced, and Creative reference-fidelity levels. Balanced is the default at 0.50 denoise and 0.85 LoRA strength; High uses 0.35/0.70, while Creative uses 0.70/1.00.
 
 ## Engine-aware style presets
 
