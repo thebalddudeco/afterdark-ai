@@ -533,15 +533,15 @@ export default function Home() {
 
           <div className="splash-gallery" aria-label="Featured Shadowframe models">
             <article className="splash-model splash-model-main">
-              <img src="/models/anima.png" alt="Artwork generated with Anima" />
+              <img src="/models/anima.jpg" alt="Red editorial portrait featured for Anima" />
               <div><span>IMAGE MODEL</span><strong>Anima</strong><small>High-detail illustration</small></div>
             </article>
             <article className="splash-model splash-model-top">
-              <img src="/models/wai-anima.png" alt="Artwork generated with WAI-ANIMA" />
+              <img src="/models/wai-anima.jpg" alt="Cinematic red roses featured for WAI-ANIMA" />
               <div><span>IMAGE MODEL</span><strong>WAI-ANIMA</strong></div>
             </article>
             <article className="splash-model splash-model-bottom">
-              <img src="/models/wan22.png" alt="Artwork generated with Wan 2.2" />
+              <img src="/models/wan22.jpg" alt="Orange horror-fashion portrait featured for Wan 2.2" />
               <div><span>VIDEO MODEL</span><strong>Wan 2.2</strong></div>
             </article>
           </div>
