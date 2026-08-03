@@ -14,8 +14,8 @@
 }
 
 * { box-sizing: border-box; }
-html { background: #311304; }
-body { margin: 0; min-width: 320px; min-height: 100vh; color: var(--cream); background: linear-gradient(145deg, #b24712 0%, #6b2708 46%, #311304 100%) fixed; font-family: var(--font-geist-sans), Arial, sans-serif; }
+html { background: #b24712; }
+body { margin: 0; min-width: 320px; min-height: 100vh; color: var(--cream); background: linear-gradient(90deg, #b24712 0%, #311304 50%, #b24712 100%) fixed; font-family: var(--font-geist-sans), Arial, sans-serif; }
 button, textarea, input { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { color: inherit; }
