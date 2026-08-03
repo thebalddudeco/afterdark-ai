@@ -80,7 +80,7 @@ internal sealed class MainForm : Form
         _statusLabel.Font = new Font("Segoe UI", 9);
         _statusLabel.Padding = new Padding(22, 8, 0, 0);
 
-        ConfigureToolbarButton(_stopButton, "Stop & exit", async (_, _) => await StopAndExitAsync());
+        ConfigureToolbarButton(_stopButton, "Stop & Exit", async (_, _) => await StopAndExitAsync());
         ConfigureToolbarButton(_restartButton, "Restart bridge", async (_, _) => await StartBridgeAndOpenAsync());
         ConfigureToolbarButton(_friendButton, "Friend access", (_, _) => ShowFriendAccess());
         _friendButton.Enabled = false;
@@ -96,6 +96,7 @@ internal sealed class MainForm : Form
     private static void ConfigureToolbarButton(Button button, string text, EventHandler onClick)
     {
         button.Text = text;
+        button.UseMnemonic = false;
         button.Dock = DockStyle.Right;
         button.Width = text.Length > 12 ? 118 : 104;
         button.FlatStyle = FlatStyle.Flat;
