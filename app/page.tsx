@@ -540,9 +540,8 @@ export default function Home() {
       </header>
 
       {connectionOpen && (
-        <div className="connection-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setConnectionOpen(false); }}>
+        <div className="connection-backdrop" role="presentation">
           <section className="connection-dialog" role="dialog" aria-modal="true" aria-labelledby="bridge-title">
-            <button className="dialog-close" type="button" aria-label="Close bridge settings" onClick={() => setConnectionOpen(false)}><X size={17} /></button>
             <span className="dialog-icon"><KeyRound size={21} /></span>
             <p className="eyebrow">Private GPU connection</p>
             <h2 id="bridge-title">Connect Shadowframe Bridge</h2>

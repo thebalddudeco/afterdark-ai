@@ -71,8 +71,6 @@ button { color: inherit; }
 
 .connection-backdrop { z-index: 50; position: fixed; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(4,4,5,.78); backdrop-filter: blur(12px); }
 .connection-dialog { width: min(430px, 100%); position: relative; padding: 28px; border: 1px solid rgba(255,255,255,.11); border-radius: 22px; background: #151517; box-shadow: 0 30px 90px rgba(0,0,0,.5); }
-.dialog-close { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 10px; color: #8b8b90; background: #1e1e21; cursor: pointer; }
-.dialog-close:hover { color: #fff; }
 .dialog-icon { width: 46px; height: 46px; display: grid; place-items: center; margin-bottom: 18px; border-radius: 14px; color: var(--orange); background: rgba(255,118,36,.12); }
 .connection-dialog h2 { margin-bottom: 8px; font-size: 22px; letter-spacing: -.035em; }
 .dialog-copy { margin-bottom: 20px; color: #8f8f94; font-size: 11px; line-height: 1.55; }
