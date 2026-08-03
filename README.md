@@ -4,6 +4,10 @@
 
 A focused local interface for running creative generation workflows through ComfyUI.
 
+Public interface: https://thebalddudeco.github.io/afterdark-ai/
+
+The GitHub Pages build is a free static presentation of the interface. Generation requires the local app or a separately configured ComfyUI bridge because GitHub Pages cannot run server APIs.
+
 ## Generator modes
 
 - Text to Image
