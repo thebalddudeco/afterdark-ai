@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" role="img" aria-labelledby="title">
+  <title id="title">Shadowframe AI</title>
+  <defs>
+    <linearGradient id="ember" x1="26" y1="18" x2="258" y2="262" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF9B55"/><stop offset="0.5" stop-color="#FF6718"/><stop offset="1" stop-color="#E33B00"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(8 8) scale(.516)">
+    <rect width="512" height="512" rx="116" fill="#0B0B0D"/>
+    <path d="M112 204v-54a38 38 0 0 1 38-38h54M308 112h54a38 38 0 0 1 38 38v54M400 308v54a38 38 0 0 1-38 38h-54M204 400h-54a38 38 0 0 1-38-38v-54" fill="none" stroke="url(#ember)" stroke-width="28" stroke-linecap="round"/>
+    <path d="M333 174c-23-31-74-44-116-28-36 13-54 40-46 67 15 48 164 20 169 83 4 47-48 78-99 72-34-3-63-19-79-42" fill="none" stroke="url(#ember)" stroke-width="38" stroke-linecap="round"/>
+    <circle cx="256" cy="256" r="13" fill="#FFE1CC"/>
+  </g>
+  <text x="324" y="139" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="88" font-weight="800" letter-spacing="5">SHADOWFRAME</text>
+  <text x="1010" y="139" fill="#FF6718" font-family="Arial, Helvetica, sans-serif" font-size="88" font-weight="300">AI</text>
+  <text x="330" y="202" fill="#A7A7AD" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="500" letter-spacing="14">CREATE IN MOTION</text>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Shadowframe AI</title>
+  <defs>
+    <linearGradient id="ember" x1="92" y1="76" x2="420" y2="438" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF9B55"/>
+      <stop offset="0.48" stop-color="#FF6718"/>
+      <stop offset="1" stop-color="#E33B00"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="#0B0B0D"/>
+  <path d="M112 204v-54a38 38 0 0 1 38-38h54M308 112h54a38 38 0 0 1 38 38v54M400 308v54a38 38 0 0 1-38 38h-54M204 400h-54a38 38 0 0 1-38-38v-54" fill="none" stroke="url(#ember)" stroke-width="28" stroke-linecap="round"/>
+  <path d="M333 174c-23-31-74-44-116-28-36 13-54 40-46 67 15 48 164 20 169 83 4 47-48 78-99 72-34-3-63-19-79-42" fill="none" stroke="url(#ember)" stroke-width="38" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="13" fill="#FFE1CC"/>
+</svg>

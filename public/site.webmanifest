@@ -1,0 +1,14 @@
+{
+  "name": "Shadowframe AI",
+  "short_name": "Shadowframe",
+  "description": "Private image and video generation powered by your local ComfyUI.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090A",
+  "theme_color": "#FF6718",
+  "icons": [
+    { "src": "/brand/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/brand/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/brand/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

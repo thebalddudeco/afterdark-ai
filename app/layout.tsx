@@ -10,14 +10,24 @@ export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   const host = requestHeaders.get("host") || "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") || (host.startsWith("localhost") ? "http" : "https");
-  const socialImage = `${protocol}://${host}/og.png`;
+  const socialImage = `${protocol}://${host}/brand/social-card.png`;
   return {
     title: "Shadowframe AI · Create Without Limits",
     description: "A focused interface for creative image and video generation powered by ComfyUI.",
+    manifest: "/site.webmanifest",
+    icons: {
+      icon: [
+        { url: "/favicon.svg", type: "image/svg+xml" },
+        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      ],
+      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+      other: [{ rel: "mask-icon", url: "/safari-pinned-tab.svg", color: "#ff6718" }],
+    },
     openGraph: {
       title: "Shadowframe AI · Create Without Limits",
       description: "Text-to-image, image-to-image, image-to-video, and text-to-video in one focused studio.",
-      images: [{ url: socialImage, width: 1536, height: 1024, alt: "Shadowframe AI creative generation dashboard" }],
+      images: [{ url: socialImage, width: 1200, height: 630, alt: "Shadowframe AI — Create in Motion" }],
     },
     twitter: {
       card: "summary_large_image",

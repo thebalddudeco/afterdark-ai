@@ -515,7 +515,7 @@ export default function Home() {
       <main className="splash-shell">
         <header className="splash-nav">
           <a className="brand" href="#top" aria-label="Shadowframe AI home">
-            <span className="brand-mark">S</span>
+            <img className="brand-mark-image" src="/brand/logo-mark-64.png" alt="" aria-hidden="true" />
             <span>SHADOWFRAME AI</span>
           </a>
         </header>
@@ -560,7 +560,7 @@ export default function Home() {
     <main className="app-shell">
       <header className="topbar">
         <button className="brand brand-button" type="button" onClick={() => setShowSplash(true)} aria-label="Return to Shadowframe AI home">
-          <span className="brand-mark">S</span>
+          <img className="brand-mark-image" src="/brand/logo-mark-64.png" alt="" aria-hidden="true" />
           <span>SHADOWFRAME AI</span>
         </button>
         <nav className="mode-switcher" aria-label="Generation mode">

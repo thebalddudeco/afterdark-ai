@@ -1,10 +1,12 @@
 # Shadowframe AI
 
-![Shadowframe AI interface preview](public/og.png)
+![Shadowframe AI](public/brand/github-banner.png)
 
 A focused local interface for running creative generation workflows through ComfyUI.
 
 Public interface: https://shadowframe.tech/
+
+Brand assets and usage guidance are documented in [BRAND.md](BRAND.md).
 
 ## Shadowframe for Windows
 
