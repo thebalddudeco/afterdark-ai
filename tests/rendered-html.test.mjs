@@ -67,6 +67,11 @@ test("protects the local bridge and permits the Shadowframe website origin", asy
       response.end(JSON.stringify({ system: { os: "mock" } }));
       return;
     }
+    if (request.url === "/interrupt" && request.method === "POST") {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({ ok: true }));
+      return;
+    }
     response.writeHead(404, { "content-type": "application/json" });
     response.end(JSON.stringify({ error: "not found" }));
   });
@@ -124,6 +129,23 @@ test("protects the local bridge and permits the Shadowframe website origin", asy
     assert.equal(authorized.status, 200);
     assert.equal(authorized.headers.get("access-control-allow-origin"), "https://shadowframe.tech");
     assert.deepEqual(await authorized.json(), { system: { os: "mock" } });
+
+    const authorizedPost = await worker.fetch(
+      new Request("http://localhost/api/comfy?path=/interrupt", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer integration-test-key",
+          origin: "https://shadowframe.tech",
+          "content-type": "application/json",
+        },
+        body: "{}",
+      }),
+      env,
+      context,
+    );
+    assert.equal(authorizedPost.status, 200);
+    assert.equal(authorizedPost.headers.get("access-control-allow-origin"), "https://shadowframe.tech");
+    assert.deepEqual(await authorizedPost.json(), { ok: true });
   } finally {
     await new Promise((resolve) => mockComfy.close(resolve));
     delete process.env.COMFYUI_URL;
