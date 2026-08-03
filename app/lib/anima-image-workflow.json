@@ -1,0 +1,56 @@
+{
+  "1": {
+    "inputs": { "unet_name": "waiANIMA_v10Base10.safetensors", "weight_dtype": "default" },
+    "class_type": "UNETLoader",
+    "_meta": { "title": "Load WAI-ANIMA v1.0" }
+  },
+  "2": {
+    "inputs": { "clip_name": "qwen_3_06b_base.safetensors", "type": "stable_diffusion", "device": "default" },
+    "class_type": "CLIPLoader",
+    "_meta": { "title": "Load Anima Text Encoder" }
+  },
+  "3": {
+    "inputs": { "text": "masterpiece, best quality, score_7, anime illustration", "clip": ["2", 0] },
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "Positive Prompt" }
+  },
+  "4": {
+    "inputs": { "text": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, lowres, censor", "clip": ["2", 0] },
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "Negative Prompt" }
+  },
+  "5": {
+    "inputs": { "width": 1024, "height": 1024, "batch_size": 1 },
+    "class_type": "EmptyLatentImage",
+    "_meta": { "title": "Generation Size" }
+  },
+  "6": {
+    "inputs": {
+      "model": ["1", 0], "seed": 0, "steps": 25, "cfg": 4.5,
+      "sampler_name": "er_sde", "scheduler": "simple",
+      "positive": ["3", 0], "negative": ["4", 0], "latent_image": ["5", 0], "denoise": 1
+    },
+    "class_type": "KSampler",
+    "_meta": { "title": "Generate WAI-ANIMA Image" }
+  },
+  "7": {
+    "inputs": { "vae_name": "qwen_image_vae.safetensors" },
+    "class_type": "VAELoader",
+    "_meta": { "title": "Load Qwen Image VAE" }
+  },
+  "8": {
+    "inputs": { "samples": ["6", 0], "vae": ["7", 0] },
+    "class_type": "VAEDecode",
+    "_meta": { "title": "Decode Image" }
+  },
+  "9": {
+    "inputs": { "image": ["8", 0], "upscale_method": "lanczos", "scale_by": 1.5 },
+    "class_type": "ImageScaleBy",
+    "_meta": { "title": "Recommended 1.5x Output" }
+  },
+  "10": {
+    "inputs": { "images": ["9", 0], "filename_prefix": "image/AfterdarkAI_WAI_ANIMA" },
+    "class_type": "SaveImage",
+    "_meta": { "title": "Save WAI-ANIMA Image" }
+  }
+}
