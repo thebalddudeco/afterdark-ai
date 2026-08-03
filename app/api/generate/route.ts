@@ -21,6 +21,14 @@ function prohibitedPromptReason(prompt: string) {
   return "";
 }
 
+function withStyleTrigger(prompt: string, trigger?: string) {
+  const userPrompt = prompt.trim();
+  const normalizedTrigger = trigger?.trim();
+  if (!normalizedTrigger) return userPrompt;
+  if (userPrompt.toLocaleLowerCase().includes(normalizedTrigger.toLocaleLowerCase())) return userPrompt;
+  return `${normalizedTrigger}, ${userPrompt}`;
+}
+
 export async function POST(request: Request) {
   const authorizationError = authorizeBridgeRequest(request);
   if (authorizationError) return authorizationError;
@@ -70,6 +78,7 @@ export async function POST(request: Request) {
     if (selectedStyle.id !== "original" && !isAnimaFamily) {
       return respond({ error: "This LoRA workflow is not installed yet." }, { status: 400 });
     }
+    const effectivePositivePrompt = withStyleTrigger(body.positivePrompt, selectedStyle.trigger);
     const selectedTemplate = isAnimaFamily
       ? mode === "img-img" ? animaImageEditWorkflowTemplate : animaImageWorkflowTemplate
       : mode === "txt-vid"
@@ -86,8 +95,7 @@ export async function POST(request: Request) {
     if (isAnimaFamily && mode === "img-img") {
       workflow["1"].inputs.image = body.imageName as string;
       workflow["2"].inputs.unet_name = isWaiAnima ? "waiANIMA_v10Base10.safetensors" : "anima-aesthetic-v1.1.safetensors";
-      const trigger = selectedStyle.trigger ? `${selectedStyle.trigger}, ` : "";
-      workflow["5"].inputs.text = `masterpiece, best quality, score_7, ${trigger}${body.positivePrompt}`;
+      workflow["5"].inputs.text = `masterpiece, best quality, score_7, ${effectivePositivePrompt}`;
       workflow["6"].inputs.text = body.negativePrompt || "";
       workflow["8"].inputs.seed = seed;
       workflow["10"].inputs.scale_by = hiresScale;
@@ -109,8 +117,7 @@ export async function POST(request: Request) {
       }
     } else if (isAnimaFamily) {
       workflow["1"].inputs.unet_name = isWaiAnima ? "waiANIMA_v10Base10.safetensors" : "anima-aesthetic-v1.1.safetensors";
-      const trigger = selectedStyle.trigger ? `${selectedStyle.trigger}, ` : "";
-      workflow["3"].inputs.text = `masterpiece, best quality, score_7, ${trigger}${body.positivePrompt}`;
+      workflow["3"].inputs.text = `masterpiece, best quality, score_7, ${effectivePositivePrompt}`;
       workflow["4"].inputs.text = body.negativePrompt || "";
       workflow["5"].inputs.width = width;
       workflow["5"].inputs.height = height;
@@ -133,7 +140,7 @@ export async function POST(request: Request) {
         workflow["6"].inputs.model = ["11", 0];
       }
     } else if (mode === "txt-vid") {
-      workflow["89"].inputs.text = body.positivePrompt;
+      workflow["89"].inputs.text = effectivePositivePrompt;
       workflow["72"].inputs.text = body.negativePrompt || "";
       workflow["74"].inputs.width = width;
       workflow["74"].inputs.height = height;
@@ -144,7 +151,7 @@ export async function POST(request: Request) {
       workflow["80"].inputs.codec = "h264";
     } else {
       workflow["97"].inputs.image = body.imageName as string;
-      workflow["129:93"].inputs.text = body.positivePrompt;
+      workflow["129:93"].inputs.text = effectivePositivePrompt;
       workflow["129:89"].inputs.text = body.negativePrompt || "";
       workflow["129:98"].inputs.width = width;
       workflow["129:98"].inputs.height = height;

@@ -61,6 +61,7 @@ test("includes all generator modes, Anima workflows, and route bindings", async 
 });
 
 test("protects the local bridge and permits the Shadowframe website origin", async () => {
+  let capturedGeneration = null;
   const mockComfy = createServer((request, response) => {
     if (request.url === "/system_stats") {
       response.writeHead(200, { "content-type": "application/json" });
@@ -70,6 +71,16 @@ test("protects the local bridge and permits the Shadowframe website origin", asy
     if (request.url === "/interrupt" && request.method === "POST") {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({ ok: true }));
+      return;
+    }
+    if (request.url === "/prompt" && request.method === "POST") {
+      let body = "";
+      request.on("data", (chunk) => { body += chunk; });
+      request.on("end", () => {
+        capturedGeneration = JSON.parse(body);
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(JSON.stringify({ prompt_id: "trigger-test" }));
+      });
       return;
     }
     response.writeHead(404, { "content-type": "application/json" });
@@ -146,6 +157,34 @@ test("protects the local bridge and permits the Shadowframe website origin", asy
     assert.equal(authorizedPost.status, 200);
     assert.equal(authorizedPost.headers.get("access-control-allow-origin"), "https://shadowframe.tech");
     assert.deepEqual(await authorizedPost.json(), { ok: true });
+
+    const generation = await worker.fetch(
+      new Request("http://localhost/api/generate", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer integration-test-key",
+          origin: "https://shadowframe.tech",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          mode: "txt-img",
+          baseModelId: "anima-aesthetic",
+          styleId: "anima-ripping",
+          positivePrompt: "an adult fashion portrait",
+          negativePrompt: "low quality",
+          width: 1024,
+          height: 1024,
+          hiresScale: 1.5,
+          seed: 42,
+        }),
+      }),
+      env,
+      context,
+    );
+    assert.equal(generation.status, 200);
+    assert.equal((await generation.json()).prompt_id, "trigger-test");
+    assert.match(capturedGeneration.prompt["3"].inputs.text, /ripping clothes by others, an adult fashion portrait/);
+    assert.doesNotMatch(capturedGeneration.prompt["3"].inputs.text, /ripping clothes by others.*ripping clothes by others/);
   } finally {
     await new Promise((resolve) => mockComfy.close(resolve));
     delete process.env.COMFYUI_URL;
