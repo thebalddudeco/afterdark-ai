@@ -1,13 +1,16 @@
 "use client";
 
 import {
+  ArrowRight,
   ChevronDown,
   Clock3,
+  Cpu,
   Download,
   Film,
   Image as ImageIcon,
   KeyRound,
   LoaderCircle,
+  LockKeyhole,
   Play,
   RotateCcw,
   SlidersHorizontal,
@@ -101,6 +104,7 @@ function bridgeRequest(path: string, bridgeUrl: string, bridgeToken: string, ini
 }
 
 export default function Home() {
+  const [showSplash, setShowSplash] = useState(true);
   const [mode, setMode] = useState<GeneratorMode>("img-vid");
   const [baseModelId, setBaseModelId] = useState(DEFAULT_BASE_MODEL["img-vid"]);
   const [styleId, setStyleId] = useState("original");
@@ -143,6 +147,11 @@ export default function Home() {
   const availableStyles = STYLE_PRESETS.filter((style) => style.id === "original" || style.baseModelIds.includes(baseModelId));
   const selectedStyle = STYLE_PRESETS.find((style) => style.id === styleId) ?? STYLE_PRESETS[0];
   const isAnimaBase = baseModelId === "wai-anima" || baseModelId === "anima-aesthetic";
+  const workflowArtwork = baseModelId === "anima-aesthetic"
+    ? { src: "/models/anima.png", alt: "Anima model artwork" }
+    : baseModelId === "wai-anima"
+      ? { src: "/models/wai-anima.png", alt: "WAI-ANIMA model artwork" }
+      : { src: "/models/wan22.png", alt: "Wan 2.2 model artwork" };
   const selectedStyleInstalled = !selectedStyle.file || installedLoras.some((name) => name.endsWith(selectedStyle.file as string));
   const estimatedTotalSeconds = createsVideo
     ? fastMode ? 300 : 900
@@ -184,9 +193,6 @@ export default function Home() {
     setBridgeUrlInput(initialUrl);
     setBridgeTokenInput(initialToken);
     setBridgeInitialized(true);
-    if (!["localhost", "127.0.0.1"].includes(window.location.hostname) && (!initialUrl || !initialToken)) {
-      setConnectionOpen(true);
-    }
   }, []);
 
   useEffect(() => {
@@ -327,6 +333,12 @@ export default function Home() {
     if (nextBaseModelId === "wai-anima" || nextBaseModelId === "anima-aesthetic") setHiresScale(1.5);
   };
 
+  const enterGenerator = () => {
+    selectMode("txt-img");
+    setShowSplash(false);
+    if (!isLocalPage && (!bridgeUrl || !bridgeToken)) setConnectionOpen(true);
+  };
+
   const generate = async () => {
     if (!comfyOnline) {
       setError("Start and connect the Shadowframe Bridge before generating.");
@@ -460,13 +472,60 @@ export default function Home() {
     setError("");
   };
 
+  if (showSplash) {
+    return (
+      <main className="splash-shell">
+        <header className="splash-nav">
+          <a className="brand" href="#top" aria-label="Shadowframe AI home">
+            <span className="brand-mark">S</span>
+            <span>SHADOWFRAME AI</span>
+          </a>
+          <button className="splash-nav-button" type="button" onClick={enterGenerator}>Open studio <ArrowRight size={15} /></button>
+        </header>
+
+        <section className="splash-hero" id="top">
+          <div className="splash-copy">
+            <p className="splash-kicker"><span /> Private, local AI creation</p>
+            <h1>Turn imagination<br />into <em>motion.</em></h1>
+            <p className="splash-lede">Create striking images and cinematic video with powerful local models, your own prompts, and no cloud rendering queue.</p>
+            <div className="splash-actions">
+              <button className="splash-primary" type="button" onClick={enterGenerator}>Generate Now <ArrowRight size={18} /></button>
+              <span><LockKeyhole size={14} /> Your work stays on your PC</span>
+            </div>
+          </div>
+
+          <div className="splash-gallery" aria-label="Featured Shadowframe models">
+            <article className="splash-model splash-model-main">
+              <img src="/models/anima.png" alt="Artwork generated with Anima" />
+              <div><span>IMAGE MODEL</span><strong>Anima</strong><small>High-detail illustration</small></div>
+            </article>
+            <article className="splash-model splash-model-top">
+              <img src="/models/wai-anima.png" alt="Artwork generated with WAI-ANIMA" />
+              <div><span>IMAGE MODEL</span><strong>WAI-ANIMA</strong></div>
+            </article>
+            <article className="splash-model splash-model-bottom">
+              <img src="/models/wan22.png" alt="Artwork generated with Wan 2.2" />
+              <div><span>VIDEO MODEL</span><strong>Wan 2.2</strong></div>
+            </article>
+          </div>
+        </section>
+
+        <section className="splash-feature-row" aria-label="Shadowframe features">
+          <div><Sparkles size={19} /><span><strong>Four creative modes</strong><small>Text and image generation</small></span></div>
+          <div><Cpu size={19} /><span><strong>Local GPU power</strong><small>Runs through your ComfyUI</small></span></div>
+          <div><LockKeyhole size={19} /><span><strong>Private by design</strong><small>Inputs remain on your machine</small></span></div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
-        <a className="brand" href="#" aria-label="Shadowframe AI home">
-          <span className="brand-mark">A</span>
+        <button className="brand brand-button" type="button" onClick={() => setShowSplash(true)} aria-label="Return to Shadowframe AI home">
+          <span className="brand-mark">S</span>
           <span>SHADOWFRAME AI</span>
-        </a>
+        </button>
         <nav className="mode-switcher" aria-label="Generation mode">
           <button className={`mode-button ${mode === "txt-img" ? "active" : ""}`} type="button" onClick={() => selectMode("txt-img")}><Sparkles size={15} /> Text → Image</button>
           <button className={`mode-button ${mode === "img-img" ? "active" : ""}`} type="button" onClick={() => selectMode("img-img")}><ImageIcon size={15} /> Image → Image</button>
@@ -673,7 +732,7 @@ export default function Home() {
           </div>
 
           <div className="workflow-card">
-            <div className="workflow-art"><span>W</span><i /><i /><i /></div>
+            <div className="workflow-art"><img src={workflowArtwork.src} alt={workflowArtwork.alt} /></div>
             <div><p className="eyebrow">Workflow</p><h3>{selectedBaseModel.name}</h3><span>{createsVideo ? "High + low noise · FP8" : isAnimaBase ? "25-step · Anima · local" : mode === "txt-img" ? "12-step · FP8 · local" : "40-step · FP8 · local"}</span></div>
             <div className="workflow-specs">{createsVideo ? <><span>{width} × {height}</span><span>16 FPS</span><span>H.264</span></> : <><span>{hiresScale}× output</span><span>PNG</span><span>Local</span></>}</div>
           </div>

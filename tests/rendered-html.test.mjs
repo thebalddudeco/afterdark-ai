@@ -15,7 +15,7 @@ async function render() {
   );
 }
 
-test("server-renders the Shadowframe AI generator", async () => {
+test("server-renders the Shadowframe AI introduction", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
@@ -23,19 +23,20 @@ test("server-renders the Shadowframe AI generator", async () => {
   const html = await response.text();
   assert.match(html, /<title>Shadowframe AI · Create Without Limits<\/title>/i);
   assert.match(html, /SHADOWFRAME AI/);
-  assert.match(html, /Text → Image/);
-  assert.match(html, /Image → Image/);
-  assert.match(html, /Image → Video/);
-  assert.match(html, /Text → Video/);
+  assert.match(html, /Generate Now/);
+  assert.match(html, /WAI-ANIMA/);
+  assert.match(html, /Wan 2\.2/);
+  assert.match(html, /Your work stays on your PC/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/i);
 });
 
-test("includes Anima image workflow templates and route bindings", async () => {
-  const [editWorkflowSource, animaWorkflowSource, route, presets] = await Promise.all([
+test("includes all generator modes, Anima workflows, and route bindings", async () => {
+  const [editWorkflowSource, animaWorkflowSource, route, presets, page] = await Promise.all([
     readFile(new URL("../app/lib/anima-img-image-workflow.json", import.meta.url), "utf8"),
     readFile(new URL("../app/lib/anima-image-workflow.json", import.meta.url), "utf8"),
     readFile(new URL("../app/api/generate/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/lib/style-presets.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
   ]);
   const editWorkflow = JSON.parse(editWorkflowSource);
   const animaWorkflow = JSON.parse(animaWorkflowSource);
@@ -50,6 +51,11 @@ test("includes Anima image workflow templates and route bindings", async () => {
   assert.match(route, /mode === "txt-img"/);
   assert.match(route, /mode === "img-img"/);
   assert.match(route, /baseModelId === "wai-anima"/);
+  assert.match(page, /Text → Image/);
+  assert.match(page, /Image → Image/);
+  assert.match(page, /Image → Video/);
+  assert.match(page, /Text → Video/);
+  assert.match(page, /selectMode\("txt-img"\)/);
   assert.doesNotMatch(presets, /id: "(?:perfeczion|qwen-edit|flux-klein|krea2|sd15|illustrious|pony)"/i);
 });
 
