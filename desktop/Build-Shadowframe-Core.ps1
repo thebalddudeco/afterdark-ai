@@ -90,7 +90,7 @@ foreach ($directory in @("app", "build", "db", "drizzle", "public", "dist", ".vi
 $previousPath = $env:PATH
 $env:PATH = "$nodeBin;$fallback;$env:PATH"
 try {
-  & (Join-Path $fallback "pnpm.cmd") install --dir $bridgeRoot --frozen-lockfile --offline --config.node-linker=hoisted --config.package-import-method=copy
+  & (Join-Path $fallback "pnpm.cmd") install --dir $bridgeRoot --ignore-workspace --frozen-lockfile --offline --config.node-linker=hoisted --config.package-import-method=copy
   $portableBridgeEntry = Join-Path $bridgeRoot "node_modules\vinext\dist\cli.js"
   if (!(Test-Path -LiteralPath $portableBridgeEntry)) {
     throw "The portable bridge dependencies could not be staged."
