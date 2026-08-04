@@ -76,72 +76,75 @@ These model families are registered in the Shadowframe UI as setup-required. The
 Base model:
 
 - RedCraft 2/3 — `https://civitai.red/models/958009/redcraft-or-2-or-3-int8int4fp8-scaled`
+- Installed filename: `redcraft23INT8INT4FP8_30Krea2.safetensors`
 
 Folder placement:
 
 - Base checkpoint/diffusion model: `models/diffusion_models`
 - LoRAs: `models/loras` or individual subfolders under `models/loras`
 
-Expected Shadowframe filenames:
+Downloaded LoRA filenames:
 
-- `RedCraft_Skin_Tone_Slider.safetensors`
-- `RedCraft_Mons_Pubis_Slider.safetensors`
-- `RedCraft_Purple_Grain.safetensors`
-- `RedCraft_Pornmaster_Asian.safetensors`
-- `RedCraft_Purple_Poster.safetensors`
-- `RedCraft_Transparent_Clothes.safetensors`
-- `RedCraft_Weird_Art.safetensors`
-- `RedCraft_Body_Retouch.safetensors`
-- `RedCraft_Breast_Size_Slider.safetensors`
-- `RedCraft_Better_Pussy.safetensors`
-- `RedCraft_AsianMix_Turbo.safetensors`
+- `skintone_v2_krea2_loraholic.safetensors`
+- `mons_pubis_krea2_loraholic.safetensors`
+- `Purple_Grainy_Kr2_AM.safetensors`
+- `PornMaster_Krea2_Asian_slider_V1.safetensors`
+- `Purple_Graphics_KR2.safetensors`
+- `transparent_clothes_krea2_v1.safetensors`
+- `Krea2_Cinematic_Artstyle.safetensors`
+- `krea2_rt_v1_5_epoch_10.safetensors`
+- `breast_size_v2_krea2_loraholic.safetensors`
+- `krea2_better_pussy_poses_v4.1.safetensors`
+- `hina_krea2Turbo_lora_tqd_v3.0.safetensors`
 
 ### Moody Real Photo
 
 Base model:
 
 - Moody Real Mix — `https://civitai.com/models/621441/moody-real-mix`
+- Installed filename: `moodyRealMix_xhsEdition.safetensors`
 
 Folder placement:
 
 - Base checkpoint/diffusion model: `models/diffusion_models`
 - LoRAs: `models/loras` or individual subfolders under `models/loras`
 
-Expected Shadowframe filenames:
+Downloaded LoRA filenames:
 
-- `Moody_Innie_Adjuster.safetensors`
-- `Moody_Breast_Size_Slider.safetensors`
-- `Moody_Artful_NSFW.safetensors`
-- `Moody_Body_Retouch.safetensors`
-- `Moody_60s_Psychedelic.safetensors`
-- `Moody_Areola_Size_Slider.safetensors`
-- `Moody_Skin_Tone_Slider.safetensors`
-- `Moody_Rope_Bondage_v2.safetensors`
-- `Moody_Egypt_Queen.safetensors`
-- `Moody_Chain_Collar.safetensors`
-- `Moody_Nostalgic_Cinema.safetensors`
-- `Moody_Fashion_Generator.safetensors`
-- `Moody_Crowd_Street.safetensors`
-- `Moody_Chun_Li_v2.safetensors`
+- `m99_labiaplasty_pussy_6_zimage.safetensors`
+- `breast_size_v2_loraholic.safetensors`
+- `MidJourneyNSFWZ.safetensors`
+- `zib-uncensored_v1_ep15.safetensors`
+- `60sPsyZBase.safetensors`
+- `areolas_size_loraholic.safetensors`
+- `skintone_v2_loraholic.safetensors`
+- `rope bondage V2.safetensors`
+- `egypt queen v2.safetensors`
+- `chain collar.safetensors`
+- `Nostalgic_Cinema_zit_final.safetensors`
+- `Fashion Generator.safetensors`
+- `crowd street.safetensors`
+- `Chun Li V2.safetensors`
 
 ### LTX 2.3 Video
 
 Base model:
 
 - LTX 2.3 GTAnimation — `https://civitai.red/models/1295569/ltx-23-gtanimation-or-25-frames-in-5s-12g-vram`
+- Installed filename: `ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors`
 
 Folder placement:
 
 - Base checkpoint/diffusion model: `models/diffusion_models`
 - LoRAs: `models/loras` or individual subfolders under `models/loras`
 
-Expected Shadowframe filenames:
+Downloaded LoRA filenames:
 
-- `LTX23_Leg_Swing_Up_Down.safetensors`
-- `LTX23_Leg_Swing_In_Out.safetensors`
-- `LTX23_East_Asian_Face_Fidelity.safetensors`
-- `LTX23_Mila.safetensors`
-- `LTX23_Bonnie_Rabbit.safetensors`
+- `ltx23-i2v-swing-up-down-os.safetensors`
+- `ltx23-i2v-swing-in-out-os.safetensors`
+- `ltx-face-prior-f1-profile-correction-step11019.safetensors`
+- `mila_ltx23_lora.safetensors`
+- `Bonnie_Rabbit_LTX_v1.safetensors`
 
 ## Phase 3 verification
 
