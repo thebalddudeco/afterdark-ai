@@ -2,6 +2,27 @@
 
 All notable Shadowframe AI packaging and application changes are tracked here.
 
+## 0.3.1 - Sample Prompt Distro Refresh
+
+### Added
+
+- Added starter positive prompt packs for RedCraft, LTX, and Moody Real Mix.
+- Added English translations for Chinese, Japanese, and Russian sample prompt text.
+- Added RedCraft Moto Saito LoRA registration and sample prompt.
+- Added installer distro support for copying source prompt samples into `Sample Prompts`.
+
+### Changed
+
+- Bumped Shadowframe Core, installer, launcher, and repository package version metadata to `0.3.1`.
+- Updated release notes, packaging logs, and model-pack notes for the sample prompt distro refresh.
+- Normalized onboarding prompt samples so human subjects are clearly adult and risky scenarios are framed as consensual/editorial examples.
+
+### Validation
+
+- Source lint completes with warnings only.
+- GitHub Pages production build completes.
+- RedCraft, LTX, and Moody sample folders are present in the local installer distro.
+
 ## 0.3.0 - Standalone Packaging Release Candidate
 
 ### Added

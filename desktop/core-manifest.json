@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "coreVersion": "0.3.0",
+  "coreVersion": "0.3.1",
   "architecture": "win-x64",
   "runtime": {
     "comfyUiVersion": "0.18.5",

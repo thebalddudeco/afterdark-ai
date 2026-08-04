@@ -1,6 +1,10 @@
 # Shadowframe AI Release Notes
 
-## Release Candidate: 0.3.0
+## Release Candidate: 0.3.1
+
+This distro refresh versions Shadowframe as `0.3.1` and adds new-user sample prompt packs for RedCraft, LTX, and Moody Real Mix. It also registers the RedCraft Moto Saito LoRA using the downloaded file `@motocross_saito_v0_0_0_cr_0010.safetensors`.
+
+## Previous Release Candidate: 0.3.0
 
 Shadowframe AI is now packaged as a Windows-first local generation stack. The app can be distributed without requiring the recipient to already have ComfyUI, Python, Node.js, Git, or this development repository installed.
 
@@ -43,6 +47,7 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 - Beta handoff package builder completed and produced `release\Shadowframe-Beta-Handoff`.
 - Beta installation verifier runs and reports actionable install readiness checks.
 - Starter prompt folders were added to the current local installer distro and the Core beta handoff folder.
+- Version metadata updated to `0.3.1` across package, Core manifest, launcher, installer, and model-pack minimum Core metadata.
 
 ## Remaining Acceptance Tests
 

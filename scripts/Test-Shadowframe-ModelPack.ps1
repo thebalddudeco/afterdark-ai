@@ -39,7 +39,7 @@ try {
   }
   Copy-Item -LiteralPath (Join-Path $setupPublish "Shadowframe Setup.exe") -Destination (Join-Path $fixtureRoot "Test Model Pack Setup.exe")
   [ordered]@{
-    schemaVersion = 1; packId = "test-models"; displayName = "Test Models"; version = "1.0.0"; minimumCoreVersion = "0.3.0"
+    schemaVersion = 1; packId = "test-models"; displayName = "Test Models"; version = "1.0.0"; minimumCoreVersion = "0.3.1"
     payloadFile = "test-models.tar"; sha256 = $payloadHash; installedBytes = (Get-Item $model).Length; fileCount = 1
     distributionPolicy = "redistributable"
     files = @([ordered]@{ relativePath = "diffusion_models/fixture.safetensors"; bytes = (Get-Item $model).Length; sha256 = $modelHash })

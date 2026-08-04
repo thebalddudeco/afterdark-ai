@@ -22,6 +22,31 @@ if (!(Test-Path -LiteralPath (Join-Path $coreRoot "Shadowframe.exe"))) {
   throw "The verified Core staging package is missing. Build Phase 1 first."
 }
 
+function New-TarPayload([string]$SourceDirectory, [string]$ArchivePath) {
+  $pwsh = Get-Command pwsh.exe -ErrorAction SilentlyContinue
+  if ($pwsh) {
+    $helper = Join-Path $env:TEMP "Shadowframe-NewTar-$([guid]::NewGuid().ToString('N')).ps1"
+    try {
+      @'
+param(
+  [string]$SourceDirectory,
+  [string]$ArchivePath
+)
+$ErrorActionPreference = "Stop"
+[System.Formats.Tar.TarFile]::CreateFromDirectory($SourceDirectory, $ArchivePath, $false)
+'@ | Set-Content -LiteralPath $helper -Encoding UTF8
+      & $pwsh.Source -NoProfile -File $helper -SourceDirectory $SourceDirectory -ArchivePath $ArchivePath
+      if ($LASTEXITCODE -ne 0) { throw "The managed Core payload archive could not be created." }
+      return
+    } finally {
+      Remove-Item -LiteralPath $helper -Force -ErrorAction SilentlyContinue
+    }
+  }
+
+  & tar.exe -cf $ArchivePath -C $SourceDirectory .
+  if ($LASTEXITCODE -ne 0) { throw "The Core payload archive could not be created." }
+}
+
 if (Test-Path -LiteralPath $output) { Remove-Item -LiteralPath $output -Recurse -Force }
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 
@@ -35,10 +60,9 @@ Copy-Item -LiteralPath (Join-Path $publish "Shadowframe Setup.exe") -Destination
 
 Write-Host "Packing the verified Shadowframe Core payload..."
 $payload = Join-Path $output "Shadowframe-Core.tar"
-$temporaryPayload = Join-Path $env:TEMP "Shadowframe-Core-$([guid]::NewGuid().ToString('N')).tar"
+$temporaryPayload = Join-Path $output "Shadowframe-Core.tar.$([guid]::NewGuid().ToString('N')).partial"
 try {
-  & tar.exe -cf $temporaryPayload -C $coreRoot .
-  if ($LASTEXITCODE -ne 0) { throw "The Core payload archive could not be created." }
+  New-TarPayload $coreRoot $temporaryPayload
   Move-Item -LiteralPath $temporaryPayload -Destination $payload -Force
 } finally {
   Remove-Item -LiteralPath $temporaryPayload -Force -ErrorAction SilentlyContinue
@@ -48,7 +72,7 @@ $files = Get-ChildItem -LiteralPath $coreRoot -File -Recurse
 $bytes = ($files | Measure-Object Length -Sum).Sum
 $hash = (Get-FileHash -LiteralPath $payload -Algorithm SHA256).Hash
 $manifest = [ordered]@{
-  version = "0.3.0"
+  version = "0.3.1"
   payloadFile = "Shadowframe-Core.tar"
   sha256 = $hash
   uncompressedBytes = $bytes

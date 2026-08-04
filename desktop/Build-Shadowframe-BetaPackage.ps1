@@ -40,8 +40,9 @@ function Add-ReleaseFile([string]$Source, [string]$Destination) {
 
 function Add-FolderFiles([string]$SourceFolder, [string]$DestinationFolder) {
   New-Item -ItemType Directory -Path $DestinationFolder -Force | Out-Null
-  Get-ChildItem -LiteralPath $SourceFolder -File | ForEach-Object {
-    Add-ReleaseFile $_.FullName (Join-Path $DestinationFolder $_.Name)
+  Get-ChildItem -LiteralPath $SourceFolder -File -Recurse | ForEach-Object {
+    $relative = Get-RelativePathCompat $SourceFolder $_.FullName
+    Add-ReleaseFile $_.FullName (Join-Path $DestinationFolder $relative)
   }
 }
 

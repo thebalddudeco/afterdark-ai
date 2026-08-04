@@ -196,3 +196,47 @@ Notes:
 
 - The `release` folder remains intentionally ignored by Git because it contains large installer payloads.
 - The pushed repository contains the source prompt folders and build-script hook needed to regenerate the distro samples.
+
+## Phase 5B - Versioned 0.3.1 Distro Refresh
+
+Goal: turn the sample prompt update into a versioned distro refresh instead of a source-only checkpoint.
+
+Completed:
+
+- Bumped package metadata, Core manifest, launcher project, installer project, installer product version, and installer manifest version to `0.3.1`.
+- Updated model-pack minimum Core version metadata to `0.3.1` for newly rebuilt packs.
+- Renamed the RedCraft sample file to `017-moto-saito-pixel-art.txt`.
+- Updated changelog, release notes, packaging log, and model-pack notes for Moto Saito and prompt sample distro contents.
+
+Validation plan:
+
+- Run source lint. Completed with warnings only.
+- Run GitHub Pages production build. Completed.
+- Rebuild Shadowframe Core staging. Completed.
+- Rebuild Shadowframe Installer distro. Completed.
+- Rebuild model-pack manifests/installers with reused Anima and Wan payload archives. Completed.
+- Refresh beta handoff package checksums. Completed.
+
+Build results:
+
+- Core installer manifest version: `0.3.1`.
+- Core installer payload hash: `B7DB450643A6D6F65424BBBBF10D8308BDF89E6E4F94232415F5007E7FC42981`.
+- Core installer payload size: 4.54 GiB tar, 4.40 GiB uncompressed file bytes.
+- Core installer file count: 73,954.
+- Anima model-pack minimum Core version: `0.3.1`.
+- Wan model-pack minimum Core version: `0.3.1`.
+- Beta handoff checksum entries: 100.
+- Beta handoff Core folder includes:
+  - `redcraft-prompts`: 18 files.
+  - `ltx-prompts`: 11 files.
+  - `moody-prompts`: 45 files.
+- `BETA-SHA256SUMS.txt` includes `01 Install Shadowframe Core/Sample Prompts/redcraft-prompts/017-moto-saito-pixel-art.txt`.
+
+Packaging fix:
+
+- Replaced the Core installer builder's direct `tar.exe` path with a PowerShell 7 managed TAR helper when available.
+- The managed archive path fixed the interrupted zero-byte `.partial` Core archive issue observed during the first `0.3.1` rebuild attempt.
+
+Distribution note:
+
+- Large `release` artifacts remain local and ignored by Git. GitHub receives the versioned source, scripts, prompt samples, and documentation needed to reproduce the distro.
