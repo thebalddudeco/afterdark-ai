@@ -7,6 +7,7 @@ namespace Shadowframe.Launcher;
 
 internal sealed class MainForm : Form
 {
+    private const int ToolbarHeight = 48;
     private static readonly Color Background = Color.FromArgb(10, 10, 11);
     private static readonly Color Surface = Color.FromArgb(22, 22, 24);
     private static readonly Color Border = Color.FromArgb(52, 52, 56);
@@ -44,11 +45,16 @@ internal sealed class MainForm : Form
         BuildToolbar();
         BuildLoadingPanel();
 
-        var content = new Panel { Dock = DockStyle.Fill, BackColor = Background };
+        var content = new Panel
+        {
+            BackColor = Background,
+            Location = new Point(0, ToolbarHeight),
+            Size = new Size(ClientSize.Width, Math.Max(0, ClientSize.Height - ToolbarHeight)),
+            Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+        };
         content.Controls.Add(_webView);
         content.Controls.Add(_loadingPanel);
         Controls.Add(content);
-        Controls.SetChildIndex(content, 1);
 
         Shown += async (_, _) => await StartBridgeAndOpenAsync();
         FormClosing += OnFormClosing;

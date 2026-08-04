@@ -127,3 +127,49 @@ Remaining:
 - Run `Verify Installation.cmd` after installing all three packages on the beta target.
 - Run real generation acceptance tests for txt-img, img-img, img-vid, and txt-vid.
 - Capture tester logs and screenshots for failures.
+
+## Phase 5 Planning - Installer Hub and Storage Locations
+
+Goal: replace the manual three-step install handoff with a single guided installer experience that can install Core and then chain selected model packs into user-selected storage locations.
+
+Design decisions:
+
+- The Core installer should ask for two different roots:
+  - **Application location** — where Shadowframe Core, the launcher, bundled runtime, scripts, and bridge live.
+  - **Storage location** — where models, inputs, outputs, logs, and generated media live.
+- Storage should be split into explicit subfolders:
+  - `models`
+  - `input`
+  - `output`
+  - `State`
+  - `Logs`
+- Model-pack installers should no longer assume `%LOCALAPPDATA%\Shadowframe\models`.
+- Core should write a shared storage configuration and registry values during install.
+- Model packs should read the Core storage location by default, while still allowing `/DATAROOT=` for advanced or silent installs.
+- The Core installer should be able to launch bundled or adjacent model-pack installers after Core is installed.
+- The UI should expose the output folder location so users can save generations directly to a preferred drive instead of manually downloading each result.
+
+Recommended installer flow:
+
+1. Choose Shadowframe app location.
+2. Choose Shadowframe storage location.
+3. Show required disk space for selected model packs.
+4. Install Core.
+5. Offer checkboxes for Anima, Wan, and future photo-real model packs.
+6. Run each selected model pack with the chosen storage root.
+7. Launch Shadowframe and run the verifier.
+
+Notes:
+
+- Network shares are supported only as advanced storage targets. Model loading across a network can be slow and fragile compared with local SSD/NVMe storage.
+- HDD storage is acceptable for large model libraries, but generation startup and model switching will be slower than SSD/NVMe.
+- If a storage root is changed later, Shadowframe should either move existing folders or create safe junctions after confirming exact source and destination paths.
+
+Remaining:
+
+- Add Core installer controls for storage root and output root.
+- Persist storage choices in the install receipt, registry, and runtime environment.
+- Update model-pack defaults to read the Core storage root from registry.
+- Add optional post-Core model-pack chaining.
+- Add app settings for default output folder and recent-generation indexing.
+- Add a photo-real image model pack once the exact checkpoint and workflow are selected.

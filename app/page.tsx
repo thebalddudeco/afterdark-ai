@@ -50,8 +50,8 @@ const STATUS_COPY: Record<RunStatus, string> = {
   idle: "Ready when you are",
   uploading: "Uploading source image",
   queued: "Waiting for the GPU",
-  generating: "Creating your video",
-  complete: "Video ready",
+  generating: "Creating your output",
+  complete: "Output ready",
   error: "Generation stopped",
 };
 
@@ -147,6 +147,12 @@ export default function Home() {
   const isRunning = ["uploading", "queued", "generating"].includes(status);
   const requiresImage = mode.startsWith("img-");
   const createsVideo = mode.endsWith("-vid");
+  const outputKind = createsVideo ? "video" : "image";
+  const statusCopy: Record<RunStatus, string> = {
+    ...STATUS_COPY,
+    generating: `Creating your ${outputKind}`,
+    complete: `${outputKind[0].toUpperCase()}${outputKind.slice(1)} ready`,
+  };
   const availableBaseModels = BASE_MODELS.filter((model) => model.modes.includes(mode));
   const selectedBaseModel = BASE_MODELS.find((model) => model.id === baseModelId) ?? availableBaseModels[0];
   const availableStyles = STYLE_PRESETS.filter((style) => style.id === "original" || style.baseModelIds.includes(baseModelId));
@@ -678,7 +684,6 @@ export default function Home() {
           {selectedStyle.id !== "original" && (
             <div className="style-note">
               <span>{selectedStyleInstalled ? `Installed for ${selectedBaseModel.name}` : `${selectedStyle.file} required`}</span>
-              {selectedStyle.source && <a href={selectedStyle.source} target="_blank" rel="noreferrer">View source</a>}
             </div>
           )}
 
@@ -723,7 +728,7 @@ export default function Home() {
           <div className="stage-toolbar">
             <div>
               <span className="live-dot" />
-              <span>{STATUS_COPY[status]}</span>
+              <span>{statusCopy[status]}</span>
             </div>
             <div className="stage-tags"><span>{aspectLabel}</span>{createsVideo ? <><span>{length} frames</span><span>{fastMode ? "4-step" : "20-step"}</span></> : <><span>{hiresScale}× output</span><span>{mode === "txt-img" ? "12-step" : "40-step"}</span></>}</div>
           </div>
@@ -744,7 +749,7 @@ export default function Home() {
             {isRunning && (
               <div className="generation-overlay">
                 <LoaderCircle className="spinner" size={34} />
-                <strong>{STATUS_COPY[status]}</strong>
+                <strong>{statusCopy[status]}</strong>
                 <span>{selectedBaseModel.name} is processing your request</span>
                 <div className="progress-track"><i style={{ width: `${progress}%` }} /></div>
                 <div className="progress-meta">
@@ -770,10 +775,10 @@ export default function Home() {
 
           <div className={`status-card status-${status}`}>
             <span className="status-icon">{isRunning ? <LoaderCircle className="spinner" size={23} /> : status === "complete" ? <Sparkles size={23} /> : <Film size={23} />}</span>
-            <div><strong>{STATUS_COPY[status]}</strong><small>{isRunning ? "You can keep this window open" : status === "complete" ? "Saved by ComfyUI" : createsVideo ? "Wan video workflow" : `${selectedBaseModel.name} image workflow`}</small></div>
+            <div><strong>{statusCopy[status]}</strong><small>{isRunning ? `Creating a local ${outputKind}` : status === "complete" ? "Saved by ComfyUI" : createsVideo ? "Wan video workflow" : `${selectedBaseModel.name} image workflow`}</small></div>
           </div>
 
-          <div className="recent-grid">
+          <div className="recent-strip">
             {sessionOutputs.length ? sessionOutputs.map((output, index) => (
               <button key={output.id} className={`recent-card ${result?.id === output.id ? "selected" : ""}`} type="button" onClick={() => setResult(output)}>
                 {output.kind === "video" ? <video src={output.url} muted preload="metadata" /> : <img src={output.url} alt="Generated thumbnail" />}

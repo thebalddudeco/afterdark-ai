@@ -6,7 +6,22 @@ Shadowframe is distributed as three Windows packages:
 2. **Anima Image Models** — WAI-ANIMA, Anima Aesthetic, the shared Qwen text encoder/VAE, and the configured Anima LoRAs.
 3. **Wan 2.2 Video Models** — Wan 2.2 image-to-video and text-to-video high/low-noise models, the shared UMT5 encoder/VAE, and Lightx2v acceleration LoRAs.
 
-Install Core first. Model packs install into `%LOCALAPPDATA%\Shadowframe\models`, are independently repairable, and appear separately in Windows Installed Apps.
+Install Core first. Current model packs install into `%LOCALAPPDATA%\Shadowframe\models`, are independently repairable, and appear separately in Windows Installed Apps.
+
+Planned installer-hub behavior: Core will ask for a Shadowframe storage location, record it, and then model packs will install into that selected storage root instead of hard-coding `%LOCALAPPDATA%`. This allows a user to install the application on one drive and keep models, inputs, outputs, and logs on a separate large drive.
+
+Recommended storage layout:
+
+```text
+<Shadowframe storage root>/
+  models/
+  input/
+  output/
+  State/
+  Logs/
+```
+
+The storage root should usually be local to the GPU machine. A network share can be supported for advanced users, but large checkpoint loading over a network is expected to be slower and less reliable than local SSD/NVMe storage.
 
 ## Current production outputs
 
