@@ -184,12 +184,6 @@ export const STYLE_PRESETS: StylePreset[] = [
     swatch: "linear-gradient(145deg, #a6f0d8, #6a67d8 46%, #d15b8f)",
   },
   {
-    id: "redcraft-pose", name: "Pose Sheet", modes: PHOTO_IMAGE_MODES, baseModelIds: REDCRAFT_BASES,
-    engine: "RedCraft", trigger: "subject pose sheet", hiddenPrompt: "multiple pose reference sheet, clean character turnaround, consistent subject poses", file: "RedCraft_Pose_Sheet.safetensors", strength: 1,
-    source: "https://civitai.red/models/2761803/krea-2-subject-pose-sheet-by-astroburner?modelVersionId=3182533",
-    swatch: "linear-gradient(145deg, #f0efe5, #8e8f96 52%, #25262c)",
-  },
-  {
     id: "redcraft-body", name: "Body Retouch", modes: PHOTO_IMAGE_MODES, baseModelIds: REDCRAFT_BASES,
     engine: "RedCraft", trigger: "female body retouched", hiddenPrompt: "retouched skin, polished body detail, refined anatomy", file: "RedCraft_Body_Retouch.safetensors", strength: 1,
     source: "https://civitai.red/models/2196685/z-female-body-retouched?modelVersionId=3186931",

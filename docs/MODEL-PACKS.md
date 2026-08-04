@@ -80,7 +80,7 @@ Base model:
 Folder placement:
 
 - Base checkpoint/diffusion model: `models/diffusion_models`
-- LoRAs: `models/loras`
+- LoRAs: `models/loras` or individual subfolders under `models/loras`
 
 Expected Shadowframe filenames:
 
@@ -91,7 +91,6 @@ Expected Shadowframe filenames:
 - `RedCraft_Purple_Poster.safetensors`
 - `RedCraft_Transparent_Clothes.safetensors`
 - `RedCraft_Weird_Art.safetensors`
-- `RedCraft_Pose_Sheet.safetensors`
 - `RedCraft_Body_Retouch.safetensors`
 - `RedCraft_Breast_Size_Slider.safetensors`
 - `RedCraft_Better_Pussy.safetensors`
@@ -106,7 +105,7 @@ Base model:
 Folder placement:
 
 - Base checkpoint/diffusion model: `models/diffusion_models`
-- LoRAs: `models/loras`
+- LoRAs: `models/loras` or individual subfolders under `models/loras`
 
 Expected Shadowframe filenames:
 
@@ -134,7 +133,7 @@ Base model:
 Folder placement:
 
 - Base checkpoint/diffusion model: `models/diffusion_models`
-- LoRAs: `models/loras`
+- LoRAs: `models/loras` or individual subfolders under `models/loras`
 
 Expected Shadowframe filenames:
 
