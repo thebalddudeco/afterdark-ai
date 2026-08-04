@@ -6,6 +6,8 @@ This distro refresh versions Shadowframe as `0.3.2` and activates the LTX 2.3 GT
 
 The local PhotoReal model-pack artifact was rebuilt for this release. Its payload SHA-256 is `4103D035D104F54478B295592AE0482FA7B78AAF8697279184FC91167484D568`.
 
+The local Core installer artifact was also rebuilt for this release. Its payload SHA-256 is `5D383D066862287FB8B488656CBDFC544EDCA26A23E5A746B2B589CA9E318A7B`.
+
 ## Previous Release Candidate: 0.3.1
 
 This distro refresh versions Shadowframe as `0.3.1` and adds new-user sample prompt packs for RedCraft, LTX, and Moody Real Mix. It also registers the RedCraft Moto Saito LoRA using the downloaded file `@motocross_saito_v0_0_0_cr_0010.safetensors`.

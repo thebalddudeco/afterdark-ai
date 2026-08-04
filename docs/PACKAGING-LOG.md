@@ -312,8 +312,14 @@ Validation:
 - Rebuilt PhotoReal payload SHA-256: `4103D035D104F54478B295592AE0482FA7B78AAF8697279184FC91167484D568`.
 - Rebuilt PhotoReal manifest minimum Core version: `0.3.2`.
 - Rebuilt PhotoReal manifest installs LTX GTAnimation to `checkpoints/ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors`.
+- Rebuilt `release\Shadowframe-Core`.
+- Rebuilt `release\Shadowframe-Installer`.
+- Rebuilt Core installer manifest version: `0.3.2`.
+- Rebuilt Core installer payload file count: 73,954.
+- Rebuilt Core installer payload SHA-256: `5D383D066862287FB8B488656CBDFC544EDCA26A23E5A746B2B589CA9E318A7B`.
 - Rebuilt `release\Shadowframe-Beta-Handoff`.
-- Refreshed beta handoff checksum entries: 28.
+- Refreshed beta handoff checksum entries: 105.
+- Beta handoff Core tar checksum matches `5D383D066862287FB8B488656CBDFC544EDCA26A23E5A746B2B589CA9E318A7B`.
 - Beta handoff PhotoReal tar checksum matches `4103D035D104F54478B295592AE0482FA7B78AAF8697279184FC91167484D568`.
 
 Notes:
