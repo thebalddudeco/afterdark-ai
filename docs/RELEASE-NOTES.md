@@ -32,6 +32,7 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 - Installer lifecycle testing covered install, repair/update, uninstall, and data preservation.
 - Reusable model-pack installer lifecycle testing passed.
 - Anima production model-pack extraction and uninstall passed.
+- Wan production model-pack extraction and uninstall passed from the full 64.33 GiB payload.
 - Anima and Wan production payloads passed whole-archive SHA-256 and manifest verification.
 - GitHub Pages app build passed.
 - Desktop launcher and installer projects build successfully.
@@ -40,7 +41,6 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 ## Remaining Acceptance Tests
 
 - Test Core, Anima, and Wan installers on a clean Windows system with a supported NVIDIA GPU.
-- Fully extract the production Wan pack on a clean install target.
 - Run real generation tests for all supported modes.
 - Confirm code-signing strategy for production EXEs.
 - Confirm public redistribution rights for every non-Wan model binary before hosting Anima model payloads publicly.

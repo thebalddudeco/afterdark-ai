@@ -35,7 +35,6 @@ All notable Shadowframe AI packaging and application changes are tracked here.
 ### Known Release-Blocking Items
 
 - Run a clean-machine install test for Core, Anima, and Wan on a Windows machine without the developer ComfyUI setup.
-- Run a full production Wan extraction test from the 64.33 GiB payload.
 - Run real generation acceptance tests for txt-img, img-img, img-vid, and txt-vid.
 - Decide external storage for large model payloads. Do not commit model archives to Git.
 - Code-sign production EXEs before broad distribution.

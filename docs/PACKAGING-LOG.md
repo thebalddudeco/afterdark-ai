@@ -63,8 +63,36 @@ Completed:
 Remaining:
 
 - Clean-machine installer test.
-- Full Wan extraction test on a clean target.
 - Real generation acceptance tests.
+- Code signing.
+- External storage choice for large model payloads.
+- Redistribution review for non-Wan model binaries.
+
+## Phase 4B - Installer Acceptance
+
+Goal: exercise the release-candidate installers and full model payloads through isolated install, repair, extraction, and uninstall paths.
+
+Completed:
+
+- Confirmed no registered Shadowframe Core install was present before automated installer testing.
+- Confirmed no Shadowframe Core state file was running before automated installer testing.
+- Confirmed available disk space for full production model-pack extraction.
+- Ran `pnpm models:verify`; Anima and Wan production artifacts passed.
+- Ran `pnpm core:test`; Core isolation passed with ComfyUI 0.18.5, Python 3.12.11, and bridge HTTP 200.
+- Ran `pnpm installer:test`; clean install, installed runtime startup, repair/update, uninstall, and user-data preservation passed.
+- Ran `pnpm models:test`; clean install, repair, modified-file preservation, and safe uninstall passed.
+- Ran production Anima model-pack extraction/uninstall from the 10.00 GiB payload; passed.
+- Ran production Wan model-pack extraction/uninstall from the 64.33 GiB payload; passed.
+
+Notes:
+
+- Windows Sandbox feature status could not be inspected from this session because the query requires elevation.
+- The full Wan production extraction was validated in an isolated `D:\Shadowframe-Install-Tests` target, not on a separate physical or virtual clean machine.
+
+Remaining:
+
+- Clean-machine test on a separate Windows system with supported NVIDIA GPU.
+- Real generation acceptance tests for txt-img, img-img, img-vid, and txt-vid.
 - Code signing.
 - External storage choice for large model payloads.
 - Redistribution review for non-Wan model binaries.

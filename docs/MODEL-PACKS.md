@@ -42,7 +42,6 @@ Neither large binary payload belongs in the Git repository. Publish installers t
 
 - Reusable installer: clean install, repair, modified-file preservation, and uninstall passed with an isolated fixture pack.
 - Anima production pack: full 10 GiB extraction, installed-file size checks, and production uninstall passed.
+- Wan production pack: full 64.33 GiB extraction, installed-file size checks, and production uninstall passed.
 - Both production packs: full payload SHA-256, installed byte totals, archive file counts, and exact archive-to-manifest path comparisons passed.
 - Installer project: Release build completed with zero warnings and zero errors.
-
-The full 64.33 GiB Wan extraction was not duplicated during Phase 3 because the same installer/extraction engine passed against the production Anima payload and the complete Wan archive independently passed its whole-payload and manifest validation. A clean-machine Wan extraction remains part of release-candidate acceptance testing.
