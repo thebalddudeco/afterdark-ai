@@ -28,12 +28,15 @@ function prohibitedPromptReason(prompt: string) {
   return "";
 }
 
-function withStyleTrigger(prompt: string, trigger?: string) {
+function withStyleTrigger(prompt: string, trigger?: string, hiddenPrompt?: string) {
   const userPrompt = prompt.trim();
-  const normalizedTrigger = trigger?.trim();
-  if (!normalizedTrigger) return userPrompt;
-  if (userPrompt.toLocaleLowerCase().includes(normalizedTrigger.toLocaleLowerCase())) return userPrompt;
-  return `${normalizedTrigger}, ${userPrompt}`;
+  const styleParts = [trigger, hiddenPrompt]
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part));
+  if (!styleParts.length) return userPrompt;
+  const normalizedUserPrompt = userPrompt.toLocaleLowerCase();
+  const missingParts = styleParts.filter((part) => !normalizedUserPrompt.includes(part.toLocaleLowerCase()));
+  return missingParts.length ? `${missingParts.join(", ")}, ${userPrompt}` : userPrompt;
 }
 
 export async function POST(request: Request) {
@@ -86,7 +89,7 @@ export async function POST(request: Request) {
     if (selectedStyle.id !== "original" && !isAnimaFamily) {
       return respond({ error: "This LoRA workflow is not installed yet." }, { status: 400 });
     }
-    const effectivePositivePrompt = withStyleTrigger(body.positivePrompt, selectedStyle.trigger);
+    const effectivePositivePrompt = withStyleTrigger(body.positivePrompt, selectedStyle.trigger, selectedStyle.hiddenPrompt);
     const selectedTemplate = isAnimaFamily
       ? mode === "img-img" ? animaImageEditWorkflowTemplate : animaImageWorkflowTemplate
       : mode === "txt-vid"

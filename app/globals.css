@@ -169,35 +169,17 @@ h1, h2, h3, p { margin-top: 0; }
 .activity-panel { display: flex; min-height: 0; flex-direction: column; padding: 18px; }
 .activity-heading { margin-bottom: 14px; }
 .activity-heading h2 { margin: 0; font-size: 15px; letter-spacing: -.02em; }
-.status-card { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
-.status-icon { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; color: var(--orange); background: rgba(255,118,36,.1); }
-.status-card div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.status-card strong { font-size: 10px; }
-.status-card small { overflow: hidden; color: #77777c; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
-.status-card.status-complete .status-icon { color: var(--green); background: rgba(88,214,141,.1); }
-.recent-strip { display: flex; min-height: 122px; gap: 9px; margin-top: 14px; overflow-x: auto; overflow-y: hidden; padding-bottom: 7px; scrollbar-color: rgba(255,118,36,.45) rgba(255,255,255,.06); }
+.recent-strip { display: flex; min-height: 122px; gap: 9px; overflow-x: auto; overflow-y: hidden; padding-bottom: 7px; scrollbar-color: rgba(255,118,36,.45) rgba(255,255,255,.06); }
 .recent-strip::-webkit-scrollbar { height: 7px; }
 .recent-strip::-webkit-scrollbar-track { border-radius: 999px; background: rgba(255,255,255,.06); }
 .recent-strip::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(255,118,36,.5); }
-.recent-card { width: 128px; min-width: 128px; min-height: 112px; position: relative; overflow: hidden; padding: 0; border: 1px solid var(--line); border-radius: 15px; background: #1c1c1f; cursor: pointer; }
+.recent-card { width: 128px; min-width: 128px; min-height: 122px; position: relative; overflow: hidden; padding: 0; border: 1px solid var(--line); border-radius: 15px; background: #1c1c1f; cursor: pointer; }
 .recent-card.selected { border-color: var(--orange); }
 .recent-card video, .recent-card img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; }
 .recent-card span { position: absolute; right: 7px; bottom: 7px; padding: 4px 6px; border-radius: 6px; color: #fff; background: rgba(0,0,0,.65); font-size: 8px; }
-.empty-history { width: 100%; min-height: 112px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 18px; border: 1px dashed var(--line); border-radius: 15px; color: #606066; text-align: center; }
+.empty-history { width: 100%; min-height: 122px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 18px; border: 1px dashed var(--line); border-radius: 15px; color: #606066; text-align: center; }
 .empty-history strong { margin: 9px 0 4px; color: #8f8f94; font-size: 10px; }
 .empty-history span { max-width: 145px; font-size: 8px; line-height: 1.5; }
-.workflow-card { position: relative; display: grid; grid-template-columns: 62px minmax(0, 1fr); align-items: center; gap: 11px; margin-top: 12px; overflow: hidden; padding: 10px; border: 1px solid rgba(255,118,36,.22); border-radius: 15px; color: #f1ede8; background: linear-gradient(145deg, rgba(178,71,18,.18), rgba(49,19,4,.42)); }
-.workflow-art { width: 62px; height: 62px; position: relative; display: grid; place-items: center; overflow: hidden; margin-bottom: 0; border-radius: 12px; color: #fff; background: #25130d; }
-.workflow-art img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center 32%; }
-.workflow-art span { z-index: 2; font-size: 31px; font-weight: 900; }
-.workflow-art i { width: 110px; height: 110px; position: absolute; border: 1px solid rgba(255,255,255,.25); border-radius: 35%; transform: rotate(24deg); }
-.workflow-art i:nth-of-type(2) { width: 78px; height: 78px; transform: rotate(50deg); }
-.workflow-art i:nth-of-type(3) { width: 145px; height: 145px; transform: rotate(70deg); }
-.workflow-card h3 { max-width: 170px; overflow: hidden; margin-bottom: 3px; color: #fff; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.workflow-card > div > span { color: rgba(245,241,234,.62); font-size: 8px; }
-.workflow-card .eyebrow { margin-bottom: 3px; color: var(--orange-light); font-size: 8px; }
-.workflow-specs { grid-column: 1 / -1; display: flex; gap: 5px; margin-top: 0; }
-.workflow-specs span { padding: 5px 7px; border-radius: 6px; color: rgba(245,241,234,.72) !important; background: rgba(255,255,255,.08); font-size: 7px !important; }
 .visually-hidden { width: 1px; height: 1px; position: absolute; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 @media (max-width: 1120px) {
@@ -205,10 +187,8 @@ h1, h2, h3, p { margin-top: 0; }
   .splash-gallery { min-height: 500px; }
   .app-shell { width: calc(100vw - 24px); margin: 12px auto; }
   .workspace { grid-template-columns: 330px minmax(420px, 1fr); }
-  .activity-panel { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-  .activity-heading { grid-column: 1 / -1; margin-bottom: 0; }
-  .recent-strip { margin: 0; }
-  .workflow-card { margin: 0; }
+  .activity-panel { grid-column: 1 / -1; }
+  .activity-heading { margin-bottom: 14px; }
 }
 
 @media (max-width: 800px) {

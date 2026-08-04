@@ -7,6 +7,7 @@ export type StylePreset = {
   baseModelIds: string[];
   engine: string;
   trigger?: string;
+  hiddenPrompt?: string;
   file?: string;
   strength?: number;
   source?: string;
@@ -124,7 +125,11 @@ export const STYLE_PRESETS: StylePreset[] = [
   },
   {
     id: "anima-ripping", name: "Ripped Clothes", modes: ANIMA_IMAGE_MODES, baseModelIds: ANIMA_BASES,
-    engine: "Anima", trigger: "ripping clothes by others", file: "Anima_Ripping_Clothes_v1.safetensors", strength: 1,
+    engine: "Anima",
+    trigger: "ripping clothes by others",
+    hiddenPrompt: "torn clothing, ripped open fabric, shredded outfit, damaged clothes, fabric pulled apart, visible tears and holes in the clothing",
+    file: "Anima_Ripping_Clothes_v1.safetensors",
+    strength: 1.25,
     source: "https://civitai.red/models/2762116/ripping-clothes-anima?modelVersionId=3108593",
     swatch: "linear-gradient(145deg, #8d9eb2, #514d61 52%, #cc6b4e)",
   },

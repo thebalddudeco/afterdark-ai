@@ -158,11 +158,6 @@ export default function Home() {
   const availableStyles = STYLE_PRESETS.filter((style) => style.id === "original" || style.baseModelIds.includes(baseModelId));
   const selectedStyle = STYLE_PRESETS.find((style) => style.id === styleId) ?? STYLE_PRESETS[0];
   const isAnimaBase = baseModelId === "wai-anima" || baseModelId === "anima-aesthetic";
-  const workflowArtwork = baseModelId === "anima-aesthetic"
-    ? { src: "/models/anima.png", alt: "Anima model artwork" }
-    : baseModelId === "wai-anima"
-      ? { src: "/models/wai-anima.png", alt: "WAI-ANIMA model artwork" }
-      : { src: "/models/wan22.png", alt: "Wan 2.2 model artwork" };
   const selectedStyleInstalled = !selectedStyle.file || installedLoras.some((name) => name.endsWith(selectedStyle.file as string));
   const estimatedTotalSeconds = createsVideo
     ? fastMode ? 300 : 900
@@ -773,11 +768,6 @@ export default function Home() {
         <aside className="activity-panel">
           <div className="activity-heading"><div><p className="eyebrow">Session</p><h2>Recent generations</h2></div><Clock3 size={20} /></div>
 
-          <div className={`status-card status-${status}`}>
-            <span className="status-icon">{isRunning ? <LoaderCircle className="spinner" size={23} /> : status === "complete" ? <Sparkles size={23} /> : <Film size={23} />}</span>
-            <div><strong>{statusCopy[status]}</strong><small>{isRunning ? `Creating a local ${outputKind}` : status === "complete" ? "Saved by ComfyUI" : createsVideo ? "Wan video workflow" : `${selectedBaseModel.name} image workflow`}</small></div>
-          </div>
-
           <div className="recent-strip">
             {sessionOutputs.length ? sessionOutputs.map((output, index) => (
               <button key={output.id} className={`recent-card ${result?.id === output.id ? "selected" : ""}`} type="button" onClick={() => setResult(output)}>
@@ -787,12 +777,6 @@ export default function Home() {
             )) : (
               <div className="empty-history">{createsVideo ? <Video size={25} /> : <ImageIcon size={25} />}<strong>No generations yet</strong><span>Your latest creations will collect here.</span></div>
             )}
-          </div>
-
-          <div className="workflow-card">
-            <div className="workflow-art"><img src={workflowArtwork.src} alt={workflowArtwork.alt} /></div>
-            <div><p className="eyebrow">Workflow</p><h3>{selectedBaseModel.name}</h3><span>{createsVideo ? "High + low noise · FP8" : isAnimaBase ? "25-step · Anima · local" : mode === "txt-img" ? "12-step · FP8 · local" : "40-step · FP8 · local"}</span></div>
-            <div className="workflow-specs">{createsVideo ? <><span>{width} × {height}</span><span>16 FPS</span><span>H.264</span></> : <><span>{hiresScale}× output</span><span>PNG</span><span>Local</span></>}</div>
           </div>
         </aside>
       </section>
