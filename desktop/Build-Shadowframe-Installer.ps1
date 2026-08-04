@@ -55,6 +55,12 @@ $manifest = [ordered]@{
   fileCount = $files.Count
 }
 $manifest | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output "Shadowframe-Package.json") -Encoding UTF8
+
+$samplePromptRoot = Join-Path $projectRoot "samples"
+if (Test-Path -LiteralPath $samplePromptRoot) {
+  Copy-Item -LiteralPath $samplePromptRoot -Destination (Join-Path $output "Sample Prompts") -Recurse -Force
+}
+
 $setupHash = (Get-FileHash -LiteralPath (Join-Path $output "Shadowframe Setup.exe") -Algorithm SHA256).Hash
 $manifestHash = (Get-FileHash -LiteralPath (Join-Path $output "Shadowframe-Package.json") -Algorithm SHA256).Hash
 @(
@@ -74,6 +80,7 @@ Keep these three files together:
 SHA256SUMS.txt contains optional download-integrity checksums.
 
 Run Shadowframe Setup.exe. Models and LoRAs are installed separately.
+Sample Prompts contains starter prompts that users can copy into Shadowframe.
 
 Silent install:
   "Shadowframe Setup.exe" /SILENT
