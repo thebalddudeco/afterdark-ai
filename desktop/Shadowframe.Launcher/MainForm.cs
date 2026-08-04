@@ -42,31 +42,45 @@ internal sealed class MainForm : Form
         Size = new Size(1440, 920);
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
-        BuildToolbar();
         BuildLoadingPanel();
+
+        var layout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Background,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            RowCount = 2,
+            ColumnCount = 1,
+        };
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, ToolbarHeight));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
         var content = new Panel
         {
+            Dock = DockStyle.Fill,
             BackColor = Background,
-            Location = new Point(0, ToolbarHeight),
-            Size = new Size(ClientSize.Width, Math.Max(0, ClientSize.Height - ToolbarHeight)),
-            Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
         };
         content.Controls.Add(_webView);
         content.Controls.Add(_loadingPanel);
-        Controls.Add(content);
+        layout.Controls.Add(BuildToolbar(), 0, 0);
+        layout.Controls.Add(content, 0, 1);
+        Controls.Add(layout);
 
         Shown += async (_, _) => await StartBridgeAndOpenAsync();
         FormClosing += OnFormClosing;
     }
 
-    private void BuildToolbar()
+    private Panel BuildToolbar()
     {
         var toolbar = new Panel
         {
-            Dock = DockStyle.Top,
-            Height = 48,
+            Dock = DockStyle.Fill,
             BackColor = Surface,
+            Margin = Padding.Empty,
             Padding = new Padding(16, 8, 12, 8),
         };
 
@@ -97,7 +111,7 @@ internal sealed class MainForm : Form
         toolbar.Controls.Add(_friendButton);
         toolbar.Controls.Add(_statusLabel);
         toolbar.Controls.Add(brand);
-        Controls.Add(toolbar);
+        return toolbar;
     }
 
     private static void ConfigureToolbarButton(Button button, string text, EventHandler onClick)
