@@ -4,6 +4,8 @@
 
 This distro refresh versions Shadowframe as `0.3.2` and activates the LTX 2.3 GTAnimation Image → Video workflow. LTX is now a real selectable video base model, its LoRAs are wired through the backend, and the PhotoReal model-pack script installs the LTX model as a checkpoint so ComfyUI can expose the matching model and VAE path.
 
+The local PhotoReal model-pack artifact was rebuilt for this release. Its payload SHA-256 is `4103D035D104F54478B295592AE0482FA7B78AAF8697279184FC91167484D568`.
+
 ## Previous Release Candidate: 0.3.1
 
 This distro refresh versions Shadowframe as `0.3.1` and adds new-user sample prompt packs for RedCraft, LTX, and Moody Real Mix. It also registers the RedCraft Moto Saito LoRA using the downloaded file `@motocross_saito_v0_0_0_cr_0010.safetensors`.

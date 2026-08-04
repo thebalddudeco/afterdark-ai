@@ -37,7 +37,7 @@ The model storage root should usually be local to the GPU machine. A network sha
 
 - `release\Shadowframe-Anima-Models` — 14 model files, 10.00 GiB payload.
 - `release\Shadowframe-Wan-Models` — 10 model files, 64.33 GiB payload.
-- `release\Shadowframe-PhotoReal-Models` — 37 model files, 64.89 GiB payload.
+- `release\Shadowframe-PhotoReal-Models` — 37 model files, 64.89 GiB payload, rebuilt for Core `0.3.2` with LTX installed as a checkpoint.
 
 Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack. Core Setup discovers model-pack installers named `Install Shadowframe * Models.exe` in adjacent package folders and launches them silently with the chosen Shadowframe library location.
 

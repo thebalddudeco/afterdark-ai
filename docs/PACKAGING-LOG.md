@@ -306,6 +306,15 @@ Validation:
 - GitHub Pages production build completed.
 - ComfyUI accepted the LTX Image → Video workflow.
 - ComfyUI accepted the LTX Image → Video workflow with an LTX LoRA selected.
+- Rebuilt `release\Shadowframe-PhotoReal-Models`.
+- Rebuilt PhotoReal payload file count: 37.
+- Rebuilt PhotoReal payload size: 64.89 GiB.
+- Rebuilt PhotoReal payload SHA-256: `4103D035D104F54478B295592AE0482FA7B78AAF8697279184FC91167484D568`.
+- Rebuilt PhotoReal manifest minimum Core version: `0.3.2`.
+- Rebuilt PhotoReal manifest installs LTX GTAnimation to `checkpoints/ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors`.
+- Rebuilt `release\Shadowframe-Beta-Handoff`.
+- Refreshed beta handoff checksum entries: 28.
+- Beta handoff PhotoReal tar checksum matches `4103D035D104F54478B295592AE0482FA7B78AAF8697279184FC91167484D568`.
 
 Notes:
 
