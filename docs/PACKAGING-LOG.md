@@ -96,3 +96,34 @@ Remaining:
 - Code signing.
 - External storage choice for large model payloads.
 - Redistribution review for non-Wan model binaries.
+
+## Phase 4C - Beta Handoff Package
+
+Goal: create a trusted-tester package that can be handed to someone later without requiring them to understand the repository layout.
+
+Completed:
+
+- Added `desktop\Build-Shadowframe-BetaPackage.ps1`.
+- Added `pnpm beta:build`.
+- Added `scripts\Verify-Shadowframe-Installation.ps1`.
+- Added `docs\BETA-HANDOFF.md`.
+- Built `release\Shadowframe-Beta-Handoff`.
+- Created numbered folders for Core, Anima, and Wan installation.
+- Added start-here, system requirements, troubleshooting, known issues, install order, and beta test notes.
+- Added normal and full-hash verification command wrappers.
+- Added `BETA-SHA256SUMS.txt` for the complete handoff folder.
+- Used hardlinks for large payloads when possible, avoiding another physical copy on the same drive.
+
+Verification:
+
+- The beta builder completed successfully.
+- The handoff folder contains 27 files.
+- The handoff folder references approximately 79.1 GiB of payload files.
+- The verifier runs and reports expected missing-install failures on the development machine because no normal Shadowframe Core/model-pack installation is currently registered.
+
+Remaining:
+
+- Transfer or host the beta handoff folder for a trusted tester.
+- Run `Verify Installation.cmd` after installing all three packages on the beta target.
+- Run real generation acceptance tests for txt-img, img-img, img-vid, and txt-vid.
+- Capture tester logs and screenshots for failures.

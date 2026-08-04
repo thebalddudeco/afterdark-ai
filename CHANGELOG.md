@@ -12,6 +12,8 @@ All notable Shadowframe AI packaging and application changes are tracked here.
 - Added full archive SHA-256 validation and per-model hash receipts for model packs.
 - Added safe model-pack uninstall behavior that removes only files whose hashes still match the installed receipt.
 - Added production model-pack verification scripts for payload hash, byte count, archive path, and manifest consistency.
+- Added a beta handoff package builder with numbered installer folders, start-here notes, troubleshooting, known issues, checksums, and installation verification commands.
+- Added a beta installation verifier for Core registration, WebView2, NVIDIA GPU, model-pack receipts, model presence, file sizes, and optional full hashes.
 - Added release documentation for Core, Windows installer, model packs, packaging logs, technical architecture, and release checklist.
 - Added GitHub Pages production build checks to the release audit.
 

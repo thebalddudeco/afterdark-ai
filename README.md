@@ -14,6 +14,7 @@ Brand assets and usage guidance are documented in [BRAND.md](BRAND.md).
 - [Release notes](docs/RELEASE-NOTES.md)
 - [Release checklist](docs/RELEASE-CHECKLIST.md)
 - [Packaging log](docs/PACKAGING-LOG.md)
+- [Beta handoff](docs/BETA-HANDOFF.md)
 - [Technical reference](docs/TECHNICAL-REFERENCE.md)
 - [GitHub repository notes](docs/GITHUB-REPOSITORY-NOTES.md)
 - [Phase 1 Core](docs/PHASE-1-CORE.md)

@@ -37,11 +37,14 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 - GitHub Pages app build passed.
 - Desktop launcher and installer projects build successfully.
 - Source lint completes with warnings only.
+- Beta handoff package builder completed and produced `release\Shadowframe-Beta-Handoff`.
+- Beta installation verifier runs and reports actionable install readiness checks.
 
 ## Remaining Acceptance Tests
 
 - Test Core, Anima, and Wan installers on a clean Windows system with a supported NVIDIA GPU.
 - Run real generation tests for all supported modes.
+- Transfer or host the beta handoff folder for a trusted tester.
 - Confirm code-signing strategy for production EXEs.
 - Confirm public redistribution rights for every non-Wan model binary before hosting Anima model payloads publicly.
 

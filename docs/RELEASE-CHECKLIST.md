@@ -18,6 +18,7 @@ Use this checklist before publishing a public build.
 - `pnpm core:build` produces `release\Shadowframe-Core`.
 - `pnpm installer:build` produces `release\Shadowframe-Installer`.
 - `pnpm models:build` produces the selected model-pack folders.
+- `pnpm beta:build` produces `release\Shadowframe-Beta-Handoff`.
 
 ## Verification
 
@@ -29,6 +30,7 @@ Use this checklist before publishing a public build.
 - Production Wan pack extraction/uninstall passes.
 - Clean-machine Core install passes.
 - Clean-machine model-pack installs pass.
+- `Verify Installation.cmd` passes on the beta target after install.
 - txt-img, img-img, img-vid, and txt-vid generation each complete successfully.
 
 ## Distribution

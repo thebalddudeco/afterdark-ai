@@ -15,6 +15,7 @@
     "core:test": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Test-Shadowframe-Core.ps1",
     "installer:build": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File desktop/Build-Shadowframe-Installer.ps1",
     "installer:test": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Test-Shadowframe-Installer.ps1",
+    "beta:build": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File desktop/Build-Shadowframe-BetaPackage.ps1",
     "models:build": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File desktop/Build-Shadowframe-ModelPacks.ps1",
     "models:test": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Test-Shadowframe-ModelPack.ps1",
     "models:verify": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/Test-Shadowframe-ModelPackArtifacts.ps1",

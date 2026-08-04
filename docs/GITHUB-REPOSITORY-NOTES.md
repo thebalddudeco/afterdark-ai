@@ -37,6 +37,7 @@ Use separate release storage for:
 - `Shadowframe-Core.tar`
 - `Shadowframe-Anima-Models.tar`
 - `Shadowframe-Wan-Models.tar`
+- `Shadowframe-Beta-Handoff`
 
 Publish SHA-256 checksums beside every downloadable payload.
 
