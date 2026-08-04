@@ -22,4 +22,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\shadowframe.png" />
+  </ItemGroup>
 </Project>

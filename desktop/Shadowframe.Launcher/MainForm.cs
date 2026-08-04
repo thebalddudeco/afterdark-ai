@@ -84,9 +84,18 @@ internal sealed class MainForm : Form
             Padding = new Padding(16, 8, 12, 8),
         };
 
+        var brandMark = new PictureBox
+        {
+            Image = LoadBrandMark(),
+            SizeMode = PictureBoxSizeMode.Zoom,
+            Dock = DockStyle.Left,
+            Width = 24,
+            Padding = new Padding(0, 3, 8, 3),
+        };
+
         var brand = new Label
         {
-            Text = "S   SHADOWFRAME AI",
+            Text = "SHADOWFRAME AI",
             AutoSize = true,
             Dock = DockStyle.Left,
             ForeColor = Color.White,
@@ -111,6 +120,7 @@ internal sealed class MainForm : Form
         toolbar.Controls.Add(_friendButton);
         toolbar.Controls.Add(_statusLabel);
         toolbar.Controls.Add(brand);
+        toolbar.Controls.Add(brandMark);
         return toolbar;
     }
 
@@ -145,15 +155,13 @@ internal sealed class MainForm : Form
             eventArgs.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
         };
 
-        var mark = new Label
+        var mark = new PictureBox
         {
-            Text = "S",
-            ForeColor = Color.White,
-            BackColor = Orange,
-            Font = new Font("Segoe UI", 18, FontStyle.Bold),
-            TextAlign = ContentAlignment.MiddleCenter,
-            Location = new Point(32, 30),
-            Size = new Size(50, 50),
+            Image = LoadBrandMark(),
+            BackColor = Color.Transparent,
+            SizeMode = PictureBoxSizeMode.Zoom,
+            Location = new Point(28, 26),
+            Size = new Size(62, 62),
         };
 
         _loadingTitle.Text = "Starting Shadowframe";
@@ -431,6 +439,17 @@ internal sealed class MainForm : Form
     {
         var match = Regex.Match(contents, $@"(?m)^{Regex.Escape(label)}:\s*(.+)$");
         return match.Success ? match.Groups[1].Value.Trim() : string.Empty;
+    }
+
+    private static Image? LoadBrandMark()
+    {
+        var resourceName = "Shadowframe.Launcher.Assets.shadowframe.png";
+        var assembly = typeof(MainForm).Assembly;
+        var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream is not null) return Image.FromStream(stream);
+
+        var filePath = Path.Combine(AppContext.BaseDirectory, "Assets", "shadowframe.png");
+        return File.Exists(filePath) ? Image.FromFile(filePath) : null;
     }
 
     private sealed record ProcessResult(int ExitCode);
