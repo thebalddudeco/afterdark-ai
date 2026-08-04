@@ -158,7 +158,7 @@ export default function Home() {
   const availableStyles = STYLE_PRESETS.filter((style) => style.id === "original" || style.baseModelIds.includes(baseModelId));
   const selectedStyle = STYLE_PRESETS.find((style) => style.id === styleId) ?? STYLE_PRESETS[0];
   const isAnimaBase = baseModelId === "wai-anima" || baseModelId === "anima-aesthetic";
-  const selectedStyleInstalled = !selectedStyle.file || installedLoras.some((name) => name.endsWith(selectedStyle.file as string));
+  const selectedStyleInstalled = !selectedStyle.file || installedLoras.some((name) => name.replaceAll("\\", "/").endsWith(selectedStyle.file as string));
   const estimatedTotalSeconds = createsVideo
     ? fastMode ? 300 : 900
     : mode === "img-img" ? 150 : isAnimaBase ? 55 : 90;
@@ -373,11 +373,6 @@ export default function Home() {
     }
     if (!selectedBaseModel.ready) {
       setError(`${selectedBaseModel.name} still needs its base workflow and model files before it can generate.`);
-      setStatus("error");
-      return;
-    }
-    if (styleId !== "original" && !isAnimaBase) {
-      setError(`${selectedStyle.name} still needs its ${selectedStyle.engine} LoRA workflow before it can generate.`);
       setStatus("error");
       return;
     }
@@ -672,7 +667,7 @@ export default function Home() {
               <button key={style.id} className={`style-option ${styleId === style.id ? "selected" : ""}`} type="button" onClick={() => { setStyleId(style.id); setError(""); setStatus("idle"); }}>
                 <i style={{ background: style.swatch }} />
                 <strong>{style.name}</strong>
-                {style.id !== "original" && <small>{!style.file || installedLoras.some((name) => name.endsWith(style.file as string)) ? "LoRA" : "Setup"}</small>}
+                {style.id !== "original" && <small>{!style.file || installedLoras.some((name) => name.replaceAll("\\", "/").endsWith(style.file as string)) ? "LoRA" : "Setup"}</small>}
               </button>
             ))}
           </div>

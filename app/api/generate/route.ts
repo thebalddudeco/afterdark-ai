@@ -72,8 +72,8 @@ export async function POST(request: Request) {
     const defaultBaseModel = mode === "txt-img" || mode === "img-img" ? "anima-aesthetic" : mode === "txt-vid" ? "wan22-t2v" : "wan22-i2v";
     const baseModelId = body.baseModelId || defaultBaseModel;
     const supportedBaseModels: Record<string, string[]> = {
-      "txt-img": ["wai-anima", "anima-aesthetic"],
-      "img-img": ["wai-anima", "anima-aesthetic"],
+      "txt-img": ["wai-anima", "anima-aesthetic", "redcraft", "moody-pro"],
+      "img-img": ["wai-anima", "anima-aesthetic", "redcraft", "moody-pro"],
       "img-vid": ["wan22-i2v"],
       "txt-vid": ["wan22-t2v"],
     };
@@ -82,15 +82,17 @@ export async function POST(request: Request) {
     }
     const isWaiAnima = baseModelId === "wai-anima";
     const isAnimaFamily = (mode === "txt-img" || mode === "img-img") && (isWaiAnima || baseModelId === "anima-aesthetic");
+    const isPhotoImageFamily = (mode === "txt-img" || mode === "img-img") && (baseModelId === "redcraft" || baseModelId === "moody-pro");
+    const isImageFamily = isAnimaFamily || isPhotoImageFamily;
     const selectedStyle = STYLE_PRESETS.find((style) => style.id === (body.styleId || "original"));
     if (!selectedStyle || (selectedStyle.id !== "original" && !selectedStyle.baseModelIds.includes(baseModelId))) {
       return respond({ error: "The selected LoRA is not compatible with this base model." }, { status: 400 });
     }
-    if (selectedStyle.id !== "original" && !isAnimaFamily) {
+    if (selectedStyle.id !== "original" && !isImageFamily) {
       return respond({ error: "This LoRA workflow is not installed yet." }, { status: 400 });
     }
     const effectivePositivePrompt = withStyleTrigger(body.positivePrompt, selectedStyle.trigger, selectedStyle.hiddenPrompt);
-    const selectedTemplate = isAnimaFamily
+    const selectedTemplate = isImageFamily
       ? mode === "img-img" ? animaImageEditWorkflowTemplate : animaImageWorkflowTemplate
       : mode === "txt-vid"
         ? textVideoWorkflowTemplate
@@ -107,15 +109,37 @@ export async function POST(request: Request) {
       : "balanced";
     const fidelitySettings = REFERENCE_FIDELITY[referenceFidelity];
 
-    if (isAnimaFamily && mode === "img-img") {
+    const photoModelName = baseModelId === "redcraft"
+      ? "redcraft23INT8INT4FP8_30Krea2.safetensors"
+      : "moodyRealMix_xhsEdition.safetensors";
+    const imageModelName = isWaiAnima
+      ? "waiANIMA_v10Base10.safetensors"
+      : baseModelId === "anima-aesthetic"
+        ? "anima-aesthetic-v1.1.safetensors"
+        : photoModelName;
+    const imageClipName = isPhotoImageFamily ? "qwen_2.5_vl_7b_fp8_scaled.safetensors" : "qwen_3_06b_base.safetensors";
+    const imageClipType = isPhotoImageFamily ? "qwen_image" : "stable_diffusion";
+    const imagePrefix = isWaiAnima
+      ? "image/ShadowframeAI_WAI_ANIMA"
+      : baseModelId === "anima-aesthetic"
+        ? "image/ShadowframeAI_ANIMA"
+        : baseModelId === "redcraft"
+          ? "image/ShadowframeAI_REDCRAFT"
+          : "image/ShadowframeAI_MOODY";
+
+    if (isImageFamily && mode === "img-img") {
       workflow["1"].inputs.image = body.imageName as string;
-      workflow["2"].inputs.unet_name = isWaiAnima ? "waiANIMA_v10Base10.safetensors" : "anima-aesthetic-v1.1.safetensors";
+      workflow["2"].inputs.unet_name = imageModelName;
+      workflow["3"].inputs.clip_name = imageClipName;
+      workflow["3"].inputs.type = imageClipType;
       workflow["5"].inputs.text = `masterpiece, best quality, score_7, ${effectivePositivePrompt}`;
       workflow["6"].inputs.text = body.negativePrompt || "";
       workflow["8"].inputs.seed = seed;
       workflow["8"].inputs.denoise = fidelitySettings.denoise;
+      workflow["8"].inputs.cfg = isPhotoImageFamily ? 3.5 : 4.5;
+      workflow["8"].inputs.sampler_name = isPhotoImageFamily ? "euler" : "er_sde";
       workflow["10"].inputs.scale_by = hiresScale;
-      workflow["11"].inputs.filename_prefix = isWaiAnima ? "image/ShadowframeAI_WAI_ANIMA_i2i" : "image/ShadowframeAI_ANIMA_i2i";
+      workflow["11"].inputs.filename_prefix = `${imagePrefix}_i2i`;
       if (selectedStyle.id !== "original" && selectedStyle.file) {
         workflow["12"] = {
           class_type: "LoraLoader",
@@ -131,15 +155,19 @@ export async function POST(request: Request) {
         workflow["6"].inputs.clip = ["12", 1];
         workflow["8"].inputs.model = ["12", 0];
       }
-    } else if (isAnimaFamily) {
-      workflow["1"].inputs.unet_name = isWaiAnima ? "waiANIMA_v10Base10.safetensors" : "anima-aesthetic-v1.1.safetensors";
+    } else if (isImageFamily) {
+      workflow["1"].inputs.unet_name = imageModelName;
+      workflow["2"].inputs.clip_name = imageClipName;
+      workflow["2"].inputs.type = imageClipType;
       workflow["3"].inputs.text = `masterpiece, best quality, score_7, ${effectivePositivePrompt}`;
       workflow["4"].inputs.text = body.negativePrompt || "";
       workflow["5"].inputs.width = width;
       workflow["5"].inputs.height = height;
       workflow["6"].inputs.seed = seed;
+      workflow["6"].inputs.cfg = isPhotoImageFamily ? 3.5 : 4.5;
+      workflow["6"].inputs.sampler_name = isPhotoImageFamily ? "euler" : "er_sde";
       workflow["9"].inputs.scale_by = hiresScale;
-      workflow["10"].inputs.filename_prefix = isWaiAnima ? "image/ShadowframeAI_WAI_ANIMA" : "image/ShadowframeAI_ANIMA";
+      workflow["10"].inputs.filename_prefix = imagePrefix;
       if (selectedStyle.id !== "original" && selectedStyle.file) {
         workflow["11"] = {
           class_type: "LoraLoader",
