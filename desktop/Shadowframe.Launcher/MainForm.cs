@@ -29,6 +29,7 @@ internal sealed class MainForm : Form
     private string? _privateKey;
     private bool _starting;
     private bool _allowClose;
+    private bool _coreInstallation;
 
     public MainForm()
     {
@@ -180,23 +181,25 @@ internal sealed class MainForm : Form
         if (_starting) return;
         _starting = true;
         ToggleToolbar(false);
-        ShowLoading("Starting Shadowframe", "Preparing ComfyUI and your private bridge…", false);
+        ShowLoading("Starting Shadowframe", "Preparing the private Shadowframe runtime…", false);
 
         try
         {
             _projectRoot = FindProjectRoot();
             if (_projectRoot is null)
             {
-                throw new InvalidOperationException("Place Shadowframe.exe in the Shadowframe project folder, then open it again.");
+                throw new InvalidOperationException("Shadowframe could not find its Core runtime. Repair or reinstall Shadowframe Core.");
             }
 
-            var launcher = Path.Combine(_projectRoot, "scripts", "Start-Shadowframe-Bridge.ps1");
-            var statusFile = Path.Combine(_projectRoot, ".shadowframe", "desktop-status.txt");
+            _coreInstallation = File.Exists(Path.Combine(_projectRoot, "runtime-manifest.json"));
+            var launcherName = _coreInstallation ? "Start-Shadowframe-Core.ps1" : "Start-Shadowframe-Bridge.ps1";
+            var launcher = Path.Combine(_projectRoot, "scripts", launcherName);
+            var statusFile = Path.Combine(GetStateDirectory(), "desktop-status.txt");
             Directory.CreateDirectory(Path.GetDirectoryName(statusFile)!);
             File.Delete(statusFile);
             var result = await RunPowerShellAsync(
                 launcher,
-                $"-NoBrowser -StartComfyUI -StatusFile \"{statusFile}\"",
+                _coreInstallation ? $"-StatusFile \"{statusFile}\"" : $"-NoBrowser -StartComfyUI -StatusFile \"{statusFile}\"",
                 statusFile,
                 message => _loadingMessage.Text = message);
             if (result.ExitCode != 0)
@@ -209,11 +212,11 @@ internal sealed class MainForm : Form
             await InitializeWebViewAsync();
             NavigateToShadowframe();
 
-            _statusLabel.Text = "●  ComfyUI connected";
+            _statusLabel.Text = _coreInstallation ? "●  Private runtime connected" : "●  ComfyUI connected";
             _statusLabel.ForeColor = Color.FromArgb(102, 220, 143);
             _loadingPanel.Visible = false;
             _webView.Visible = true;
-            _friendButton.Enabled = true;
+            _friendButton.Enabled = !_coreInstallation;
         }
         catch (Exception exception)
         {
@@ -231,7 +234,7 @@ internal sealed class MainForm : Form
     private async Task InitializeWebViewAsync()
     {
         if (_webView.CoreWebView2 is not null) return;
-        var userDataFolder = Path.Combine(_projectRoot!, ".shadowframe", "desktop-profile");
+        var userDataFolder = Path.Combine(GetStateDirectory(), "desktop-profile");
         var environment = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
         await _webView.EnsureCoreWebView2Async(environment);
         var core = _webView.CoreWebView2 ?? throw new InvalidOperationException("Microsoft WebView2 could not initialize.");
@@ -247,7 +250,7 @@ internal sealed class MainForm : Form
         {
             if (eventArgs.IsSuccess)
             {
-                _statusLabel.Text = "●  ComfyUI connected";
+                _statusLabel.Text = _coreInstallation ? "●  Private runtime connected" : "●  ComfyUI connected";
                 _statusLabel.ForeColor = Color.FromArgb(102, 220, 143);
             }
         };
@@ -255,15 +258,17 @@ internal sealed class MainForm : Form
 
     private void NavigateToShadowframe()
     {
-        // GitHub Pages is still provisioning the custom-domain certificate, so use
-        // the working HTTP endpoint until HTTPS is available for shadowframe.tech.
         var pairingUrl = $"http://shadowframe.tech/#bridge={Uri.EscapeDataString(_bridgeAddress!)}&token={Uri.EscapeDataString(_privateKey!)}";
         _webView.Source = new Uri(pairingUrl);
     }
 
     private void ReadFriendAccess()
     {
-        var accessPath = Path.Combine(_projectRoot!, ".shadowframe", "Friend Access.txt");
+        var accessPath = Path.Combine(GetStateDirectory(), "Friend Access.txt");
+        if (!_coreInstallation)
+        {
+            accessPath = Path.Combine(_projectRoot!, ".shadowframe", "Friend Access.txt");
+        }
         if (!File.Exists(accessPath)) throw new InvalidOperationException("The bridge started without creating access details.");
         var contents = File.ReadAllText(accessPath);
         _bridgeAddress = MatchLine(contents, "Bridge address");
@@ -290,7 +295,8 @@ internal sealed class MainForm : Form
             _projectRoot ??= FindProjectRoot();
             if (_projectRoot is not null)
             {
-                var stopScript = Path.Combine(_projectRoot, "scripts", "Stop-Shadowframe-Bridge.ps1");
+                var stopName = _coreInstallation ? "Stop-Shadowframe-Core.ps1" : "Stop-Shadowframe-Bridge.ps1";
+                var stopScript = Path.Combine(_projectRoot, "scripts", stopName);
                 await RunPowerShellAsync(stopScript, "");
             }
         }
@@ -306,7 +312,7 @@ internal sealed class MainForm : Form
         if (_allowClose) return;
         var answer = MessageBox.Show(
             this,
-            "Close the Shadowframe window? ComfyUI and the bridge will remain available in the background.\n\nUse “Stop & exit” when you want to shut everything down.",
+            "Close the Shadowframe window? The private generation engine will remain available in the background.\n\nUse “Stop & exit” when you want to shut everything down.",
             "Close Shadowframe",
             MessageBoxButtons.OKCancel,
             MessageBoxIcon.Information);
@@ -328,7 +334,7 @@ internal sealed class MainForm : Form
     {
         _restartButton.Enabled = enabled;
         _stopButton.Enabled = enabled;
-        _friendButton.Enabled = enabled && !string.IsNullOrWhiteSpace(_privateKey);
+        _friendButton.Enabled = enabled && !_coreInstallation && !string.IsNullOrWhiteSpace(_privateKey);
     }
 
     private static string? FindProjectRoot()
@@ -339,13 +345,23 @@ internal sealed class MainForm : Form
             var directory = new DirectoryInfo(candidate);
             for (var depth = 0; directory is not null && depth < 6; depth++, directory = directory.Parent)
             {
-                if (File.Exists(Path.Combine(directory.FullName, "scripts", "Start-Shadowframe-Bridge.ps1")))
+                if (File.Exists(Path.Combine(directory.FullName, "runtime-manifest.json")) ||
+                    File.Exists(Path.Combine(directory.FullName, "scripts", "Start-Shadowframe-Bridge.ps1")))
                 {
                     return directory.FullName;
                 }
             }
         }
         return null;
+    }
+
+    private string GetStateDirectory()
+    {
+        if (_coreInstallation)
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Shadowframe", "State");
+        }
+        return Path.Combine(_projectRoot!, ".shadowframe");
     }
 
     private static async Task<ProcessResult> RunPowerShellAsync(

@@ -8,6 +8,18 @@ Public interface: https://shadowframe.tech/
 
 Brand assets and usage guidance are documented in [BRAND.md](BRAND.md).
 
+## Documentation
+
+- [Changelog](CHANGELOG.md)
+- [Release notes](docs/RELEASE-NOTES.md)
+- [Release checklist](docs/RELEASE-CHECKLIST.md)
+- [Packaging log](docs/PACKAGING-LOG.md)
+- [Technical reference](docs/TECHNICAL-REFERENCE.md)
+- [GitHub repository notes](docs/GITHUB-REPOSITORY-NOTES.md)
+- [Phase 1 Core](docs/PHASE-1-CORE.md)
+- [Phase 2 Installer](docs/PHASE-2-INSTALLER.md)
+- [Model packs](docs/MODEL-PACKS.md)
+
 ## Shadowframe for Windows
 
 `Shadowframe.exe` is the recommended daily launcher on Windows. It starts legacy ComfyUI and the private bridge, pairs the connection automatically, and opens the public interface inside a dedicated desktop window. Its toolbar includes Friend Access, Restart Bridge, and Stop & Exit controls.
@@ -15,6 +27,20 @@ Brand assets and usage guidance are documented in [BRAND.md](BRAND.md).
 Build it from source by running `desktop/Build-Shadowframe.ps1`. The build creates a self-contained Windows x64 executable in the project root and a **Shadowframe AI** desktop shortcut. The generated executable and local release folder are intentionally ignored by Git.
 
 The GitHub Pages interface connects to ComfyUI through the authenticated Shadowframe Bridge running on your PC. GitHub never receives model files, prompts, generated media, or the private bridge access key.
+
+### Standalone Core (Phase 1)
+
+The Phase 1 Core staging package no longer depends on the developer PC's existing ComfyUI, Python, or Node.js installations. It carries private copies of those runtimes and stores application data under `%LOCALAPPDATA%\Shadowframe`. Model checkpoints and LoRAs remain separate so the later installer can offer smaller, replaceable model packs.
+
+Build it with `pnpm core:build` and verify the staged copy with `pnpm core:test`. The output is written to `release/Shadowframe-Core` and is intentionally ignored by Git. See [docs/PHASE-1-CORE.md](docs/PHASE-1-CORE.md) for scope, test behavior, and the clean-machine checks required before distribution.
+
+### Windows Installer (Phase 2)
+
+`pnpm installer:build` creates a per-user Windows installer in `release/Shadowframe-Installer`. Setup verifies Windows, NVIDIA GPU, WebView2, free space, and the complete Core payload before installing. It supports rollback-safe repair/update installs, Windows Installed Apps registration, shortcuts, silent deployment, and data-preserving uninstall. See [docs/PHASE-2-INSTALLER.md](docs/PHASE-2-INSTALLER.md) for distribution and release requirements.
+
+### Model Packs (Phase 3)
+
+`pnpm models:build` creates independent Anima and Wan model-pack installers. Each pack verifies its full archive and records per-model hashes, installs into `%LOCALAPPDATA%\Shadowframe\models`, supports repair/update, and registers its own safe uninstaller in Windows Installed Apps. Run `pnpm models:test` for the small automated installer lifecycle test. See [docs/MODEL-PACKS.md](docs/MODEL-PACKS.md) for contents, build options, and distribution restrictions.
 
 ## Shadowframe Bridge
 

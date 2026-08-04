@@ -179,25 +179,33 @@ export default function Home() {
   }, [width, height]);
 
   useEffect(() => {
-    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    const pairedUrl = normalizeBridgeUrl(hash.get("bridge") || "");
-    const pairedToken = hash.get("token") || "";
-    const storedUrl = sessionStorage.getItem("shadowframe.bridge.url") || "";
-    const storedToken = sessionStorage.getItem("shadowframe.bridge.token") || "";
-    const initialUrl = pairedUrl || storedUrl || DEFAULT_BRIDGE_URL;
-    const initialToken = pairedToken || storedToken;
+    let active = true;
+    const timer = window.setTimeout(() => {
+      if (!active) return;
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const pairedUrl = normalizeBridgeUrl(hash.get("bridge") || "");
+      const pairedToken = hash.get("token") || "";
+      const storedUrl = sessionStorage.getItem("shadowframe.bridge.url") || "";
+      const storedToken = sessionStorage.getItem("shadowframe.bridge.token") || "";
+      const initialUrl = pairedUrl || storedUrl || DEFAULT_BRIDGE_URL;
+      const initialToken = pairedToken || storedToken;
 
-    if (pairedUrl && pairedToken) {
-      sessionStorage.setItem("shadowframe.bridge.url", pairedUrl);
-      sessionStorage.setItem("shadowframe.bridge.token", pairedToken);
-      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
-    }
+      if (pairedUrl && pairedToken) {
+        sessionStorage.setItem("shadowframe.bridge.url", pairedUrl);
+        sessionStorage.setItem("shadowframe.bridge.token", pairedToken);
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+      }
 
-    setBridgeUrl(initialUrl);
-    setBridgeToken(initialToken);
-    setBridgeUrlInput(initialUrl);
-    setBridgeTokenInput(initialToken);
-    setBridgeInitialized(true);
+      setBridgeUrl(initialUrl);
+      setBridgeToken(initialToken);
+      setBridgeUrlInput(initialUrl);
+      setBridgeTokenInput(initialToken);
+      setBridgeInitialized(true);
+    }, 0);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {

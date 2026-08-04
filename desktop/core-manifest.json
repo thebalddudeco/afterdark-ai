@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "coreVersion": "0.3.0",
+  "architecture": "win-x64",
+  "runtime": {
+    "comfyUiVersion": "0.18.5",
+    "pythonVersion": "3.12.11",
+    "nodeMajorVersion": 22,
+    "comfyUiEntryPoint": "Runtime/ComfyUI/main.py",
+    "comfyUiFrontEndRoot": "Runtime/UI",
+    "pythonExecutable": "Runtime/PythonBase/python.exe",
+    "nodeExecutable": "Runtime/Node/node.exe",
+    "bridgeEntryPoint": "Bridge/node_modules/vinext/dist/cli.js"
+  },
+  "data": {
+    "root": "%LOCALAPPDATA%/Shadowframe",
+    "models": "models",
+    "input": "input",
+    "output": "output",
+    "temporary": "temp",
+    "customNodes": "custom_nodes",
+    "state": "State"
+  },
+  "requiredFiles": [
+    "Shadowframe.exe",
+    "Runtime/ComfyUI/main.py",
+    "Runtime/PythonBase/python.exe",
+    "Runtime/Node/node.exe",
+    "Bridge/node_modules/vinext/dist/cli.js",
+    "Bridge/package.json",
+    "scripts/Start-Shadowframe-Core.ps1",
+    "scripts/Stop-Shadowframe-Core.ps1"
+  ],
+  "modelPacks": [
+    {
+      "packId": "anima-models",
+      "displayName": "Anima Image Models",
+      "version": "1.0.0"
+    },
+    {
+      "packId": "wan-models",
+      "displayName": "Wan 2.2 Video Models",
+      "version": "1.0.0"
+    }
+  ]
+}
