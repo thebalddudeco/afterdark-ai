@@ -9,7 +9,7 @@ Shadowframe is distributed as three Windows packages:
 Planned photo/video expansion packs:
 
 4. **RedCraft Photo Models** — RedCraft 2/3 image generation plus Krea/ZIT-compatible photo LoRAs.
-5. **Moody Pro Photo Models** — Moody Pro Mix image generation plus SDXL/Krea/Z-Image compatible photo/style LoRAs.
+5. **Moody Real Photo Models** — Moody Real Mix image generation plus SDXL/Krea/Z-Image compatible photo/style LoRAs.
 6. **LTX 2.3 Video Models** — LTX 2.3 GTAnimation video generation plus motion and identity LoRAs.
 
 Install Core first. Current model packs install into `%LOCALAPPDATA%\Shadowframe\models`, are independently repairable, and appear separately in Windows Installed Apps.
@@ -77,6 +77,11 @@ Base model:
 
 - RedCraft 2/3 — `https://civitai.red/models/958009/redcraft-or-2-or-3-int8int4fp8-scaled`
 
+Folder placement:
+
+- Base checkpoint/diffusion model: `models/diffusion_models`
+- LoRAs: `models/loras`
+
 Expected Shadowframe filenames:
 
 - `RedCraft_Skin_Tone_Slider.safetensors`
@@ -92,11 +97,16 @@ Expected Shadowframe filenames:
 - `RedCraft_Better_Pussy.safetensors`
 - `RedCraft_AsianMix_Turbo.safetensors`
 
-### Moody Pro Photo
+### Moody Real Photo
 
 Base model:
 
-- Moody Pro Mix — `https://civitai.red/models/620406/moody-pro-mix`
+- Moody Real Mix — `https://civitai.com/models/621441/moody-real-mix`
+
+Folder placement:
+
+- Base checkpoint/diffusion model: `models/diffusion_models`
+- LoRAs: `models/loras`
 
 Expected Shadowframe filenames:
 
@@ -121,6 +131,11 @@ Base model:
 
 - LTX 2.3 GTAnimation — `https://civitai.red/models/1295569/ltx-23-gtanimation-or-25-frames-in-5s-12g-vram`
 
+Folder placement:
+
+- Base checkpoint/diffusion model: `models/diffusion_models`
+- LoRAs: `models/loras`
+
 Expected Shadowframe filenames:
 
 - `LTX23_Leg_Swing_Up_Down.safetensors`
@@ -136,3 +151,4 @@ Expected Shadowframe filenames:
 - Wan production pack: full 64.33 GiB extraction, installed-file size checks, and production uninstall passed.
 - Both production packs: full payload SHA-256, installed byte totals, archive file counts, and exact archive-to-manifest path comparisons passed.
 - Installer project: Release build completed with zero warnings and zero errors.
+
