@@ -208,7 +208,7 @@ export const STYLE_PRESETS: StylePreset[] = [
     swatch: "linear-gradient(145deg, #f5d38e, #c06135 54%, #25120c)",
   },
   {
-    id: "redcraft-motocross", name: "Motocross", modes: PHOTO_IMAGE_MODES, baseModelIds: REDCRAFT_BASES,
+    id: "redcraft-motocross", name: "Moto Saito", modes: PHOTO_IMAGE_MODES, baseModelIds: REDCRAFT_BASES,
     engine: "RedCraft", trigger: "@motocross saito", hiddenPrompt: "pixel art, motocross saito style, crisp retro game-art styling", file: "@motocross_saito_v0_0_0_cr_0010.safetensors", strength: 1,
     source: "https://civitai.red/models/2782223/motocross-saito-style?modelVersionId=3133600",
     swatch: "linear-gradient(145deg, #8fd6ff, #4862d8 50%, #1f264f)",
