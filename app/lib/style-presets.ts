@@ -208,6 +208,12 @@ export const STYLE_PRESETS: StylePreset[] = [
     swatch: "linear-gradient(145deg, #f5d38e, #c06135 54%, #25120c)",
   },
   {
+    id: "redcraft-motocross", name: "Motocross", modes: PHOTO_IMAGE_MODES, baseModelIds: REDCRAFT_BASES,
+    engine: "RedCraft", trigger: "@motocross saito", hiddenPrompt: "pixel art, motocross saito style, crisp retro game-art styling", file: "@motocross_saito_v0_0_0_cr_0010.safetensors", strength: 1,
+    source: "https://civitai.red/models/2782223/motocross-saito-style?modelVersionId=3133600",
+    swatch: "linear-gradient(145deg, #8fd6ff, #4862d8 50%, #1f264f)",
+  },
+  {
     id: "ltx-leg-up", name: "Leg Swing Up", modes: LTX_VIDEO_MODES, baseModelIds: LTX_BASES,
     engine: "LTX 2.3", trigger: "swing up and down legs", hiddenPrompt: "legs swinging up and down motion", file: "ltx23-i2v-swing-up-down-os.safetensors", strength: 1,
     source: "https://civitai.red/models/2755595/swing-up-and-down-legs?modelVersionId=3100594",

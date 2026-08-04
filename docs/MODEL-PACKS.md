@@ -96,6 +96,7 @@ Downloaded LoRA filenames:
 - `breast_size_v2_krea2_loraholic.safetensors`
 - `krea2_better_pussy_poses_v4.1.safetensors`
 - `hina_krea2Turbo_lora_tqd_v3.0.safetensors`
+- `@motocross_saito_v0_0_0_cr_0010.safetensors`
 
 ### Moody Real Photo
 
