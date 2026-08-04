@@ -286,8 +286,21 @@ internal sealed class MainForm : Form
 
     private void NavigateToShadowframe()
     {
-        var pairingUrl = $"http://shadowframe.tech/#bridge={Uri.EscapeDataString(_bridgeAddress!)}&token={Uri.EscapeDataString(_privateKey!)}";
+        var cacheBuster = GetLauncherBuildStamp();
+        var pairingUrl = $"http://shadowframe.tech/?desktop={Uri.EscapeDataString(cacheBuster)}#bridge={Uri.EscapeDataString(_bridgeAddress!)}&token={Uri.EscapeDataString(_privateKey!)}";
         _webView.Source = new Uri(pairingUrl);
+    }
+
+    private static string GetLauncherBuildStamp()
+    {
+        try
+        {
+            return File.GetLastWriteTimeUtc(Application.ExecutablePath).Ticks.ToString();
+        }
+        catch
+        {
+            return DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+        }
     }
 
     private void ReadFriendAccess()
