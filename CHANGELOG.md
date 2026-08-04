@@ -16,6 +16,8 @@ All notable Shadowframe AI packaging and application changes are tracked here.
 - Added a beta installation verifier for Core registration, WebView2, NVIDIA GPU, model-pack receipts, model presence, file sizes, and optional full hashes.
 - Added release documentation for Core, Windows installer, model packs, packaging logs, technical architecture, and release checklist.
 - Added GitHub Pages production build checks to the release audit.
+- Added starter positive prompt packs for RedCraft, LTX, and Moody Real Mix, including translated English samples for new users.
+- Added RedCraft Moto Saito LoRA registration and a matching pixel-art sample prompt.
 
 ### Changed
 
@@ -25,6 +27,7 @@ All notable Shadowframe AI packaging and application changes are tracked here.
 - Updated image workflows to use Anima image models and Wan 2.2 for video workflows.
 - Updated visual style filtering so only compatible LoRAs appear for the selected base model and mode.
 - Updated lint configuration so generated release artifacts are excluded from source linting.
+- Updated the Windows installer distro builder so `Sample Prompts` are copied beside the installer files.
 
 ### Fixed
 

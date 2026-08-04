@@ -22,6 +22,9 @@ Core must be installed first. Model packs install independently into `%LOCALAPPD
 - `release\Shadowframe-Anima-Models\Shadowframe-Anima-Models.tar`
 - `release\Shadowframe-Wan-Models\Install Shadowframe Wan Models.exe`
 - `release\Shadowframe-Wan-Models\Shadowframe-Wan-Models.tar`
+- `release\Shadowframe-Installer\Sample Prompts\redcraft-prompts`
+- `release\Shadowframe-Installer\Sample Prompts\ltx-prompts`
+- `release\Shadowframe-Installer\Sample Prompts\moody-prompts`
 
 The `release` folder is intentionally ignored by Git. These files are release artifacts, not repository source.
 
@@ -39,6 +42,7 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 - Source lint completes with warnings only.
 - Beta handoff package builder completed and produced `release\Shadowframe-Beta-Handoff`.
 - Beta installation verifier runs and reports actionable install readiness checks.
+- Starter prompt folders were added to the current local installer distro and the Core beta handoff folder.
 
 ## Remaining Acceptance Tests
 

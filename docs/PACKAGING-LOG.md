@@ -175,3 +175,24 @@ Remaining:
 - Add optional post-Core model-pack chaining.
 - Add app settings for default output folder and recent-generation indexing.
 - Add a photo-real image model pack once the exact checkpoint and workflow are selected.
+
+## Phase 5A - Sample Prompt Distro Update
+
+Goal: give new users ready-to-copy positive prompt examples for the photo and video model families.
+
+Completed:
+
+- Added source-controlled prompt sample folders under `samples`.
+- Added RedCraft, LTX, and Moody Real Mix positive prompt packs.
+- Translated Chinese, Japanese, and Russian source text into English.
+- Normalized onboarding examples so human subjects are clearly adult and risky scenes are framed as consensual/editorial where needed.
+- Added RedCraft Moto Saito LoRA registration using `@motocross_saito_v0_0_0_cr_0010.safetensors`.
+- Added a Moto Saito pixel-art starter prompt.
+- Updated the Core installer distro builder to copy `samples` into `Sample Prompts`.
+- Refreshed the local `release\Shadowframe-Installer\Sample Prompts` folder.
+- Refreshed the local `release\Shadowframe-Beta-Handoff\01 Install Shadowframe Core\Sample Prompts` folder.
+
+Notes:
+
+- The `release` folder remains intentionally ignored by Git because it contains large installer payloads.
+- The pushed repository contains the source prompt folders and build-script hook needed to regenerate the distro samples.
