@@ -8,20 +8,28 @@ Shadowframe is distributed as three Windows packages:
 
 Install Core first. Current model packs install into `%LOCALAPPDATA%\Shadowframe\models`, are independently repairable, and appear separately in Windows Installed Apps.
 
-Planned installer-hub behavior: Core will ask for a Shadowframe storage location, record it, and then model packs will install into that selected storage root instead of hard-coding `%LOCALAPPDATA%`. This allows a user to install the application on one drive and keep models, inputs, outputs, and logs on a separate large drive.
+Planned installer-hub behavior: Core will ask for a model storage location and a generation storage location, record both, and then model packs will install into the selected model storage root instead of hard-coding `%LOCALAPPDATA%`. This allows a user to install the application on one drive, keep large model files on another, and keep generated files somewhere convenient.
 
-Recommended storage layout:
+Recommended model storage layout:
 
 ```text
-<Shadowframe storage root>/
+<Shadowframe model storage root>/
   models/
+```
+
+Recommended generation storage layout:
+
+```text
+<Shadowframe generation storage root>/
   input/
   output/
   State/
   Logs/
 ```
 
-The storage root should usually be local to the GPU machine. A network share can be supported for advanced users, but large checkpoint loading over a network is expected to be slower and less reliable than local SSD/NVMe storage.
+The user should not need to choose an input folder separately. Dragged-in source images are automatically stored under `input` beside the configured `output` folder.
+
+The model storage root should usually be local to the GPU machine. A network share can be supported for advanced users, but large checkpoint loading over a network is expected to be slower and less reliable than local SSD/NVMe storage.
 
 ## Current production outputs
 

@@ -136,9 +136,10 @@ Design decisions:
 
 - The Core installer should ask for two different roots:
   - **Application location** — where Shadowframe Core, the launcher, bundled runtime, scripts, and bridge live.
-  - **Storage location** — where models, inputs, outputs, logs, and generated media live.
+  - **Generation storage location** — where user uploads, generated outputs, logs, and runtime state live.
+- The installer should not ask for a separate input folder. When a user drags an image into the generator, Shadowframe should automatically save that source image under `input` beside the chosen output folder.
+- Model storage can be chosen separately from the application and generation storage locations because model packs are large and may belong on a different drive.
 - Storage should be split into explicit subfolders:
-  - `models`
   - `input`
   - `output`
   - `State`
@@ -152,12 +153,13 @@ Design decisions:
 Recommended installer flow:
 
 1. Choose Shadowframe app location.
-2. Choose Shadowframe storage location.
-3. Show required disk space for selected model packs.
-4. Install Core.
-5. Offer checkboxes for Anima, Wan, and future photo-real model packs.
-6. Run each selected model pack with the chosen storage root.
-7. Launch Shadowframe and run the verifier.
+2. Choose generation storage location.
+3. Choose model storage location.
+4. Show required disk space for selected model packs.
+5. Install Core.
+6. Offer checkboxes for Anima, Wan, and future photo-real model packs.
+7. Run each selected model pack with the chosen model storage root.
+8. Launch Shadowframe and run the verifier.
 
 Notes:
 
@@ -167,9 +169,9 @@ Notes:
 
 Remaining:
 
-- Add Core installer controls for storage root and output root.
+- Add Core installer controls for generation storage root and model storage root.
 - Persist storage choices in the install receipt, registry, and runtime environment.
-- Update model-pack defaults to read the Core storage root from registry.
+- Update model-pack defaults to read the Core model storage root from registry.
 - Add optional post-Core model-pack chaining.
 - Add app settings for default output folder and recent-generation indexing.
 - Add a photo-real image model pack once the exact checkpoint and workflow are selected.
