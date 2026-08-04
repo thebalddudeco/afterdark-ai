@@ -325,3 +325,25 @@ Validation:
 Notes:
 
 - The current LTX workflow is intentionally one-pass. A later quality pass can add the heavier two-stage upscale chain once the base LTX path is proven in normal use.
+
+## Phase 5F - RedCraft Krea2 Runtime Guard
+
+Goal: prevent RedCraft PhotoReal generations from failing with a vague runtime error when the installed ComfyUI runtime does not support Krea2 yet.
+
+Completed:
+
+- Added a RedCraft preflight that checks ComfyUI's `CLIPLoader` support for the `krea2` type before queuing RedCraft jobs.
+- Updated RedCraft routing to target the Krea2 text encoder path expected by the model metadata.
+- Changed PhotoReal LoRA application to use model-only LoRA loading so image text encoders are not patched by slider/style LoRAs.
+- Updated the app's runtime error handling to show ComfyUI's actual execution exception instead of only `ComfyUI reported an error while running this workflow`.
+
+Validation:
+
+- Vinext production build completed.
+- GitHub Pages production build completed.
+- Local bridge health check passed against ComfyUI `0.18.5`.
+- RedCraft now returns a clear compatibility message on the current beta machine: `RedCraft needs Krea2 support in ComfyUI. Update the local ComfyUI runtime before using RedCraft 2/3.`
+
+Notes:
+
+- No model payloads changed in this hotfix. The current beta machine's ComfyUI runtime does not expose the `krea2` CLIP type, and the required `qwen3vl_4b_bf16.safetensors` text encoder is not installed yet.

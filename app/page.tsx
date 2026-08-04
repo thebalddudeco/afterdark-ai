@@ -94,6 +94,21 @@ function mediaPathFor(media: MediaOutput) {
   return `/api/comfy?${query.toString()}`;
 }
 
+function comfyRuntimeError(entry: unknown) {
+  if (!entry || typeof entry !== "object") return "";
+  const messages = (entry as { status?: { messages?: unknown[] } }).status?.messages;
+  if (!Array.isArray(messages)) return "";
+  for (const message of messages) {
+    if (!Array.isArray(message) || message[0] !== "execution_error") continue;
+    const payload = message[1] as { exception_message?: unknown; node_type?: unknown; node_id?: unknown };
+    const exception = typeof payload?.exception_message === "string" ? payload.exception_message.trim() : "";
+    const nodeType = typeof payload?.node_type === "string" ? payload.node_type : "";
+    const nodeId = typeof payload?.node_id === "string" ? payload.node_id : "";
+    if (exception) return nodeType ? `${exception} (${nodeType}${nodeId ? ` node ${nodeId}` : ""})` : exception;
+  }
+  return "";
+}
+
 function normalizeBridgeUrl(value: string) {
   return value.trim().replace(/\/+$/, "");
 }
@@ -486,7 +501,7 @@ export default function Home() {
         }
         const serialized = JSON.stringify(entry ?? "");
         if (/execution_error|error/i.test(serialized)) {
-          throw new Error("ComfyUI reported an error while running this workflow.");
+          throw new Error(comfyRuntimeError(entry) || "ComfyUI reported an error while running this workflow.");
         }
       }
       throw new Error("Generation timed out before an output was returned.");

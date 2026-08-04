@@ -40,6 +40,29 @@ function withStyleTrigger(prompt: string, trigger?: string, hiddenPrompt?: strin
   return missingParts.length ? `${missingParts.join(", ")}, ${userPrompt}` : userPrompt;
 }
 
+async function comfyClipLoaderOptions() {
+  try {
+    const response = await fetch(`${COMFYUI_URL}/object_info/CLIPLoader`, { cache: "no-store" });
+    if (!response.ok) return { clipNames: [] as string[], clipTypes: [] as string[] };
+    const info = await response.json() as {
+      CLIPLoader?: {
+        input?: {
+          required?: {
+            clip_name?: [string[]];
+            type?: [string[]];
+          };
+        };
+      };
+    };
+    return {
+      clipNames: info.CLIPLoader?.input?.required?.clip_name?.[0] || [],
+      clipTypes: info.CLIPLoader?.input?.required?.type?.[0] || [],
+    };
+  } catch {
+    return { clipNames: [] as string[], clipTypes: [] as string[] };
+  }
+}
+
 export async function POST(request: Request) {
   const authorizationError = authorizeBridgeRequest(request);
   if (authorizationError) return authorizationError;
@@ -122,8 +145,16 @@ export async function POST(request: Request) {
       : baseModelId === "anima-aesthetic"
         ? "anima-aesthetic-v1.1.safetensors"
         : photoModelName;
-    const imageClipName = isPhotoImageFamily ? "qwen_2.5_vl_7b_fp8_scaled.safetensors" : "qwen_3_06b_base.safetensors";
-    const imageClipType = isPhotoImageFamily ? "qwen_image" : "stable_diffusion";
+    const imageClipName = baseModelId === "redcraft"
+      ? "qwen3vl_4b_bf16.safetensors"
+      : isPhotoImageFamily
+        ? "qwen_2.5_vl_7b_fp8_scaled.safetensors"
+        : "qwen_3_06b_base.safetensors";
+    const imageClipType = baseModelId === "redcraft"
+      ? "krea2"
+      : isPhotoImageFamily
+        ? "qwen_image"
+        : "stable_diffusion";
     const imagePrefix = isWaiAnima
       ? "image/ShadowframeAI_WAI_ANIMA"
       : baseModelId === "anima-aesthetic"
@@ -131,6 +162,20 @@ export async function POST(request: Request) {
         : baseModelId === "redcraft"
           ? "image/ShadowframeAI_REDCRAFT"
           : "image/ShadowframeAI_MOODY";
+
+    if (baseModelId === "redcraft") {
+      const { clipNames, clipTypes } = await comfyClipLoaderOptions();
+      if (!clipTypes.includes("krea2")) {
+        return respond({
+          error: "RedCraft needs Krea2 support in ComfyUI. Update the local ComfyUI runtime before using RedCraft 2/3.",
+        }, { status: 409 });
+      }
+      if (!clipNames.includes(imageClipName)) {
+        return respond({
+          error: `RedCraft needs ${imageClipName} in ComfyUI's text_encoders folder.`,
+        }, { status: 409 });
+      }
+    }
 
     if (isImageFamily && mode === "img-img") {
       workflow["1"].inputs.image = body.imageName as string;
@@ -146,19 +191,31 @@ export async function POST(request: Request) {
       workflow["10"].inputs.scale_by = hiresScale;
       workflow["11"].inputs.filename_prefix = `${imagePrefix}_i2i`;
       if (selectedStyle.id !== "original" && selectedStyleFile) {
-        workflow["12"] = {
-          class_type: "LoraLoader",
-          inputs: {
-            model: ["2", 0],
-            clip: ["3", 0],
-            lora_name: selectedStyleFile,
-            strength_model: (selectedStyle.strength ?? 1) * fidelitySettings.loraStrength,
-            strength_clip: (selectedStyle.strength ?? 1) * fidelitySettings.loraStrength,
-          },
-        };
-        workflow["5"].inputs.clip = ["12", 1];
-        workflow["6"].inputs.clip = ["12", 1];
-        workflow["8"].inputs.model = ["12", 0];
+        if (isPhotoImageFamily) {
+          workflow["12"] = {
+            class_type: "LoraLoaderModelOnly",
+            inputs: {
+              model: ["2", 0],
+              lora_name: selectedStyleFile,
+              strength_model: (selectedStyle.strength ?? 1) * fidelitySettings.loraStrength,
+            },
+          };
+          workflow["8"].inputs.model = ["12", 0];
+        } else {
+          workflow["12"] = {
+            class_type: "LoraLoader",
+            inputs: {
+              model: ["2", 0],
+              clip: ["3", 0],
+              lora_name: selectedStyleFile,
+              strength_model: (selectedStyle.strength ?? 1) * fidelitySettings.loraStrength,
+              strength_clip: (selectedStyle.strength ?? 1) * fidelitySettings.loraStrength,
+            },
+          };
+          workflow["5"].inputs.clip = ["12", 1];
+          workflow["6"].inputs.clip = ["12", 1];
+          workflow["8"].inputs.model = ["12", 0];
+        }
       }
     } else if (isImageFamily) {
       workflow["1"].inputs.unet_name = imageModelName;
@@ -174,19 +231,31 @@ export async function POST(request: Request) {
       workflow["9"].inputs.scale_by = hiresScale;
       workflow["10"].inputs.filename_prefix = imagePrefix;
       if (selectedStyle.id !== "original" && selectedStyleFile) {
-        workflow["11"] = {
-          class_type: "LoraLoader",
-          inputs: {
-            model: ["1", 0],
-            clip: ["2", 0],
-            lora_name: selectedStyleFile,
-            strength_model: selectedStyle.strength ?? 1,
-            strength_clip: selectedStyle.strength ?? 1,
-          },
-        };
-        workflow["3"].inputs.clip = ["11", 1];
-        workflow["4"].inputs.clip = ["11", 1];
-        workflow["6"].inputs.model = ["11", 0];
+        if (isPhotoImageFamily) {
+          workflow["11"] = {
+            class_type: "LoraLoaderModelOnly",
+            inputs: {
+              model: ["1", 0],
+              lora_name: selectedStyleFile,
+              strength_model: selectedStyle.strength ?? 1,
+            },
+          };
+          workflow["6"].inputs.model = ["11", 0];
+        } else {
+          workflow["11"] = {
+            class_type: "LoraLoader",
+            inputs: {
+              model: ["1", 0],
+              clip: ["2", 0],
+              lora_name: selectedStyleFile,
+              strength_model: selectedStyle.strength ?? 1,
+              strength_clip: selectedStyle.strength ?? 1,
+            },
+          };
+          workflow["3"].inputs.clip = ["11", 1];
+          workflow["4"].inputs.clip = ["11", 1];
+          workflow["6"].inputs.model = ["11", 0];
+        }
       }
     } else if (isLtxImageVideo) {
       const ltxWidth = Math.max(256, Math.min(1536, Math.round(width / 32) * 32));
