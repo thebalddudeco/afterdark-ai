@@ -4,7 +4,21 @@ param(
 
 $ErrorActionPreference = "Stop"
 $coreKeyPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ShadowframeAI"
-$dataRoot = Join-Path $env:LOCALAPPDATA "Shadowframe"
+function Get-ShadowframeRegistryValue([string]$Name, [string]$Fallback) {
+  try {
+    $core = Get-Item -LiteralPath "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ShadowframeAI" -ErrorAction SilentlyContinue
+    if ($core) {
+      $value = $core.GetValue($Name)
+      if ($value -and ![string]::IsNullOrWhiteSpace([string]$value)) {
+        return [IO.Path]::GetFullPath([string]$value).TrimEnd('\')
+      }
+    }
+  } catch {}
+  return [IO.Path]::GetFullPath($Fallback).TrimEnd('\')
+}
+
+$dataRoot = Get-ShadowframeRegistryValue "DataRoot" (Join-Path $env:LOCALAPPDATA "Shadowframe")
+$outputRoot = Get-ShadowframeRegistryValue "OutputRoot" (Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::MyDocuments)) "Shadowframe Output")
 $modelPacksRoot = Join-Path $dataRoot "State\ModelPacks"
 $failed = $false
 
@@ -86,10 +100,12 @@ if ($coreInstalled) {
 }
 
 Write-Check "Shadowframe data folder" (Test-Path -LiteralPath $dataRoot -PathType Container) "Model packs create this automatically."
+Write-Check "Shadowframe output folder" (Test-Path -LiteralPath $outputRoot -PathType Container) "Core setup creates this automatically."
 
 $expectedPacks = @(
   @{ Id = "anima-models"; Name = "Anima Image Models" },
-  @{ Id = "wan-models"; Name = "Wan 2.2 Video Models" }
+  @{ Id = "wan-models"; Name = "Wan 2.2 Video Models" },
+  @{ Id = "photoreal-models"; Name = "PhotoReal Image and Video Models" }
 )
 
 foreach ($pack in $expectedPacks) {

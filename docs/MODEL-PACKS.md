@@ -5,22 +5,19 @@ Shadowframe is distributed as three Windows packages:
 1. **Shadowframe Core** — the desktop app, private bridge, bundled ComfyUI runtime, and workflow code.
 2. **Anima Image Models** — WAI-ANIMA, Anima Aesthetic, the shared Qwen text encoder/VAE, and the configured Anima LoRAs.
 3. **Wan 2.2 Video Models** — Wan 2.2 image-to-video and text-to-video high/low-noise models, the shared UMT5 encoder/VAE, and Lightx2v acceleration LoRAs.
+4. **PhotoReal Image and Video Models** — RedCraft, Moody Real Mix, LTX 2.3 GTAnimation, shared Qwen support files, and their configured PhotoReal LoRAs.
 
-Planned photo/video expansion packs:
+Install Core first. Core Setup now asks for a Shadowframe library location and can run adjacent Anima, Wan, and future PhotoReal model-pack installers automatically. Model packs install into `<Shadowframe library location>\models`, are independently repairable, and appear separately in Windows Installed Apps.
 
-4. **RedCraft Photo Models** — RedCraft 2/3 image generation plus Krea/ZIT-compatible photo LoRAs.
-5. **Moody Real Photo Models** — Moody Real Mix image generation plus SDXL/Krea/Z-Image compatible photo/style LoRAs.
-6. **LTX 2.3 Video Models** — LTX 2.3 GTAnimation video generation plus motion and identity LoRAs.
-
-Install Core first. Current model packs install into `%LOCALAPPDATA%\Shadowframe\models`, are independently repairable, and appear separately in Windows Installed Apps.
-
-Planned installer-hub behavior: Core will ask for a model storage location and a generation storage location, record both, and then model packs will install into the selected model storage root instead of hard-coding `%LOCALAPPDATA%`. This allows a user to install the application on one drive, keep large model files on another, and keep generated files somewhere convenient.
+This allows a user to install the application on one drive, keep large model files on another, and keep generated files somewhere convenient.
 
 Recommended model storage layout:
 
 ```text
-<Shadowframe model storage root>/
+<Shadowframe library location>/
   models/
+  State/
+  Sample Prompts/
 ```
 
 Recommended generation storage layout:
@@ -29,8 +26,7 @@ Recommended generation storage layout:
 <Shadowframe generation storage root>/
   input/
   output/
-  State/
-  Logs/
+  temp/
 ```
 
 The user should not need to choose an input folder separately. Dragged-in source images are automatically stored under `input` beside the configured `output` folder.
@@ -41,8 +37,9 @@ The model storage root should usually be local to the GPU machine. A network sha
 
 - `release\Shadowframe-Anima-Models` — 14 model files, 10.00 GiB payload.
 - `release\Shadowframe-Wan-Models` — 10 model files, 64.33 GiB payload.
+- `release\Shadowframe-PhotoReal-Models` — 37 model files, 64.89 GiB payload.
 
-Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack.
+Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack. Core Setup discovers model-pack installers named `Install Shadowframe * Models.exe` in adjacent package folders and launches them silently with the chosen Shadowframe library location.
 
 ## Build
 
@@ -64,6 +61,7 @@ For a full extraction test of a production pack, run `scripts\Test-Shadowframe-P
 
 - **Wan pack:** the selected Comfy-Org Wan 2.2 repackaged files identify Apache-2.0 as their license. Retain the included third-party notices when redistributing.
 - **Anima pack:** private/personal distribution only until explicit permission to redistribute the original checkpoint and LoRA binaries has been confirmed with every creator. Civitai's API-level usage permissions do not by themselves establish permission to republish the original files.
+- **PhotoReal pack:** private/personal distribution only until explicit permission to redistribute the original RedCraft, Moody, LTX, and related LoRA binaries has been confirmed with every creator.
 
 Neither large binary payload belongs in the Git repository. Publish installers through release storage after licensing review, malware scanning, and code signing.
 

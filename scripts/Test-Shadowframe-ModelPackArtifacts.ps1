@@ -1,7 +1,8 @@
 param(
   [string[]]$PackDirectories = @(
     "release\Shadowframe-Anima-Models",
-    "release\Shadowframe-Wan-Models"
+    "release\Shadowframe-Wan-Models",
+    "release\Shadowframe-PhotoReal-Models"
   )
 )
 

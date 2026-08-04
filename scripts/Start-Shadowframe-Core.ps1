@@ -13,7 +13,21 @@ if (!(Test-Path -LiteralPath $manifestPath)) {
 }
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
 
-$dataRoot = Join-Path $env:LOCALAPPDATA "Shadowframe"
+function Get-ShadowframeInstallValue([string]$Name, [string]$Fallback) {
+  try {
+    $key = Get-Item -LiteralPath "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ShadowframeAI" -ErrorAction SilentlyContinue
+    if ($key) {
+      $value = $key.GetValue($Name)
+      if ($value -and ![string]::IsNullOrWhiteSpace([string]$value)) {
+        return [IO.Path]::GetFullPath([string]$value).TrimEnd('\')
+      }
+    }
+  } catch {}
+  return [IO.Path]::GetFullPath($Fallback).TrimEnd('\')
+}
+
+$dataRoot = Get-ShadowframeInstallValue "DataRoot" (Join-Path $env:LOCALAPPDATA "Shadowframe")
+$outputRoot = Get-ShadowframeInstallValue "OutputRoot" (Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::MyDocuments)) "Shadowframe Output")
 $stateDirectory = Join-Path $dataRoot "State"
 $statePath = Join-Path $stateDirectory "processes.json"
 $serverLog = Join-Path $stateDirectory "bridge.log"
@@ -53,8 +67,11 @@ function Stop-RecordedProcesses {
 }
 
 New-Item -ItemType Directory -Path $stateDirectory -Force | Out-Null
-foreach ($directory in @("models", "input", "output", "temp", "custom_nodes", "user")) {
+foreach ($directory in @("models", "custom_nodes", "user")) {
   New-Item -ItemType Directory -Path (Join-Path $dataRoot $directory) -Force | Out-Null
+}
+foreach ($directory in @("input", "output", "temp")) {
+  New-Item -ItemType Directory -Path (Join-Path $outputRoot $directory) -Force | Out-Null
 }
 
 Write-CoreStatus "Validating the private Shadowframe runtime..."
@@ -90,9 +107,9 @@ Write-CoreStatus "Starting the private ComfyUI engine..."
 $comfyArguments = @(
   $comfyMain,
   "--base-directory", $dataRoot,
-  "--input-directory", (Join-Path $dataRoot "input"),
-  "--output-directory", (Join-Path $dataRoot "output"),
-  "--temp-directory", (Join-Path $dataRoot "temp"),
+  "--input-directory", (Join-Path $outputRoot "input"),
+  "--output-directory", (Join-Path $outputRoot "output"),
+  "--temp-directory", (Join-Path $outputRoot "temp"),
   "--front-end-root", $comfyFrontEndRoot,
   "--disable-auto-launch",
   "--lowvram",
@@ -167,6 +184,7 @@ $bridgeAddress = "http://127.0.0.1:$bridgePort"
   mode = "core-local"
   coreRoot = $coreRoot
   dataRoot = $dataRoot
+  outputRoot = $outputRoot
   comfyProcessId = $comfyProcess.Id
   bridgeProcessId = $bridgeProcess.Id
   bridgeListenerProcessId = $bridgeListenerProcessId

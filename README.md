@@ -37,11 +37,11 @@ Build it with `pnpm core:build` and verify the staged copy with `pnpm core:test`
 
 ### Windows Installer (Phase 2)
 
-`pnpm installer:build` creates a per-user Windows installer in `release/Shadowframe-Installer`. Setup verifies Windows, NVIDIA GPU, WebView2, free space, and the complete Core payload before installing. It supports rollback-safe repair/update installs, Windows Installed Apps registration, shortcuts, silent deployment, and data-preserving uninstall. See [docs/PHASE-2-INSTALLER.md](docs/PHASE-2-INSTALLER.md) for distribution and release requirements.
+`pnpm installer:build` creates a per-user Windows installer in `release/Shadowframe-Installer`. Setup verifies Windows, NVIDIA GPU, WebView2, free space, and the complete Core payload before installing. It supports rollback-safe repair/update installs, Windows Installed Apps registration, shortcuts, silent deployment, data-preserving uninstall, selectable Shadowframe library/output folders, adjacent model-pack chaining, and a final sample-prompt handoff screen. See [docs/PHASE-2-INSTALLER.md](docs/PHASE-2-INSTALLER.md) for distribution and release requirements.
 
 ### Model Packs (Phase 3)
 
-`pnpm models:build` creates independent Anima and Wan model-pack installers. Each pack verifies its full archive and records per-model hashes, installs into `%LOCALAPPDATA%\Shadowframe\models`, supports repair/update, and registers its own safe uninstaller in Windows Installed Apps. Run `pnpm models:test` for the small automated installer lifecycle test. See [docs/MODEL-PACKS.md](docs/MODEL-PACKS.md) for contents, build options, and distribution restrictions.
+`pnpm models:build` creates independent Anima and Wan model-pack installers. Each pack verifies its full archive and records per-model hashes, installs into the selected Shadowframe library's `models` folder, supports repair/update, and registers its own safe uninstaller in Windows Installed Apps. Core Setup can run adjacent model-pack installers automatically, so users normally launch only `Shadowframe Setup.exe`. Run `pnpm models:test` for the small automated installer lifecycle test. See [docs/MODEL-PACKS.md](docs/MODEL-PACKS.md) for contents, build options, and distribution restrictions.
 
 ## Shadowframe Bridge
 

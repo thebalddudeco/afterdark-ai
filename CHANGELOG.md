@@ -10,18 +10,26 @@ All notable Shadowframe AI packaging and application changes are tracked here.
 - Added English translations for Chinese, Japanese, and Russian sample prompt text.
 - Added RedCraft Moto Saito LoRA registration and sample prompt.
 - Added installer distro support for copying source prompt samples into `Sample Prompts`.
+- Added Core installer controls for app location, Shadowframe library/model location, and generation output location.
+- Added Core installer orchestration for adjacent Anima, Wan, and PhotoReal model-pack installers.
+- Added final installer links for separated SFW and NSFW sample prompt folders.
+- Added a PhotoReal model-pack build target and created the first local `Install Shadowframe PhotoReal Models.exe` release folder.
 
 ### Changed
 
 - Bumped Shadowframe Core, installer, launcher, and repository package version metadata to `0.3.1`.
 - Updated release notes, packaging logs, and model-pack notes for the sample prompt distro refresh.
 - Normalized onboarding prompt samples so human subjects are clearly adult and risky scenarios are framed as consensual/editorial examples.
+- Updated Core runtime launch so selected model/state and input/output storage locations are honored.
+- Updated beta handoff notes so testers run Core Setup first and let it chain the available model packs.
 
 ### Validation
 
 - Source lint completes with warnings only.
 - GitHub Pages production build completes.
 - RedCraft, LTX, and Moody sample folders are present in the local installer distro.
+- Shadowframe installer project compiles successfully in Release configuration.
+- PhotoReal model-pack build completed locally with 37 files and a 64.89 GiB payload.
 
 ## 0.3.0 - Standalone Packaging Release Candidate
 

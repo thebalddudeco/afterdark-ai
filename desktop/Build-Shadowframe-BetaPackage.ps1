@@ -11,6 +11,7 @@ if (!$OutputDirectory) { $OutputDirectory = Join-Path $releaseRoot "Shadowframe-
 $coreSource = Join-Path $releaseRoot "Shadowframe-Installer"
 $animaSource = Join-Path $releaseRoot "Shadowframe-Anima-Models"
 $wanSource = Join-Path $releaseRoot "Shadowframe-Wan-Models"
+$photoRealSource = Join-Path $releaseRoot "Shadowframe-PhotoReal-Models"
 
 foreach ($path in @($coreSource, $animaSource, $wanSource)) {
   if (!(Test-Path -LiteralPath $path -PathType Container)) {
@@ -78,11 +79,15 @@ New-CleanDirectory $output
 $coreTarget = Join-Path $output "01 Install Shadowframe Core"
 $animaTarget = Join-Path $output "02 Install Anima Models"
 $wanTarget = Join-Path $output "03 Install Wan Models"
+$photoRealTarget = Join-Path $output "04 Install PhotoReal Models"
 $toolsTarget = Join-Path $output "Tools"
 
 Add-FolderFiles $coreSource $coreTarget
 Add-FolderFiles $animaSource $animaTarget
 Add-FolderFiles $wanSource $wanTarget
+if (Test-Path -LiteralPath $photoRealSource -PathType Container) {
+  Add-FolderFiles $photoRealSource $photoRealTarget
+}
 
 New-Item -ItemType Directory -Path $toolsTarget -Force | Out-Null
 Add-ReleaseFile (Join-Path $projectRoot "scripts\Verify-Shadowframe-Installation.ps1") (Join-Path $toolsTarget "Verify-Shadowframe-Installation.ps1")
@@ -108,21 +113,23 @@ pause
 Write-TextFile (Join-Path $output "README - START HERE.txt") @"
 Shadowframe AI Beta Install
 
-Install in this exact order:
+Normal install:
 
 1. Open "01 Install Shadowframe Core" and run "Shadowframe Setup.exe".
-2. Open "02 Install Anima Models" and run "Install Shadowframe Anima Models.exe".
-3. Open "03 Install Wan Models" and run "Install Shadowframe Wan Models.exe".
+2. Choose the app install location, Shadowframe library location, and output location.
+3. Leave "Install adjacent model packs automatically" checked.
 4. Run "Verify Installation.cmd".
 5. Launch Shadowframe AI from the Desktop or Start Menu.
 
 Keep every file inside each numbered folder together. The EXE files need the TAR payload and manifest beside them.
+The Core installer searches this package for adjacent Anima, Wan, and PhotoReal model-pack installers and runs them for the user.
 
 Approximate package sizes:
 
 - Core: 4.46 GiB payload plus setup EXE.
 - Anima Models: 10.00 GiB payload plus setup EXE.
 - Wan Models: 64.33 GiB payload plus setup EXE.
+- PhotoReal Models: included when the PhotoReal pack has been built.
 
 This beta package is for trusted testing. The model payloads are intentionally not stored in GitHub.
 "@
@@ -143,9 +150,13 @@ Recommended:
 - Close other ComfyUI instances before launching Shadowframe.
 - Restart Windows after GPU driver changes.
 
-Shadowframe stores mutable data in:
+Shadowframe stores model/state data in the library location selected during setup. Default:
 
 %LOCALAPPDATA%\Shadowframe
+
+Shadowframe stores generated source images and outputs in the output location selected during setup. Default:
+
+Documents\Shadowframe Output
 
 The application installs to:
 
@@ -198,10 +209,15 @@ Write-TextFile (Join-Path $output "INSTALL ORDER.txt") @"
 Install Order
 
 1. 01 Install Shadowframe Core\Shadowframe Setup.exe
-2. 02 Install Anima Models\Install Shadowframe Anima Models.exe
-3. 03 Install Wan Models\Install Shadowframe Wan Models.exe
-4. Verify Installation.cmd
-5. Shadowframe AI Desktop or Start Menu shortcut
+2. Keep automatic model-pack installation checked.
+3. Verify Installation.cmd
+4. Shadowframe AI Desktop or Start Menu shortcut
+
+Manual fallback only:
+
+- 02 Install Anima Models\Install Shadowframe Anima Models.exe
+- 03 Install Wan Models\Install Shadowframe Wan Models.exe
+- 04 Install PhotoReal Models\Install Shadowframe PhotoReal Models.exe, when present
 "@
 
 Write-TextFile (Join-Path $output "BETA TEST NOTES.txt") @"

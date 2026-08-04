@@ -1,5 +1,5 @@
 param(
-  [ValidateSet("All", "Anima", "Wan")]
+  [ValidateSet("All", "Anima", "Wan", "PhotoReal")]
   [string]$Pack = "All",
   [string]$ComfyModelsRoot = "C:\Users\info\Documents\ComfyUI\models",
   [string]$WanDownloadRoot = "",
@@ -69,6 +69,46 @@ $wanFiles = @(
   New-PackFile (Join-Path $WanDownloadRoot "loras\wan2.2_t2v_lightx2v_4steps_lora_v1.1_low_noise.safetensors") "loras/wan2.2_t2v_lightx2v_4steps_lora_v1.1_low_noise.safetensors"
 )
 
+$photoRealFiles = @(
+  New-PackFile (Join-Path $ComfyModelsRoot "diffusion_models\redcraft23INT8INT4FP8_30Krea2.safetensors") "diffusion_models/redcraft23INT8INT4FP8_30Krea2.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "diffusion_models\moodyRealMix_xhsEdition.safetensors") "diffusion_models/moodyRealMix_xhsEdition.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "diffusion_models\ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors") "diffusion_models/ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "diffusion_models\qwen_image_2512_fp8_e4m3fn.safetensors") "diffusion_models/qwen_image_2512_fp8_e4m3fn.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "text_encoders\qwen_2.5_vl_7b_fp8_scaled.safetensors") "text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "vae\qwen_image_vae.safetensors") "vae/qwen_image_vae.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\skintone_v2_krea2_loraholic.safetensors") "loras/RED CRAFT/skintone_v2_krea2_loraholic.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\mons_pubis_krea2_loraholic.safetensors") "loras/RED CRAFT/mons_pubis_krea2_loraholic.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\Purple_Grainy_Kr2_AM.safetensors") "loras/RED CRAFT/Purple_Grainy_Kr2_AM.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\PornMaster_Krea2_Asian_slider_V1.safetensors") "loras/RED CRAFT/PornMaster_Krea2_Asian_slider_V1.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\Purple_Graphics_KR2.safetensors") "loras/RED CRAFT/Purple_Graphics_KR2.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\transparent_clothes_krea2_v1.safetensors") "loras/RED CRAFT/transparent_clothes_krea2_v1.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\Krea2_Cinematic_Artstyle.safetensors") "loras/RED CRAFT/Krea2_Cinematic_Artstyle.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\krea2_rt_v1_5_epoch_10.safetensors") "loras/RED CRAFT/krea2_rt_v1_5_epoch_10.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\breast_size_v2_krea2_loraholic.safetensors") "loras/RED CRAFT/breast_size_v2_krea2_loraholic.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\krea2_better_pussy_poses_v4.1.safetensors") "loras/RED CRAFT/krea2_better_pussy_poses_v4.1.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\hina_krea2Turbo_lora_tqd_v3.0.safetensors") "loras/RED CRAFT/hina_krea2Turbo_lora_tqd_v3.0.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\@motocross_saito_v0_0_0_cr_0010.safetensors") "loras/RED CRAFT/@motocross_saito_v0_0_0_cr_0010.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\m99_labiaplasty_pussy_6_zimage.safetensors") "loras/Moody Pro Mix/m99_labiaplasty_pussy_6_zimage.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\breast_size_v2_loraholic.safetensors") "loras/Moody Pro Mix/breast_size_v2_loraholic.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\MidJourneyNSFWZ.safetensors") "loras/Moody Pro Mix/MidJourneyNSFWZ.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\zib-uncensored_v1_ep15.safetensors") "loras/Moody Pro Mix/zib-uncensored_v1_ep15.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\60sPsyZBase.safetensors") "loras/Moody Pro Mix/60sPsyZBase.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\areolas_size_loraholic.safetensors") "loras/Moody Pro Mix/areolas_size_loraholic.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\skintone_v2_loraholic.safetensors") "loras/Moody Pro Mix/skintone_v2_loraholic.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\rope bondage V2.safetensors") "loras/Moody Pro Mix/rope bondage V2.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\egypt queen v2.safetensors") "loras/Moody Pro Mix/egypt queen v2.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\chain collar.safetensors") "loras/Moody Pro Mix/chain collar.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\Nostalgic_Cinema_zit_final.safetensors") "loras/Moody Pro Mix/Nostalgic_Cinema_zit_final.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\Fashion Generator.safetensors") "loras/Moody Pro Mix/Fashion Generator.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\crowd street.safetensors") "loras/Moody Pro Mix/crowd street.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\Chun Li V2.safetensors") "loras/Moody Pro Mix/Chun Li V2.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\LTX 2.3\ltx23-i2v-swing-up-down-os.safetensors") "loras/LTX 2.3/ltx23-i2v-swing-up-down-os.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\LTX 2.3\ltx23-i2v-swing-in-out-os.safetensors") "loras/LTX 2.3/ltx23-i2v-swing-in-out-os.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\LTX 2.3\ltx-face-prior-f1-profile-correction-step11019.safetensors") "loras/LTX 2.3/ltx-face-prior-f1-profile-correction-step11019.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\LTX 2.3\mila_ltx23_lora.safetensors") "loras/LTX 2.3/mila_ltx23_lora.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\LTX 2.3\Bonnie_Rabbit_LTX_v1.safetensors") "loras/LTX 2.3/Bonnie_Rabbit_LTX_v1.safetensors"
+)
+
 $definitions = @(
   [pscustomobject]@{
     Name = "Anima"; PackId = "anima-models"; DisplayName = "Anima Image Models"; Version = "1.0.0"
@@ -96,6 +136,19 @@ $definitions = @(
     Sources = @(
       [ordered]@{ name = "Wan 2.2 ComfyUI Repackaged"; url = "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged"; license = "Apache-2.0" }
       [ordered]@{ name = "Wan 2.2 Lightx2v LoRAs"; url = "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged"; license = "Apache-2.0" }
+    )
+  }
+  [pscustomobject]@{
+    Name = "PhotoReal"; PackId = "photoreal-models"; DisplayName = "PhotoReal Image and Video Models"; Version = "1.0.0"
+    OutputName = "Shadowframe-PhotoReal-Models"; Payload = "Shadowframe-PhotoReal-Models.tar"; Files = $photoRealFiles
+    DistributionPolicy = "private-use"
+    Sources = @(
+      [ordered]@{ name = "RedCraft 2/3"; url = "https://civitai.red/models/958009/redcraft-or-2-or-3-int8int4fp8-scaled"; license = "Creator terms; redistribution permission not confirmed" }
+      [ordered]@{ name = "Moody Real Mix"; url = "https://civitai.com/models/621441/moody-real-mix"; license = "Creator terms; redistribution permission not confirmed" }
+      [ordered]@{ name = "LTX 2.3 GTAnimation"; url = "https://civitai.red/models/1295569/ltx-23-gtanimation-or-25-frames-in-5s-12g-vram"; license = "Creator terms; redistribution permission not confirmed" }
+      [ordered]@{ name = "RedCraft LoRAs"; url = "https://civitai.red/"; license = "Creator terms; redistribution permission not confirmed" }
+      [ordered]@{ name = "Moody Real LoRAs"; url = "https://civitai.com/"; license = "Creator terms; redistribution permission not confirmed" }
+      [ordered]@{ name = "LTX 2.3 LoRAs"; url = "https://civitai.red/"; license = "Creator terms; redistribution permission not confirmed" }
     )
   }
 )
@@ -194,10 +247,12 @@ Install Shadowframe Core first, then keep these files together and run:
   $setupName
 
 The installer adds models to:
-  %LOCALAPPDATA%\Shadowframe\models
+  <Shadowframe library location>\models
+
+When launched by Shadowframe Core Setup, this location is passed in automatically.
 
 Silent install:
-  "$setupName" /SILENT
+  "$setupName" /SILENT /DATAROOT="X:\Shadowframe"
 
 SHA256SUMS.txt can be used to verify downloaded files.
 See THIRD-PARTY-NOTICES.txt before sharing this package.

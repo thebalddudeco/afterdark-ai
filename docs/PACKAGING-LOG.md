@@ -169,12 +169,55 @@ Notes:
 
 Remaining:
 
-- Add Core installer controls for generation storage root and model storage root.
-- Persist storage choices in the install receipt, registry, and runtime environment.
-- Update model-pack defaults to read the Core model storage root from registry.
-- Add optional post-Core model-pack chaining.
+- Rebuild the large Core installer artifact after the source patch.
 - Add app settings for default output folder and recent-generation indexing.
 - Add a photo-real image model pack once the exact checkpoint and workflow are selected.
+
+## Phase 5C - Core Installer Orchestration Update
+
+Goal: keep the pack-based distro, but make the Core installer run model-pack installers for the user and surface prompt samples at the end of the same wizard.
+
+Completed:
+
+- Added Core installer fields for application install location, Shadowframe library location, and generation output location.
+- Persisted selected `DataRoot` and `OutputRoot` values in the install receipt and Windows uninstall registry key.
+- Updated the installed runtime launcher to use the selected library location for `models`/state and the selected generation location for `input`, `output`, and `temp`.
+- Added automatic discovery and silent launch of adjacent `Install Shadowframe * Models.exe` pack installers, passing the selected Shadowframe library location with `/DATAROOT=`.
+- Added final wizard text, “Check out our sample prompts here,” with direct folder buttons for SFW and NSFW prompt samples.
+- Updated the installer distro builder to separate sample prompts into `Sample Prompts\SFW\<model set>` and `Sample Prompts\NSFW\<model set>`.
+- Updated the beta handoff builder and installation verifier for selected storage roots and one-installer model-pack chaining.
+
+Validation:
+
+- `desktop\Shadowframe.Installer\Shadowframe.Installer.csproj` builds successfully in Release configuration.
+- A full `release\Shadowframe-Installer` rebuild was started with the existing Core package, but the large Core tar packaging pass exceeded the interactive tool window and left only the newly built Setup EXE plus a zero-byte partial tar. Re-run `pnpm installer:build` or `desktop\Build-Shadowframe-Installer.ps1 -SkipCoreBuild` before distributing.
+
+Notes:
+
+- The model-pack installers still remain independently runnable as a manual fallback.
+- Core Setup discovers Anima, Wan, and PhotoReal packs by filename, so the PhotoReal pack will be included automatically once its release folder exists.
+
+## Phase 5D - PhotoReal Model Pack Build
+
+Goal: create the missing PhotoReal model-pack installer so Core Setup can install it automatically with Anima and Wan.
+
+Completed:
+
+- Added `PhotoReal` to `desktop\Build-Shadowframe-ModelPacks.ps1`.
+- Built `release\Shadowframe-PhotoReal-Models`.
+- Created `Install Shadowframe PhotoReal Models.exe`.
+- Packaged RedCraft, Moody Real Mix, LTX 2.3 GTAnimation, shared Qwen support files, and configured PhotoReal LoRAs.
+- Rebuilt `release\Shadowframe-Beta-Handoff` so it includes `04 Install PhotoReal Models`.
+- Updated the installation verifier and model-pack artifact verifier to include `photoreal-models`.
+
+Validation:
+
+- PhotoReal model-pack artifact verification passed.
+- PhotoReal payload contains 37 files and is 64.89 GiB.
+
+Notes:
+
+- The PhotoReal pack is currently marked `private-use` in its manifest because third-party redistribution permissions are not fully confirmed.
 
 ## Phase 5A - Sample Prompt Distro Update
 
