@@ -356,6 +356,15 @@ export default function Home() {
     setError("");
     setStatus("idle");
     if (nextBaseModelId === "wai-anima" || nextBaseModelId === "anima-aesthetic") setHiresScale(1.5);
+    if (nextBaseModelId === "ltx23-gtanimation") {
+      setWidth(768);
+      setHeight(512);
+      setLength(25);
+    } else if (mode === "img-vid") {
+      setWidth(720);
+      setHeight(1280);
+      setLength(93);
+    }
   };
 
   const enterGenerator = () => {

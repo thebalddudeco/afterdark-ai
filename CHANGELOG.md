@@ -2,6 +2,27 @@
 
 All notable Shadowframe AI packaging and application changes are tracked here.
 
+## 0.3.2 - LTX Video Workflow Activation
+
+### Added
+
+- Added a native LTX 2.3 Image → Video workflow using the GTAnimation checkpoint, LTX conditioning, LTX scheduler, audio/video latent path, and MP4 output.
+- Enabled LTX 2.3 GTAnimation as an installed Image → Video base model.
+- Enabled LTX video LoRAs, including automatic backend trigger prompt injection.
+
+### Changed
+
+- Updated nested LoRA handling so ComfyUI receives Windows-compatible nested LoRA paths.
+- Updated LTX defaults to 768 × 512 and 25 frames when the LTX base model is selected.
+- Updated the PhotoReal model-pack script so the LTX GTAnimation file installs as a checkpoint, where the native LTX workflow can load its model and VAE.
+- Bumped Shadowframe Core, installer, launcher, and repository package version metadata to `0.3.2`.
+
+### Validation
+
+- GitHub Pages production build completes.
+- Vinext production build completes.
+- ComfyUI accepted the LTX Image → Video workflow with and without an LTX LoRA selected.
+
 ## 0.3.1 - Sample Prompt Distro Refresh
 
 ### Added

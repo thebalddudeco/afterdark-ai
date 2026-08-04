@@ -14,7 +14,7 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <PublishTrimmed>false</PublishTrimmed>
     <DebugType>embedded</DebugType>
-    <Version>0.3.1</Version>
+    <Version>0.3.2</Version>
     <Authors>Shadowframe AI</Authors>
     <Product>Shadowframe AI</Product>
     <Description>Private local AI creation powered by ComfyUI.</Description>

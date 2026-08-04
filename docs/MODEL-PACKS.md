@@ -78,8 +78,8 @@ Base model:
 
 Folder placement:
 
-- Base checkpoint/diffusion model: `models/diffusion_models`
-- LoRAs: `models/loras` or individual subfolders under `models/loras`
+- Base diffusion model: `models/diffusion_models`
+- LoRAs: `models/loras/RED CRAFT`
 
 Downloaded LoRA filenames:
 
@@ -105,8 +105,8 @@ Base model:
 
 Folder placement:
 
-- Base checkpoint/diffusion model: `models/diffusion_models`
-- LoRAs: `models/loras` or individual subfolders under `models/loras`
+- Base diffusion model: `models/diffusion_models`
+- LoRAs: `models/loras/Moody Pro Mix`
 
 Downloaded LoRA filenames:
 
@@ -134,8 +134,8 @@ Base model:
 
 Folder placement:
 
-- Base checkpoint/diffusion model: `models/diffusion_models`
-- LoRAs: `models/loras` or individual subfolders under `models/loras`
+- Base checkpoint: `models/checkpoints`
+- LoRAs: `models/loras/LTX 2.3`
 
 Downloaded LoRA filenames:
 

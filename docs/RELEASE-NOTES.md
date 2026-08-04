@@ -1,6 +1,10 @@
 # Shadowframe AI Release Notes
 
-## Release Candidate: 0.3.1
+## Release Candidate: 0.3.2
+
+This distro refresh versions Shadowframe as `0.3.2` and activates the LTX 2.3 GTAnimation Image → Video workflow. LTX is now a real selectable video base model, its LoRAs are wired through the backend, and the PhotoReal model-pack script installs the LTX model as a checkpoint so ComfyUI can expose the matching model and VAE path.
+
+## Previous Release Candidate: 0.3.1
 
 This distro refresh versions Shadowframe as `0.3.1` and adds new-user sample prompt packs for RedCraft, LTX, and Moody Real Mix. It also registers the RedCraft Moto Saito LoRA using the downloaded file `@motocross_saito_v0_0_0_cr_0010.safetensors`.
 
@@ -47,7 +51,8 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 - Beta handoff package builder completed and produced `release\Shadowframe-Beta-Handoff`.
 - Beta installation verifier runs and reports actionable install readiness checks.
 - Starter prompt folders were added to the current local installer distro and the Core beta handoff folder.
-- Version metadata updated to `0.3.1` across package, Core manifest, launcher, installer, and model-pack minimum Core metadata.
+- Version metadata updated to `0.3.2` across package, Core manifest, launcher, installer, and model-pack minimum Core metadata.
+- LTX Image → Video workflow validation passed in ComfyUI, including an LTX LoRA selection.
 
 ## Remaining Acceptance Tests
 

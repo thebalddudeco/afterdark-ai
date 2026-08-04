@@ -283,3 +283,30 @@ Packaging fix:
 Distribution note:
 
 - Large `release` artifacts remain local and ignored by Git. GitHub receives the versioned source, scripts, prompt samples, and documentation needed to reproduce the distro.
+
+## Phase 5E - LTX Workflow Activation
+
+Goal: make the PhotoReal video model usable inside Shadowframe instead of leaving LTX 2.3 GTAnimation as a setup-only placeholder.
+
+Completed:
+
+- Added `app\lib\ltx-img-video-workflow.json`.
+- Enabled `LTX 2.3 GTAnimation` for Image → Video.
+- Added backend routing for the LTX workflow.
+- Added automatic LTX LoRA trigger prompt injection using the existing style preset system.
+- Normalized nested LoRA paths before sending workflows to ComfyUI.
+- Updated LTX UI defaults to 768 × 512 and 25 frames.
+- Updated the PhotoReal model-pack script so the LTX GTAnimation file installs under `models\checkpoints`.
+- Added a local hardlink from the existing ComfyUI diffusion model copy into `models\checkpoints` so the current beta machine can test without duplicating the 16 GiB file.
+- Bumped app, launcher, installer, Core manifest, and model-pack minimum Core metadata to `0.3.2`.
+
+Validation:
+
+- Vinext production build completed.
+- GitHub Pages production build completed.
+- ComfyUI accepted the LTX Image → Video workflow.
+- ComfyUI accepted the LTX Image → Video workflow with an LTX LoRA selected.
+
+Notes:
+
+- The current LTX workflow is intentionally one-pass. A later quality pass can add the heavier two-stage upscale chain once the base LTX path is proven in normal use.

@@ -1,0 +1,298 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": ""
+    }
+  },
+  "2": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors"
+    }
+  },
+  "3": {
+    "class_type": "LTXAVTextEncoderLoader",
+    "inputs": {
+      "text_encoder": "mistral_3_small_flux2_bf16.safetensors",
+      "ckpt_name": "ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors",
+      "device": "default"
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "3",
+        0
+      ],
+      "text": ""
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "3",
+        0
+      ],
+      "text": ""
+    }
+  },
+  "6": {
+    "class_type": "LTXVConditioning",
+    "inputs": {
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "frame_rate": 25
+    }
+  },
+  "7": {
+    "class_type": "EmptyLTXVLatentVideo",
+    "inputs": {
+      "width": 768,
+      "height": 512,
+      "length": 25,
+      "batch_size": 1
+    }
+  },
+  "8": {
+    "class_type": "LTXVImgToVideoInplace",
+    "inputs": {
+      "vae": [
+        "2",
+        2
+      ],
+      "image": [
+        "1",
+        0
+      ],
+      "latent": [
+        "7",
+        0
+      ],
+      "strength": 1,
+      "bypass": false
+    }
+  },
+  "9": {
+    "class_type": "LTXVAddGuide",
+    "inputs": {
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "6",
+        1
+      ],
+      "vae": [
+        "2",
+        2
+      ],
+      "latent": [
+        "8",
+        0
+      ],
+      "image": [
+        "1",
+        0
+      ],
+      "frame_idx": 0,
+      "strength": 1
+    }
+  },
+  "10": {
+    "class_type": "LTXVAudioVAELoader",
+    "inputs": {
+      "ckpt_name": "ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors"
+    }
+  },
+  "11": {
+    "class_type": "LTXVEmptyLatentAudio",
+    "inputs": {
+      "audio_vae": [
+        "10",
+        0
+      ],
+      "frames_number": 25,
+      "frame_rate": 25,
+      "batch_size": 1
+    }
+  },
+  "12": {
+    "class_type": "LTXVConcatAVLatent",
+    "inputs": {
+      "video_latent": [
+        "9",
+        2
+      ],
+      "audio_latent": [
+        "11",
+        0
+      ]
+    }
+  },
+  "13": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "2",
+        0
+      ],
+      "lora_name": "LTX 2.3\\ltx-face-prior-f1-profile-correction-step11019.safetensors",
+      "strength_model": 0
+    }
+  },
+  "14": {
+    "class_type": "ModelSamplingLTXV",
+    "inputs": {
+      "model": [
+        "13",
+        0
+      ],
+      "latent": [
+        "12",
+        0
+      ],
+      "max_shift": 2.05,
+      "base_shift": 0.95
+    }
+  },
+  "15": {
+    "class_type": "CFGGuider",
+    "inputs": {
+      "model": [
+        "14",
+        0
+      ],
+      "positive": [
+        "9",
+        0
+      ],
+      "negative": [
+        "9",
+        1
+      ],
+      "cfg": 3
+    }
+  },
+  "16": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "17": {
+    "class_type": "LTXVScheduler",
+    "inputs": {
+      "latent": [
+        "12",
+        0
+      ],
+      "steps": 20,
+      "max_shift": 2.05,
+      "base_shift": 0.95,
+      "stretch": true,
+      "terminal": 0.1
+    }
+  },
+  "18": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 0
+    }
+  },
+  "19": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "18",
+        0
+      ],
+      "guider": [
+        "15",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "17",
+        0
+      ],
+      "latent_image": [
+        "12",
+        0
+      ]
+    }
+  },
+  "20": {
+    "class_type": "LTXVSeparateAVLatent",
+    "inputs": {
+      "av_latent": [
+        "19",
+        0
+      ]
+    }
+  },
+  "21": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "20",
+        0
+      ],
+      "vae": [
+        "2",
+        2
+      ]
+    }
+  },
+  "22": {
+    "class_type": "LTXVAudioVAEDecode",
+    "inputs": {
+      "samples": [
+        "20",
+        1
+      ],
+      "audio_vae": [
+        "10",
+        0
+      ]
+    }
+  },
+  "23": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "images": [
+        "21",
+        0
+      ],
+      "audio": [
+        "22",
+        0
+      ],
+      "fps": 25
+    }
+  },
+  "24": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "23",
+        0
+      ],
+      "filename_prefix": "video/ShadowframeAI_LTX",
+      "format": "mp4",
+      "codec": "h264"
+    }
+  }
+}
