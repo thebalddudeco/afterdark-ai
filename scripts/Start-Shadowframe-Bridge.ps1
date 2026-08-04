@@ -135,7 +135,17 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed." }
   }
   & $pnpmPath build
-  if ($LASTEXITCODE -ne 0) { throw "Shadowframe Bridge build failed." }
+  if ($LASTEXITCODE -ne 0) {
+    Write-LauncherStatus "Repairing local Shadowframe dependencies..."
+    $nodeModulesPath = Join-Path $projectRoot "node_modules"
+    if (Test-Path -LiteralPath $nodeModulesPath) {
+      Remove-Item -LiteralPath $nodeModulesPath -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    & $pnpmPath install --frozen-lockfile
+    if ($LASTEXITCODE -ne 0) { throw "Dependency repair failed." }
+    & $pnpmPath build
+    if ($LASTEXITCODE -ne 0) { throw "Shadowframe Bridge build failed." }
+  }
 } finally {
   Pop-Location
   $env:PATH = $previousPath
