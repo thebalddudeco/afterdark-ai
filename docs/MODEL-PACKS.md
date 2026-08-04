@@ -6,6 +6,12 @@ Shadowframe is distributed as three Windows packages:
 2. **Anima Image Models** — WAI-ANIMA, Anima Aesthetic, the shared Qwen text encoder/VAE, and the configured Anima LoRAs.
 3. **Wan 2.2 Video Models** — Wan 2.2 image-to-video and text-to-video high/low-noise models, the shared UMT5 encoder/VAE, and Lightx2v acceleration LoRAs.
 
+Planned photo/video expansion packs:
+
+4. **RedCraft Photo Models** — RedCraft 2/3 image generation plus Krea/ZIT-compatible photo LoRAs.
+5. **Moody Pro Photo Models** — Moody Pro Mix image generation plus SDXL/Krea/Z-Image compatible photo/style LoRAs.
+6. **LTX 2.3 Video Models** — LTX 2.3 GTAnimation video generation plus motion and identity LoRAs.
+
 Install Core first. Current model packs install into `%LOCALAPPDATA%\Shadowframe\models`, are independently repairable, and appear separately in Windows Installed Apps.
 
 Planned installer-hub behavior: Core will ask for a model storage location and a generation storage location, record both, and then model packs will install into the selected model storage root instead of hard-coding `%LOCALAPPDATA%`. This allows a user to install the application on one drive, keep large model files on another, and keep generated files somewhere convenient.
@@ -60,6 +66,68 @@ For a full extraction test of a production pack, run `scripts\Test-Shadowframe-P
 - **Anima pack:** private/personal distribution only until explicit permission to redistribute the original checkpoint and LoRA binaries has been confirmed with every creator. Civitai's API-level usage permissions do not by themselves establish permission to republish the original files.
 
 Neither large binary payload belongs in the Git repository. Publish installers through release storage after licensing review, malware scanning, and code signing.
+
+## Planned photo-real model sets
+
+These model families are registered in the Shadowframe UI as setup-required. They are not runnable until matching workflow JSON, checkpoint filenames, and model-pack payloads are verified.
+
+### RedCraft Photo
+
+Base model:
+
+- RedCraft 2/3 — `https://civitai.red/models/958009/redcraft-or-2-or-3-int8int4fp8-scaled`
+
+Expected Shadowframe filenames:
+
+- `RedCraft_Skin_Tone_Slider.safetensors`
+- `RedCraft_Mons_Pubis_Slider.safetensors`
+- `RedCraft_Purple_Grain.safetensors`
+- `RedCraft_Pornmaster_Asian.safetensors`
+- `RedCraft_Purple_Poster.safetensors`
+- `RedCraft_Transparent_Clothes.safetensors`
+- `RedCraft_Weird_Art.safetensors`
+- `RedCraft_Pose_Sheet.safetensors`
+- `RedCraft_Body_Retouch.safetensors`
+- `RedCraft_Breast_Size_Slider.safetensors`
+- `RedCraft_Better_Pussy.safetensors`
+- `RedCraft_AsianMix_Turbo.safetensors`
+
+### Moody Pro Photo
+
+Base model:
+
+- Moody Pro Mix — `https://civitai.red/models/620406/moody-pro-mix`
+
+Expected Shadowframe filenames:
+
+- `Moody_Innie_Adjuster.safetensors`
+- `Moody_Breast_Size_Slider.safetensors`
+- `Moody_Artful_NSFW.safetensors`
+- `Moody_Body_Retouch.safetensors`
+- `Moody_60s_Psychedelic.safetensors`
+- `Moody_Areola_Size_Slider.safetensors`
+- `Moody_Skin_Tone_Slider.safetensors`
+- `Moody_Rope_Bondage_v2.safetensors`
+- `Moody_Egypt_Queen.safetensors`
+- `Moody_Chain_Collar.safetensors`
+- `Moody_Nostalgic_Cinema.safetensors`
+- `Moody_Fashion_Generator.safetensors`
+- `Moody_Crowd_Street.safetensors`
+- `Moody_Chun_Li_v2.safetensors`
+
+### LTX 2.3 Video
+
+Base model:
+
+- LTX 2.3 GTAnimation — `https://civitai.red/models/1295569/ltx-23-gtanimation-or-25-frames-in-5s-12g-vram`
+
+Expected Shadowframe filenames:
+
+- `LTX23_Leg_Swing_Up_Down.safetensors`
+- `LTX23_Leg_Swing_In_Out.safetensors`
+- `LTX23_East_Asian_Face_Fidelity.safetensors`
+- `LTX23_Mila.safetensors`
+- `LTX23_Bonnie_Rabbit.safetensors`
 
 ## Phase 3 verification
 
