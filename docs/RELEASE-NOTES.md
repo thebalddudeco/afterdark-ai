@@ -12,7 +12,9 @@ The local PhotoReal model-pack artifact was rebuilt for this release. Its payloa
 
 PhotoReal Setup and the packaged installation verifier now perform a targeted RedCraft/Krea2 compatibility check for the exact RedCraft checkpoint and Qwen3VL encoder pair. If the app detects a stale or mismatched PhotoReal pack, it opens a self-repair dialog that can rerun the PhotoReal model-pack repair locally through the Shadowframe Bridge.
 
-The local Core installer artifact was also rebuilt for this release. Its payload SHA-256 is `8E014ABB330B3070FA14C9367E5A8C83769913B442B9D1C793DB439EDD1A6DF8`.
+The local Core installer artifact was also rebuilt for this release. Its payload SHA-256 is `406FF28C70D968552EDB1751FC379CD478038F7FB454713BB140E42DA6454E67`.
+
+Strict Outfit Replace is now available as its own tool. It takes a source model photo plus a garment reference image, then sends a locked backend wardrobe-replacement prompt so the app treats the job as clothing replacement rather than a fresh portrait generation.
 
 ## Previous Release Candidate: 0.3.2
 
@@ -53,9 +55,8 @@ Core must be installed first. Model packs install independently into `%LOCALAPPD
 - `release\Shadowframe-Wan-Models\Shadowframe-Wan-Models.tar`
 - `release\Shadowframe-PhotoReal-Models\Install Shadowframe PhotoReal Models.exe`
 - `release\Shadowframe-PhotoReal-Models\Shadowframe-PhotoReal-Models.tar`
-- `release\Shadowframe-Installer\Sample Prompts\redcraft-prompts`
-- `release\Shadowframe-Installer\Sample Prompts\ltx-prompts`
-- `release\Shadowframe-Installer\Sample Prompts\moody-prompts`
+- `release\Shadowframe-Installer\Sample Prompts\SFW`
+- `release\Shadowframe-Installer\Sample Prompts\NSFW`
 
 The `release` folder is intentionally ignored by Git. These files are release artifacts, not repository source.
 
@@ -77,6 +78,7 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 - Version metadata updated to `0.3.3` across package, Core manifest, launcher, installer, and model-pack minimum Core metadata.
 - LTX Image → Video workflow validation passed in ComfyUI, including an LTX LoRA selection.
 - RedCraft Krea2 workflow validation passed in ComfyUI after upgrading the local runtime to `0.30.0`.
+- Strict Outfit Replace build validation passed for the local app, GitHub Pages app, Core package, and Core installer package.
 
 ## Remaining Acceptance Tests
 

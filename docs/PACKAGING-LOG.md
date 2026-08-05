@@ -452,3 +452,33 @@ Notes:
 
 - No model payloads changed in this hotfix.
 
+## Phase 5J - Strict Outfit Replacement Tool
+
+Goal: add a dedicated wardrobe replacement tool that preserves the source photo while swapping only the outfit from a reference render.
+
+Completed:
+
+- Added a new `Outfit Replace` generation mode in the Shadowframe app.
+- Added a dedicated source-photo drop zone and garment-reference drop zone for the new tool.
+- Embedded the strict wardrobe-replacement instruction on the backend so users do not need to paste the preservation prompt manually.
+- Allowed the user prompt field to act as optional garment fit notes instead of the main generation instruction.
+- Added a dedicated outfit replacement workflow that routes the source person image and garment image into ComfyUI's available `FluxVTONode`.
+- Added `Strict Outfit Replace` as a mode-specific base model option and hid normal image size/upscale controls for this tool.
+
+Validation:
+
+- Vinext production build completed.
+- GitHub Pages production build completed.
+- Local Core rebuild completed.
+- Local Core installer rebuild completed.
+- Rebuilt Core installer manifest version: `0.3.3`.
+- Rebuilt Core installer payload file count: 77,797.
+- Rebuilt Core installer payload SHA-256: `406FF28C70D968552EDB1751FC379CD478038F7FB454713BB140E42DA6454E67`.
+- Rebuilt `release\Shadowframe-Beta-Handoff`.
+- Beta handoff Core tar checksum matches `406FF28C70D968552EDB1751FC379CD478038F7FB454713BB140E42DA6454E67`.
+
+Notes:
+
+- No model payloads changed in this feature build.
+- The current workflow uses the `FluxVTONode` already exposed by the installed ComfyUI runtime. If that node requires a Comfy org credential at runtime, Shadowframe should surface that as a setup requirement in a follow-up patch.
+

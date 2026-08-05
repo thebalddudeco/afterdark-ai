@@ -3,6 +3,7 @@ import textVideoWorkflowTemplate from "../../lib/txt-video-workflow.json";
 import ltxImageVideoWorkflowTemplate from "../../lib/ltx-img-video-workflow.json";
 import animaImageWorkflowTemplate from "../../lib/anima-image-workflow.json";
 import animaImageEditWorkflowTemplate from "../../lib/anima-img-image-workflow.json";
+import outfitReplacementWorkflowTemplate from "../../lib/outfit-replacement-workflow.json";
 import { STYLE_PRESETS } from "../../lib/style-presets";
 import type { StylePreset } from "../../lib/style-presets";
 import { authorizeBridgeRequest, bridgeJson, bridgeOptions } from "../../lib/bridge-security";
@@ -27,6 +28,20 @@ const PHOTO_REAL_REPAIR_ACTION = {
   packId: "photoreal-models",
   label: "Repair PhotoReal Pack",
 };
+
+const STRICT_OUTFIT_REPLACEMENT_PROMPT = `Wardrobe replacement only. Replace the existing clothing with the garment shown in the reference image while preserving every other aspect of the photograph exactly as captured.
+
+Do not change composition, framing, crop, camera position, camera angle, focal length, perspective, pose, head position, facial expression, body position, body proportions, eye direction, hair placement, lighting direction, depth of field, background, environmental elements, or subject identity.
+
+Maintain identical image geometry and pixel-space alignment. The subject must remain in the exact same position within the frame with the same crop and camera distance.
+
+The only modification permitted is the clothing. Preserve the original shoulders, arms, neckline position, chest position, torso shape, skin visibility, and body contours. The garment must conform naturally to the existing pose rather than altering the pose to fit the garment.
+
+Do not zoom in, zoom out, recrop, reframe, rotate, reposition, or regenerate the subject. Do not create a new portrait. Do not reinterpret the scene.
+
+Treat this as a clothing swap on an existing photograph, not a new image generation.
+
+Match the garment from the reference image while maintaining the exact original photograph underneath. All facial features, skin texture, hair strands, body proportions, perspective, background blur, and lighting relationships must remain unchanged.`;
 
 function prohibitedPromptReason(prompt: string) {
   if (CHILD_CONTENT.test(prompt)) return "Content involving minors is not permitted.";
@@ -80,6 +95,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json() as {
       imageName?: string;
+      garmentImageName?: string;
       positivePrompt?: string;
       negativePrompt?: string;
       width?: number;
@@ -88,7 +104,7 @@ export async function POST(request: Request) {
       seed?: number;
       fastMode?: boolean;
       hiresScale?: number;
-      mode?: "txt-img" | "img-img" | "img-vid" | "txt-vid";
+      mode?: "txt-img" | "img-img" | "outfit" | "img-vid" | "txt-vid";
       styleId?: string;
       styleIds?: string[];
       sliderSelections?: Record<string, string>;
@@ -96,20 +112,26 @@ export async function POST(request: Request) {
       referenceFidelity?: ReferenceFidelity;
     };
     const mode = body.mode || "img-vid";
-    const needsImage = mode === "img-vid" || mode === "img-img";
-    if (!body.positivePrompt || (needsImage && !body.imageName)) {
-      return respond({ error: needsImage ? "An image and positive prompt are required." : "A positive prompt is required." }, { status: 400 });
+    const needsImage = mode === "img-vid" || mode === "img-img" || mode === "outfit";
+    const needsGarment = mode === "outfit";
+    if ((mode !== "outfit" && !body.positivePrompt) || (needsImage && !body.imageName) || (needsGarment && !body.garmentImageName)) {
+      return respond({
+        error: mode === "outfit"
+          ? "A source image and outfit reference image are required."
+          : needsImage ? "An image and positive prompt are required." : "A positive prompt is required.",
+      }, { status: 400 });
     }
-    const prohibitedReason = prohibitedPromptReason(body.positivePrompt);
+    const prohibitedReason = prohibitedPromptReason(body.positivePrompt || "");
     if (prohibitedReason) {
       return respond({ error: prohibitedReason }, { status: 400 });
     }
 
-    const defaultBaseModel = mode === "txt-img" || mode === "img-img" ? "anima-aesthetic" : mode === "txt-vid" ? "wan22-t2v" : "wan22-i2v";
+    const defaultBaseModel = mode === "txt-img" || mode === "img-img" ? "anima-aesthetic" : mode === "outfit" ? "flux-vton" : mode === "txt-vid" ? "wan22-t2v" : "wan22-i2v";
     const baseModelId = body.baseModelId || defaultBaseModel;
     const supportedBaseModels: Record<string, string[]> = {
       "txt-img": ["wai-anima", "anima-aesthetic", "redcraft", "moody-pro"],
       "img-img": ["wai-anima", "anima-aesthetic", "redcraft", "moody-pro"],
+      "outfit": ["flux-vton"],
       "img-vid": ["wan22-i2v", "ltx23-gtanimation"],
       "txt-vid": ["wan22-t2v"],
     };
@@ -135,7 +157,9 @@ export async function POST(request: Request) {
     const sliderSelections = body.sliderSelections && typeof body.sliderSelections === "object" ? body.sliderSelections : {};
     const effectivePositivePrompt = withStyleTrigger(body.positivePrompt, selectedStyles, sliderSelections);
     const loraStyles = selectedStyles.filter((style) => style.file);
-    const selectedTemplate = isImageFamily
+    const selectedTemplate = mode === "outfit"
+      ? outfitReplacementWorkflowTemplate
+      : isImageFamily
       ? mode === "img-img" ? animaImageEditWorkflowTemplate : animaImageWorkflowTemplate
       : isLtxImageVideo
         ? ltxImageVideoWorkflowTemplate
@@ -195,7 +219,14 @@ export async function POST(request: Request) {
       }
     }
 
-    if (isImageFamily && mode === "img-img") {
+    if (mode === "outfit") {
+      const userNote = body.positivePrompt?.trim();
+      workflow["1"].inputs.image = body.imageName as string;
+      workflow["2"].inputs.image = body.garmentImageName as string;
+      workflow["3"].inputs.prompt = userNote ? `${STRICT_OUTFIT_REPLACEMENT_PROMPT}\n\nAdditional garment fit note: ${userNote}` : STRICT_OUTFIT_REPLACEMENT_PROMPT;
+      workflow["3"].inputs.seed = seed;
+      workflow["4"].inputs.filename_prefix = "image/ShadowframeAI_OUTFIT";
+    } else if (isImageFamily && mode === "img-img") {
       workflow["1"].inputs.image = body.imageName as string;
       workflow["2"].inputs.unet_name = imageModelName;
       workflow["3"].inputs.clip_name = imageClipName;

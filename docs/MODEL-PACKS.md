@@ -39,7 +39,7 @@ The model storage root should usually be local to the GPU machine. A network sha
 - `release\Shadowframe-Wan-Models` — 10 model files, 64.33 GiB payload.
 - `release\Shadowframe-PhotoReal-Models` — 38 model files, 69.77 GiB payload, rebuilt for Core `0.3.3` with LTX installed as a checkpoint and Qwen3VL included for RedCraft.
 
-Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack. Core Setup discovers model-pack installers named `Install Shadowframe * Models.exe` in adjacent package folders and launches them silently with the chosen Shadowframe library location. The current rebuilt Core `0.3.3` payload SHA-256 is `8E014ABB330B3070FA14C9367E5A8C83769913B442B9D1C793DB439EDD1A6DF8`.
+Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack. Core Setup discovers model-pack installers named `Install Shadowframe * Models.exe` in adjacent package folders and launches them silently with the chosen Shadowframe library location. The current rebuilt Core `0.3.3` payload SHA-256 is `406FF28C70D968552EDB1751FC379CD478038F7FB454713BB140E42DA6454E67`.
 
 The PhotoReal pack also includes a targeted RedCraft/Krea2 compatibility check. During install and repair, the pack verifies that `diffusion_models/redcraft23INT8INT4FP8_30Krea2.safetensors` and `text_encoders/qwen3vl_4b_fp8_scaled.safetensors` are the exact expected files. This prevents the common RedCraft size-mismatch failure from becoming a generation-time surprise for users.
 

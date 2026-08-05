@@ -58,6 +58,8 @@ type ModeSettings = {
   fastMode: boolean;
 };
 
+type ImageSlot = "source" | "garment";
+
 const DEFAULT_NEGATIVE =
   "watermark, text, subtitles, letterbox, pillarbox, frame, border, split screen, noise, artifacts, blur, vignette, worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia, low quality, worst quality, blurry, bad anatomy, extra limbs, deformed, watermark, text, signature, bareness, artifacts, copyrights name, jpeg_artifacts, scan_artifacts, bad hands, missing fingers, extra digit, fewer digits, artistic error, ye-pop, deviantart, logo, patreon logo,monochrome, greyscale,censored, mosaic censoring, 色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走";
 const DEFAULT_BRIDGE_URL = "https://bridge.shadowframe.tech";
@@ -164,6 +166,8 @@ export default function Home() {
   const [runningMode, setRunningMode] = useState<GeneratorMode | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [garmentFile, setGarmentFile] = useState<File | null>(null);
+  const [garmentPreview, setGarmentPreview] = useState("");
   const [positivePrompt, setPositivePrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState(DEFAULT_NEGATIVE);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -195,12 +199,15 @@ export default function Home() {
   const [runStartedAt, setRunStartedAt] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const garmentInputRef = useRef<HTMLInputElement>(null);
   const runTokenRef = useRef(0);
   const uploadedImageRef = useRef<{ fingerprint: string; imageName: string } | null>(null);
+  const uploadedGarmentRef = useRef<{ fingerprint: string; imageName: string } | null>(null);
   const bridgeHealthFailuresRef = useRef(0);
 
   const isRunning = ["uploading", "queued", "generating"].includes(status);
-  const requiresImage = mode.startsWith("img-");
+  const isOutfitMode = mode === "outfit";
+  const requiresImage = mode.startsWith("img-") || isOutfitMode;
   const createsVideo = mode.endsWith("-vid");
   const outputKind = createsVideo ? "video" : "image";
   const statusCopy: Record<RunStatus, string> = {
@@ -220,7 +227,7 @@ export default function Home() {
   const selectedStylesInstalled = selectedStyleFiles.every((style) => installedLoras.some((name) => name.replaceAll("\\", "/").endsWith(style.file as string)));
   const estimatedTotalSeconds = createsVideo
     ? fastMode ? 300 : 900
-    : mode === "img-img" ? 150 : isAnimaBase ? 55 : 90;
+    : isOutfitMode ? 120 : mode === "img-img" ? 150 : isAnimaBase ? 55 : 90;
   const timeProgress = (elapsedSeconds / estimatedTotalSeconds) * 100;
   const progress = status === "uploading"
     ? Math.max(6, Math.min(18, timeProgress))
@@ -304,8 +311,9 @@ export default function Home() {
   useEffect(() => {
     return () => {
       if (imagePreview) URL.revokeObjectURL(imagePreview);
+      if (garmentPreview) URL.revokeObjectURL(garmentPreview);
     };
-  }, [imagePreview]);
+  }, [garmentPreview, imagePreview]);
 
   useEffect(() => {
     if (!isRunning || runStartedAt === null) return;
@@ -315,15 +323,21 @@ export default function Home() {
     return () => window.clearInterval(timer);
   }, [isRunning, runStartedAt]);
 
-  const acceptFile = (nextFile: File) => {
+  const acceptFile = (nextFile: File, slot: ImageSlot = "source") => {
     if (!nextFile.type.startsWith("image/")) {
       setError("Choose a JPG, PNG, or WebP image.");
       setStatus("error");
       return;
     }
-    setFile(nextFile);
-    uploadedImageRef.current = null;
-    setImagePreview(URL.createObjectURL(nextFile));
+    if (slot === "garment") {
+      setGarmentFile(nextFile);
+      uploadedGarmentRef.current = null;
+      setGarmentPreview(URL.createObjectURL(nextFile));
+    } else {
+      setFile(nextFile);
+      uploadedImageRef.current = null;
+      setImagePreview(URL.createObjectURL(nextFile));
+    }
     setResult(null);
     setError("");
     setStatus("idle");
@@ -334,11 +348,16 @@ export default function Home() {
     if (nextFile) acceptFile(nextFile);
   };
 
-  const onDrop = (event: DragEvent<HTMLButtonElement>) => {
+  const onGarmentInput = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextFile = event.target.files?.[0];
+    if (nextFile) acceptFile(nextFile, "garment");
+  };
+
+  const onDrop = (event: DragEvent<HTMLButtonElement>, slot: ImageSlot = "source") => {
     event.preventDefault();
     setDragging(false);
     const nextFile = event.dataTransfer.files?.[0];
-    if (nextFile) acceptFile(nextFile);
+    if (nextFile) acceptFile(nextFile, slot);
   };
 
   const resetImage = () => {
@@ -347,6 +366,14 @@ export default function Home() {
     setImagePreview("");
     setResult(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const resetGarmentImage = () => {
+    setGarmentFile(null);
+    uploadedGarmentRef.current = null;
+    setGarmentPreview("");
+    setResult(null);
+    if (garmentInputRef.current) garmentInputRef.current.value = "";
   };
 
   const captureModeSettings = (): ModeSettings => ({
@@ -387,6 +414,9 @@ export default function Home() {
       setWidth(1024);
       setHeight(1024);
       setHiresScale(2);
+    } else if (nextMode === "outfit") {
+      setHiresScale(1);
+      setReferenceFidelity("high");
     } else {
       setHiresScale(2);
     }
@@ -452,6 +482,7 @@ export default function Home() {
       setHeight(1280);
       setLength(93);
     }
+    if (nextBaseModelId === "flux-vton") setHiresScale(1);
   };
 
   const enterGenerator = () => {
@@ -500,11 +531,16 @@ export default function Home() {
       return;
     }
     if (requiresImage && !file) {
-      setError("Drop in a source image first.");
+      setError(isOutfitMode ? "Drop in the source model photo first." : "Drop in a source image first.");
       setStatus("error");
       return;
     }
-    if (!positivePrompt.trim()) {
+    if (isOutfitMode && !garmentFile) {
+      setError("Drop in an outfit reference image first.");
+      setStatus("error");
+      return;
+    }
+    if (!isOutfitMode && !positivePrompt.trim()) {
       setError(`Add a positive prompt describing the ${createsVideo ? "motion" : "image"} you want.`);
       setStatus("error");
       return;
@@ -521,6 +557,7 @@ export default function Home() {
 
     try {
       let imageName = "";
+      let garmentImageName = "";
       if (requiresImage && file) {
         const fingerprint = `${file.name}:${file.size}:${file.lastModified}`;
         if (uploadedImageRef.current?.fingerprint === fingerprint) {
@@ -541,6 +578,26 @@ export default function Home() {
           uploadedImageRef.current = { fingerprint, imageName };
         }
       }
+      if (isOutfitMode && garmentFile) {
+        const fingerprint = `${garmentFile.name}:${garmentFile.size}:${garmentFile.lastModified}`;
+        if (uploadedGarmentRef.current?.fingerprint === fingerprint) {
+          garmentImageName = uploadedGarmentRef.current.imageName;
+        } else {
+          setStatus("uploading");
+          const uploadBody = new FormData();
+          uploadBody.append("image", garmentFile);
+          uploadBody.append("type", "input");
+          uploadBody.append("overwrite", "true");
+          const uploadResponse = await bridgeRequest("/api/comfy?path=/upload/image", bridgeUrl, bridgeToken, {
+            method: "POST",
+            body: uploadBody,
+          });
+          if (!uploadResponse.ok) throw new Error("ComfyUI could not accept the outfit reference image.");
+          const uploaded = (await uploadResponse.json()) as { name: string; subfolder?: string };
+          garmentImageName = uploaded.subfolder ? `${uploaded.subfolder}/${uploaded.name}` : uploaded.name;
+          uploadedGarmentRef.current = { fingerprint, imageName: garmentImageName };
+        }
+      }
 
       setStatus("queued");
       const generationResponse = await bridgeRequest("/api/generate", bridgeUrl, bridgeToken, {
@@ -548,6 +605,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           imageName,
+          garmentImageName,
           positivePrompt: positivePrompt.trim(),
           negativePrompt: negativePrompt.trim(),
           width,
@@ -588,7 +646,7 @@ export default function Home() {
             ...media,
             id: generation.prompt_id,
             url: mediaUrl,
-            prompt: positivePrompt.trim(),
+            prompt: isOutfitMode ? (positivePrompt.trim() || "Strict outfit replacement") : positivePrompt.trim(),
           };
           setResult(completed);
           setSessionOutputs((current) => [completed, ...current].slice(0, 4));
@@ -728,6 +786,7 @@ export default function Home() {
         <nav className="mode-switcher" aria-label="Generation mode">
           <button className={`mode-button ${mode === "txt-img" ? "active" : ""}`} type="button" onClick={() => selectMode("txt-img")}><Sparkles size={15} /> Text → Image</button>
           <button className={`mode-button ${mode === "img-img" ? "active" : ""}`} type="button" onClick={() => selectMode("img-img")}><ImageIcon size={15} /> Image → Image</button>
+          <button className={`mode-button ${mode === "outfit" ? "active" : ""}`} type="button" onClick={() => selectMode("outfit")}><ImageIcon size={15} /> Outfit Replace</button>
           <button className={`mode-button ${mode === "img-vid" ? "active" : ""}`} type="button" onClick={() => selectMode("img-vid")}><Video size={15} /> Image → Video</button>
           <button className={`mode-button ${mode === "txt-vid" ? "active" : ""}`} type="button" onClick={() => selectMode("txt-vid")}><Film size={15} /> Text → Video</button>
         </nav>
@@ -803,13 +862,14 @@ export default function Home() {
           <div className="panel-heading">
             <div>
               <p className="eyebrow">Create</p>
-              <h1>{mode === "txt-img" ? "Turn words into an image" : mode === "img-img" ? "Transform a source image" : mode === "txt-vid" ? "Turn words into motion" : "Bring a still image to life"}</h1>
+              <h1>{mode === "txt-img" ? "Turn words into an image" : mode === "img-img" ? "Transform a source image" : mode === "outfit" ? "Replace outfit only" : mode === "txt-vid" ? "Turn words into motion" : "Bring a still image to life"}</h1>
             </div>
             <Film size={22} />
           </div>
 
           {requiresImage && <>
             <input ref={fileInputRef} className="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp" onChange={onFileInput} />
+            {isOutfitMode && <label className="field-label">Source model photo <span>Required</span></label>}
             <button
             className={`dropzone ${dragging ? "dragging" : ""} ${imagePreview ? "has-image" : ""}`}
             type="button"
@@ -817,7 +877,7 @@ export default function Home() {
             onDragEnter={(event) => { event.preventDefault(); setDragging(true); }}
             onDragOver={(event) => event.preventDefault()}
             onDragLeave={() => setDragging(false)}
-            onDrop={onDrop}
+            onDrop={(event) => onDrop(event)}
           >
             {imagePreview ? (
               <>
@@ -835,13 +895,41 @@ export default function Home() {
             {imagePreview && <button className="clear-image" type="button" onClick={resetImage}><X size={14} /> Remove</button>}
           </>}
 
-          <label className="field-label" htmlFor="positive-prompt">Positive prompt <span>Required</span></label>
+          {isOutfitMode && <>
+            <input ref={garmentInputRef} className="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp" onChange={onGarmentInput} />
+            <label className="field-label">Outfit reference <span>Required</span></label>
+            <button
+              className={`dropzone ${garmentPreview ? "has-image" : ""}`}
+              type="button"
+              onClick={() => garmentInputRef.current?.click()}
+              onDragEnter={(event) => { event.preventDefault(); setDragging(true); }}
+              onDragOver={(event) => event.preventDefault()}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(event) => onDrop(event, "garment")}
+            >
+              {garmentPreview ? (
+                <>
+                  <img src={garmentPreview} alt="Selected outfit reference" />
+                  <span className="replace-label"><RotateCcw size={14} /> Replace outfit</span>
+                </>
+              ) : (
+                <>
+                  <span className="upload-icon"><UploadCloud size={23} /></span>
+                  <strong>Drop outfit render here</strong>
+                  <small>the garment to transfer · JPG, PNG, WebP</small>
+                </>
+              )}
+            </button>
+            {garmentPreview && <button className="clear-image" type="button" onClick={resetGarmentImage}><X size={14} /> Remove</button>}
+          </>}
+
+          <label className="field-label" htmlFor="positive-prompt">Positive prompt <span>{isOutfitMode ? "Optional" : "Required"}</span></label>
           <div className="prompt-wrap">
             <textarea
               id="positive-prompt"
               value={positivePrompt}
               onChange={(event) => setPositivePrompt(event.target.value)}
-              placeholder={createsVideo ? "Describe the motion, camera, lighting, and final look…" : mode === "img-img" ? "Describe exactly how the source image should change…" : "Describe the subject, composition, lighting, and final look…"}
+              placeholder={isOutfitMode ? "Optional: add fit notes only, like tighter fit, glossy latex, longer sleeves…" : createsVideo ? "Describe the motion, camera, lighting, and final look…" : mode === "img-img" ? "Describe exactly how the source image should change…" : "Describe the subject, composition, lighting, and final look…"}
               maxLength={2000}
             />
             <small>{positivePrompt.length}/2000</small>
@@ -891,7 +979,7 @@ export default function Home() {
 
           {advancedOpen && (
             <div className="advanced-grid">
-              {mode !== "img-img" && (
+              {mode !== "img-img" && !isOutfitMode && (
                 <div className="aspect-section">
                   <span>Aspect ratio</span>
                   <div className="aspect-buttons">
@@ -899,12 +987,12 @@ export default function Home() {
                   </div>
                 </div>
               )}
-              {mode !== "img-img" && <>
+              {mode !== "img-img" && !isOutfitMode && <>
                 <div className="advanced-subheading">Custom Resolution</div>
                 <label>Width<input type="number" value={width} step={16} min={256} max={1536} onChange={(event) => setWidth(Number(event.target.value))} /></label>
                 <label>Height<input type="number" value={height} step={16} min={256} max={1536} onChange={(event) => setHeight(Number(event.target.value))} /></label>
               </>}
-              {mode === "img-img" && (
+              {(mode === "img-img" || isOutfitMode) && (
                 <label>Reference fidelity
                   <select value={referenceFidelity} onChange={(event) => setReferenceFidelity(event.target.value as ReferenceFidelity)}>
                     <option value="high">High — closest match</option>
@@ -913,7 +1001,7 @@ export default function Home() {
                   </select>
                 </label>
               )}
-              {createsVideo ? <label>Frames<input type="number" value={length} step={4} min={17} max={241} onChange={(event) => setLength(Number(event.target.value))} /></label> : (
+              {createsVideo ? <label>Frames<input type="number" value={length} step={4} min={17} max={241} onChange={(event) => setLength(Number(event.target.value))} /></label> : !isOutfitMode && (
                 <label>Output scale<select value={hiresScale} onChange={(event) => setHiresScale(Number(event.target.value))}><option value={1}>1× original</option>{isAnimaBase ? <option value={1.5}>1.5× recommended</option> : <><option value={2}>2× high-res</option><option value={4}>4× ultra-res</option></>}</select></label>
               )}
               <label>Seed<input type="number" value={seed} min={0} onChange={(event) => setSeed(Number(event.target.value))} /></label>
@@ -949,7 +1037,7 @@ export default function Home() {
               <div className="empty-stage">
                 <span>{createsVideo ? <Video size={34} /> : <ImageIcon size={34} />}</span>
                 <h2>Your {createsVideo ? "video" : "image"} will appear here</h2>
-                <p>{requiresImage ? "Add an image and prompt to begin." : "Add a prompt to begin."}</p>
+                <p>{isOutfitMode ? "Add a source photo and outfit reference to begin." : requiresImage ? "Add an image and prompt to begin." : "Add a prompt to begin."}</p>
               </div>
             )}
 
@@ -968,7 +1056,7 @@ export default function Home() {
           </div>
 
           <div className="stage-footer">
-            <div><strong>{result ? result.filename : "Output preview"}</strong><span>{result ? (result.kind === "video" ? "MP4 · H.264" : "High-resolution image") : createsVideo ? "Video · 720 × 1280 default" : `Image · ${width * hiresScale} × ${height * hiresScale} target`}</span></div>
+            <div><strong>{result ? result.filename : "Output preview"}</strong><span>{result ? (result.kind === "video" ? "MP4 · H.264" : "High-resolution image") : createsVideo ? "Video · 720 × 1280 default" : isOutfitMode ? "Strict wardrobe replacement" : `Image · ${width * hiresScale} × ${height * hiresScale} target`}</span></div>
             {result ? (
               <a className="download-button" href={result.url} download={result.filename}><Download size={17} /> Download {createsVideo ? "video" : "image"}</a>
             ) : (
