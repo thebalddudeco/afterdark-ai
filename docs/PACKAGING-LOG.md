@@ -482,3 +482,29 @@ Notes:
 - No model payloads changed in this feature build.
 - The current workflow uses the `FluxVTONode` already exposed by the installed ComfyUI runtime. If that node requires a Comfy org credential at runtime, Shadowframe should surface that as a setup requirement in a follow-up patch.
 
+## Phase 5K - Explicit Outfit Fabric Contour Tuning
+
+Goal: make Strict Outfit Replace produce more realistic adult tight-fabric details when the reference garment is lingerie, swimwear, bikini, t-shirt, dress, transparent clothing, or another contour-revealing garment.
+
+Completed:
+
+- Expanded the backend-only Strict Outfit Replace instruction with fabric-tension guidance.
+- Added automatic direction for realistic nipple impressions, breast shape through fabric, genital/pubic mound garment impressions, seam pressure, stretch, cling, translucency, and compression when appropriate to the selected outfit reference.
+- Kept the existing preservation rules intact so the workflow still prioritizes unchanged pose, crop, camera, identity, lighting, and background.
+
+Validation:
+
+- Vinext production build completed.
+- GitHub Pages production build completed.
+- Local Core rebuild completed.
+- Local Core installer rebuild completed.
+- Rebuilt Core installer manifest version: `0.3.3`.
+- Rebuilt Core installer payload file count: 77,797.
+- Rebuilt Core installer payload SHA-256: `A25AC586745E5309B6C6BF7AF5534F0D810C7A435BA64711B9BC9A8C79BC3842`.
+- Rebuilt `release\Shadowframe-Beta-Handoff`.
+- Beta handoff Core tar checksum matches `A25AC586745E5309B6C6BF7AF5534F0D810C7A435BA64711B9BC9A8C79BC3842`.
+
+Notes:
+
+- No model payloads changed in this prompt-tuning patch.
+

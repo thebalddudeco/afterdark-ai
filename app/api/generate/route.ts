@@ -37,6 +37,8 @@ Maintain identical image geometry and pixel-space alignment. The subject must re
 
 The only modification permitted is the clothing. Preserve the original shoulders, arms, neckline position, chest position, torso shape, skin visibility, and body contours. The garment must conform naturally to the existing pose rather than altering the pose to fit the garment.
 
+When the replacement garment is lingerie, swimwear, bikini, bodysuit, t-shirt, dress, or any tight/stretch/transparent fabric, render realistic adult fabric tension and anatomical contouring. Preserve natural body pressure under the garment, including visible nipple impressions, breast shape through fabric, cameltoe or vulva/pubic mound impressions where the garment is tight, seam pressure, fabric stretch, cling, translucency, and compression consistent with the referenced garment. These details should appear as garment-surface impressions and realistic fabric deformation, not as a different body, pose, crop, or new scene.
+
 Do not zoom in, zoom out, recrop, reframe, rotate, reposition, or regenerate the subject. Do not create a new portrait. Do not reinterpret the scene.
 
 Treat this as a clothing swap on an existing photograph, not a new image generation.
