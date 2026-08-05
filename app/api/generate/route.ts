@@ -4,6 +4,7 @@ import ltxImageVideoWorkflowTemplate from "../../lib/ltx-img-video-workflow.json
 import animaImageWorkflowTemplate from "../../lib/anima-image-workflow.json";
 import animaImageEditWorkflowTemplate from "../../lib/anima-img-image-workflow.json";
 import { STYLE_PRESETS } from "../../lib/style-presets";
+import type { StylePreset } from "../../lib/style-presets";
 import { authorizeBridgeRequest, bridgeJson, bridgeOptions } from "../../lib/bridge-security";
 
 const COMFYUI_URL = process.env.COMFYUI_URL || "http://127.0.0.1:8188";
@@ -21,6 +22,7 @@ const REFERENCE_FIDELITY: Record<ReferenceFidelity, { denoise: number; loraStren
 const CHILD_CONTENT = /\b(?:child|children|kid|kids|minor|minors|underage|preteen|teenager|schoolgirl|schoolboy|toddler|infant|baby|lolicon|shotacon)\b/i;
 const SEXUAL_VIOLENCE = /\b(?:rape|raped|raping|sexual assault|sexually assault|forced sex|nonconsensual|non-consensual|without consent|sexual violence|sexual coercion)\b/i;
 const ANIMAL_SEXUAL_CONTENT = /\b(?:bestiality|zoophilia|zoophile|animal sex|sex with (?:an? )?(?:animal|dog|cat|horse|pony|wolf|fox|goat|sheep|cow|pig))\b/i;
+const MODEL_SHAPE_MISMATCH = /size mismatch|copying a param with shape/i;
 
 function prohibitedPromptReason(prompt: string) {
   if (CHILD_CONTENT.test(prompt)) return "Content involving minors is not permitted.";
@@ -29,9 +31,13 @@ function prohibitedPromptReason(prompt: string) {
   return "";
 }
 
-function withStyleTrigger(prompt: string, trigger?: string, hiddenPrompt?: string) {
+function withStyleTrigger(prompt: string, selectedStyles: StylePreset[], sliderSelections: Record<string, string>) {
   const userPrompt = prompt.trim();
-  const styleParts = [trigger, hiddenPrompt]
+  const styleParts = selectedStyles.flatMap((style) => {
+    const selectedOptionId = sliderSelections[style.id] || style.slider?.defaultOptionId;
+    const selectedOption = style.slider?.options.find((option) => option.id === selectedOptionId);
+    return [style.trigger, style.hiddenPrompt, selectedOption?.prompt];
+  })
     .map((part) => part?.trim())
     .filter((part): part is string => Boolean(part));
   if (!styleParts.length) return userPrompt;
@@ -80,6 +86,8 @@ export async function POST(request: Request) {
       hiresScale?: number;
       mode?: "txt-img" | "img-img" | "img-vid" | "txt-vid";
       styleId?: string;
+      styleIds?: string[];
+      sliderSelections?: Record<string, string>;
       baseModelId?: string;
       referenceFidelity?: ReferenceFidelity;
     };
@@ -109,15 +117,20 @@ export async function POST(request: Request) {
     const isPhotoImageFamily = (mode === "txt-img" || mode === "img-img") && (baseModelId === "redcraft" || baseModelId === "moody-pro");
     const isImageFamily = isAnimaFamily || isPhotoImageFamily;
     const isLtxImageVideo = mode === "img-vid" && baseModelId === "ltx23-gtanimation";
-    const selectedStyle = STYLE_PRESETS.find((style) => style.id === (body.styleId || "original"));
-    if (!selectedStyle || (selectedStyle.id !== "original" && !selectedStyle.baseModelIds.includes(baseModelId))) {
+    const requestedStyleIds = Array.isArray(body.styleIds) ? body.styleIds : (body.styleId ? [body.styleId] : ["original"]);
+    const selectedStyles = requestedStyleIds
+      .filter((id) => id !== "original")
+      .map((id) => STYLE_PRESETS.find((style) => style.id === id))
+      .filter((style): style is StylePreset => Boolean(style));
+    if (selectedStyles.length !== requestedStyleIds.filter((id) => id !== "original").length || selectedStyles.some((style) => !style.baseModelIds.includes(baseModelId))) {
       return respond({ error: "The selected LoRA is not compatible with this base model." }, { status: 400 });
     }
-    if (selectedStyle.id !== "original" && !isImageFamily && !isLtxImageVideo) {
+    if (selectedStyles.length && !isImageFamily && !isLtxImageVideo) {
       return respond({ error: "This LoRA workflow is not installed yet." }, { status: 400 });
     }
-    const effectivePositivePrompt = withStyleTrigger(body.positivePrompt, selectedStyle.trigger, selectedStyle.hiddenPrompt);
-    const selectedStyleFile = selectedStyle.file?.replaceAll("/", "\\");
+    const sliderSelections = body.sliderSelections && typeof body.sliderSelections === "object" ? body.sliderSelections : {};
+    const effectivePositivePrompt = withStyleTrigger(body.positivePrompt, selectedStyles, sliderSelections);
+    const loraStyles = selectedStyles.filter((style) => style.file);
     const selectedTemplate = isImageFamily
       ? mode === "img-img" ? animaImageEditWorkflowTemplate : animaImageWorkflowTemplate
       : isLtxImageVideo
@@ -190,31 +203,41 @@ export async function POST(request: Request) {
       workflow["8"].inputs.sampler_name = isPhotoImageFamily ? "euler" : "er_sde";
       workflow["10"].inputs.scale_by = hiresScale;
       workflow["11"].inputs.filename_prefix = `${imagePrefix}_i2i`;
-      if (selectedStyle.id !== "original" && selectedStyleFile) {
-        if (isPhotoImageFamily) {
-          workflow["12"] = {
+      if (loraStyles.length) {
+        let currentModel: [string, number] = ["2", 0];
+        let currentClip: [string, number] = ["3", 0];
+        loraStyles.forEach((style, index) => {
+          const nodeId = String(12 + index);
+          const selectedStyleFile = style.file?.replaceAll("/", "\\") as string;
+          if (isPhotoImageFamily) {
+            workflow[nodeId] = {
             class_type: "LoraLoaderModelOnly",
             inputs: {
-              model: ["2", 0],
+              model: currentModel,
               lora_name: selectedStyleFile,
-              strength_model: (selectedStyle.strength ?? 1) * fidelitySettings.loraStrength,
+              strength_model: (style.strength ?? 1) * fidelitySettings.loraStrength,
             },
           };
-          workflow["8"].inputs.model = ["12", 0];
-        } else {
-          workflow["12"] = {
+            currentModel = [nodeId, 0];
+          } else {
+            workflow[nodeId] = {
             class_type: "LoraLoader",
             inputs: {
-              model: ["2", 0],
-              clip: ["3", 0],
+              model: currentModel,
+              clip: currentClip,
               lora_name: selectedStyleFile,
-              strength_model: (selectedStyle.strength ?? 1) * fidelitySettings.loraStrength,
-              strength_clip: (selectedStyle.strength ?? 1) * fidelitySettings.loraStrength,
+              strength_model: (style.strength ?? 1) * fidelitySettings.loraStrength,
+              strength_clip: (style.strength ?? 1) * fidelitySettings.loraStrength,
             },
           };
-          workflow["5"].inputs.clip = ["12", 1];
-          workflow["6"].inputs.clip = ["12", 1];
-          workflow["8"].inputs.model = ["12", 0];
+            currentModel = [nodeId, 0];
+            currentClip = [nodeId, 1];
+          }
+        });
+        workflow["8"].inputs.model = currentModel;
+        if (!isPhotoImageFamily) {
+          workflow["5"].inputs.clip = currentClip;
+          workflow["6"].inputs.clip = currentClip;
         }
       }
     } else if (isImageFamily) {
@@ -230,31 +253,41 @@ export async function POST(request: Request) {
       workflow["6"].inputs.sampler_name = isPhotoImageFamily ? "euler" : "er_sde";
       workflow["9"].inputs.scale_by = hiresScale;
       workflow["10"].inputs.filename_prefix = imagePrefix;
-      if (selectedStyle.id !== "original" && selectedStyleFile) {
-        if (isPhotoImageFamily) {
-          workflow["11"] = {
+      if (loraStyles.length) {
+        let currentModel: [string, number] = ["1", 0];
+        let currentClip: [string, number] = ["2", 0];
+        loraStyles.forEach((style, index) => {
+          const nodeId = String(11 + index);
+          const selectedStyleFile = style.file?.replaceAll("/", "\\") as string;
+          if (isPhotoImageFamily) {
+            workflow[nodeId] = {
             class_type: "LoraLoaderModelOnly",
             inputs: {
-              model: ["1", 0],
+              model: currentModel,
               lora_name: selectedStyleFile,
-              strength_model: selectedStyle.strength ?? 1,
+              strength_model: style.strength ?? 1,
             },
           };
-          workflow["6"].inputs.model = ["11", 0];
-        } else {
-          workflow["11"] = {
+            currentModel = [nodeId, 0];
+          } else {
+            workflow[nodeId] = {
             class_type: "LoraLoader",
             inputs: {
-              model: ["1", 0],
-              clip: ["2", 0],
+              model: currentModel,
+              clip: currentClip,
               lora_name: selectedStyleFile,
-              strength_model: selectedStyle.strength ?? 1,
-              strength_clip: selectedStyle.strength ?? 1,
+              strength_model: style.strength ?? 1,
+              strength_clip: style.strength ?? 1,
             },
           };
-          workflow["3"].inputs.clip = ["11", 1];
-          workflow["4"].inputs.clip = ["11", 1];
-          workflow["6"].inputs.model = ["11", 0];
+            currentModel = [nodeId, 0];
+            currentClip = [nodeId, 1];
+          }
+        });
+        workflow["6"].inputs.model = currentModel;
+        if (!isPhotoImageFamily) {
+          workflow["3"].inputs.clip = currentClip;
+          workflow["4"].inputs.clip = currentClip;
         }
       }
     } else if (isLtxImageVideo) {
@@ -272,9 +305,10 @@ export async function POST(request: Request) {
       workflow["24"].inputs.filename_prefix = "video/ShadowframeAI_LTX";
       workflow["24"].inputs.format = "mp4";
       workflow["24"].inputs.codec = "h264";
-      if (selectedStyle.id !== "original" && selectedStyleFile) {
-        workflow["13"].inputs.lora_name = selectedStyleFile;
-        workflow["13"].inputs.strength_model = selectedStyle.strength ?? 1;
+      if (loraStyles.length) {
+        const style = loraStyles[0];
+        workflow["13"].inputs.lora_name = style.file?.replaceAll("/", "\\") as string;
+        workflow["13"].inputs.strength_model = style.strength ?? 1;
       }
     } else if (mode === "txt-vid") {
       workflow["89"].inputs.text = effectivePositivePrompt;
@@ -306,7 +340,11 @@ export async function POST(request: Request) {
     });
     const result = await upstream.json() as Record<string, unknown>;
     if (!upstream.ok) {
-      return respond({ error: "ComfyUI rejected the workflow.", details: result }, { status: upstream.status });
+      const detailText = JSON.stringify(result);
+      const error = MODEL_SHAPE_MISMATCH.test(detailText)
+        ? "The selected checkpoint does not match the text encoder/runtime architecture. For RedCraft, confirm the installed RedCraft file is the Krea2-compatible version that matches qwen3vl_4b_fp8_scaled.safetensors."
+        : "ComfyUI rejected the workflow.";
+      return respond({ error, details: result }, { status: upstream.status });
     }
     return respond(result);
   } catch (error) {

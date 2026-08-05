@@ -24,7 +24,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent } from "react";
 import { BASE_MODELS, DEFAULT_BASE_MODEL, STYLE_PRESETS } from "./lib/style-presets";
-import type { GeneratorMode } from "./lib/style-presets";
+import type { GeneratorMode, StylePreset } from "./lib/style-presets";
 
 type RunStatus = "idle" | "uploading" | "queued" | "generating" | "complete" | "error";
 type ReferenceFidelity = "high" | "balanced" | "creative";
@@ -42,9 +42,30 @@ type SessionOutput = MediaOutput & {
   prompt: string;
 };
 
+type ModeSettings = {
+  baseModelId: string;
+  selectedStyleIds: string[];
+  width: number;
+  height: number;
+  length: number;
+  hiresScale: number;
+  referenceFidelity: ReferenceFidelity;
+  fastMode: boolean;
+};
+
 const DEFAULT_NEGATIVE =
   "watermark, text, subtitles, letterbox, pillarbox, frame, border, split screen, noise, artifacts, blur, vignette, worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia, low quality, worst quality, blurry, bad anatomy, extra limbs, deformed, watermark, text, signature, bareness, artifacts, copyrights name, jpeg_artifacts, scan_artifacts, bad hands, missing fingers, extra digit, fewer digits, artistic error, ye-pop, deviantart, logo, patreon logo,monochrome, greyscale,censored, mosaic censoring, 色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走";
 const DEFAULT_BRIDGE_URL = "https://bridge.shadowframe.tech";
+const ASPECT_PRESETS = [
+  { label: "1:1", width: 1024, height: 1024 },
+  { label: "2:1", width: 1536, height: 768 },
+  { label: "3:2", width: 1536, height: 1024 },
+  { label: "4:3", width: 1344, height: 1008 },
+  { label: "16:9", width: 1536, height: 864 },
+  { label: "9:16", width: 864, height: 1536 },
+  { label: "3:4", width: 1008, height: 1344 },
+  { label: "1:2", width: 768, height: 1536 },
+];
 
 const STATUS_COPY: Record<RunStatus, string> = {
   idle: "Ready when you are",
@@ -109,6 +130,13 @@ function comfyRuntimeError(entry: unknown) {
   return "";
 }
 
+function friendlyRuntimeError(message: string) {
+  if (/size mismatch|copying a param with shape/i.test(message)) {
+    return "The selected checkpoint does not match the text encoder/runtime architecture. For RedCraft, confirm the installed RedCraft file is the Krea2-compatible version that matches qwen3vl_4b_fp8_scaled.safetensors.";
+  }
+  return message;
+}
+
 function normalizeBridgeUrl(value: string) {
   return value.trim().replace(/\/+$/, "");
 }
@@ -124,7 +152,11 @@ export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
   const [mode, setMode] = useState<GeneratorMode>("img-vid");
   const [baseModelId, setBaseModelId] = useState(DEFAULT_BASE_MODEL["img-vid"]);
-  const [styleId, setStyleId] = useState("original");
+  const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>([]);
+  const [sliderSelections, setSliderSelections] = useState<Record<string, string>>({});
+  const [sliderDialogStyleId, setSliderDialogStyleId] = useState("");
+  const [modeSettings, setModeSettings] = useState<Partial<Record<GeneratorMode, ModeSettings>>>({});
+  const [runningMode, setRunningMode] = useState<GeneratorMode | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
   const [positivePrompt, setPositivePrompt] = useState("");
@@ -170,10 +202,14 @@ export default function Home() {
   };
   const availableBaseModels = BASE_MODELS.filter((model) => model.modes.includes(mode));
   const selectedBaseModel = BASE_MODELS.find((model) => model.id === baseModelId) ?? availableBaseModels[0];
-  const availableStyles = STYLE_PRESETS.filter((style) => style.id === "original" || style.baseModelIds.includes(baseModelId));
-  const selectedStyle = STYLE_PRESETS.find((style) => style.id === styleId) ?? STYLE_PRESETS[0];
+  const availableStyles = STYLE_PRESETS.filter((style) => (style.id === "original" || style.baseModelIds.includes(baseModelId)) && style.modes.includes(mode));
+  const selectedStyles = selectedStyleIds
+    .map((id) => STYLE_PRESETS.find((style) => style.id === id))
+    .filter((style): style is StylePreset => Boolean(style) && style.baseModelIds.includes(baseModelId));
+  const selectedStyleFiles = selectedStyles.filter((style) => style.file);
+  const sliderDialogStyle = STYLE_PRESETS.find((style) => style.id === sliderDialogStyleId);
   const isAnimaBase = baseModelId === "wai-anima" || baseModelId === "anima-aesthetic";
-  const selectedStyleInstalled = !selectedStyle.file || installedLoras.some((name) => name.replaceAll("\\", "/").endsWith(selectedStyle.file as string));
+  const selectedStylesInstalled = selectedStyleFiles.every((style) => installedLoras.some((name) => name.replaceAll("\\", "/").endsWith(style.file as string)));
   const estimatedTotalSeconds = createsVideo
     ? fastMode ? 300 : 900
     : mode === "img-img" ? 150 : isAnimaBase ? 55 : 90;
@@ -186,6 +222,7 @@ export default function Home() {
         ? Math.min(96, 32 + (timeProgress * 0.64))
         : status === "complete" ? 100 : 0;
   const remainingSeconds = Math.max(0, estimatedTotalSeconds - elapsedSeconds);
+  const generationAwayFromTab = isRunning && runningMode !== null && runningMode !== mode;
   const isLocalPage = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
   const aspectLabel = useMemo(() => {
@@ -304,6 +341,49 @@ export default function Home() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const captureModeSettings = (): ModeSettings => ({
+    baseModelId,
+    selectedStyleIds,
+    width,
+    height,
+    length,
+    hiresScale,
+    referenceFidelity,
+    fastMode,
+  });
+
+  const applyModeSettings = (nextMode: GeneratorMode, settings?: ModeSettings) => {
+    if (settings) {
+      setBaseModelId(settings.baseModelId);
+      setSelectedStyleIds(settings.selectedStyleIds);
+      setWidth(settings.width);
+      setHeight(settings.height);
+      setLength(settings.length);
+      setHiresScale(settings.hiresScale);
+      setReferenceFidelity(settings.referenceFidelity);
+      setFastMode(settings.fastMode);
+      return;
+    }
+    setBaseModelId(DEFAULT_BASE_MODEL[nextMode]);
+    setSelectedStyleIds([]);
+    if (nextMode === "txt-vid") {
+      setWidth(640);
+      setHeight(640);
+      setLength(81);
+      setFastMode(true);
+    } else if (nextMode === "img-vid") {
+      setWidth(720);
+      setHeight(1280);
+      setLength(93);
+    } else if (nextMode === "txt-img") {
+      setWidth(1024);
+      setHeight(1024);
+      setHiresScale(2);
+    } else {
+      setHiresScale(2);
+    }
+  };
+
   const saveBridgeConnection = async () => {
     const nextUrl = normalizeBridgeUrl(bridgeUrlInput);
     const nextToken = bridgeTokenInput.trim();
@@ -340,36 +420,18 @@ export default function Home() {
   };
 
   const selectMode = (nextMode: GeneratorMode) => {
+    setModeSettings((current) => ({ ...current, [mode]: captureModeSettings() }));
     setMode(nextMode);
-    setBaseModelId(DEFAULT_BASE_MODEL[nextMode]);
-    setStyleId("original");
     setError("");
-    setStatus("idle");
-    setResult(null);
-    if (nextMode === "txt-vid") {
-      setWidth(640);
-      setHeight(640);
-      setLength(81);
-      setFastMode(true);
-    } else if (nextMode === "img-vid") {
-      setWidth(720);
-      setHeight(1280);
-      setLength(93);
-    } else if (nextMode === "txt-img") {
-      setWidth(1024);
-      setHeight(1024);
-      setHiresScale(2);
-    } else {
-      setHiresScale(2);
-    }
+    applyModeSettings(nextMode, modeSettings[nextMode]);
   };
 
   const selectBaseModel = (nextBaseModelId: string) => {
     setBaseModelId(nextBaseModelId);
-    setStyleId("original");
+    setSelectedStyleIds([]);
     setResult(null);
     setError("");
-    setStatus("idle");
+    if (!isRunning) setStatus("idle");
     if (nextBaseModelId === "wai-anima" || nextBaseModelId === "anima-aesthetic") setHiresScale(1.5);
     if (nextBaseModelId === "ltx23-gtanimation") {
       setWidth(768);
@@ -388,6 +450,25 @@ export default function Home() {
     if (!isLocalPage && (!bridgeUrl || !bridgeToken)) setConnectionOpen(true);
   };
 
+  const toggleStyle = (style: StylePreset) => {
+    setError("");
+    if (!isRunning) setStatus("idle");
+    if (style.id === "original") {
+      setSelectedStyleIds([]);
+      return;
+    }
+    setSelectedStyleIds((current) => current.includes(style.id) ? current.filter((id) => id !== style.id) : [...current, style.id]);
+    if (style.slider) {
+      setSliderSelections((current) => ({ ...current, [style.id]: current[style.id] || style.slider?.defaultOptionId || "" }));
+      setSliderDialogStyleId(style.id);
+    }
+  };
+
+  const applyAspectRatio = (preset: typeof ASPECT_PRESETS[number]) => {
+    setWidth(preset.width);
+    setHeight(preset.height);
+  };
+
   const generate = async () => {
     if (!comfyOnline) {
       setError("Start and connect the Shadowframe Bridge before generating.");
@@ -400,8 +481,9 @@ export default function Home() {
       setStatus("error");
       return;
     }
-    if (!selectedStyleInstalled) {
-      setError(`${selectedStyle.name} needs ${selectedStyle.file} in ComfyUI's LoRA folder.`);
+    if (!selectedStylesInstalled) {
+      const missing = selectedStyleFiles.find((style) => !installedLoras.some((name) => name.replaceAll("\\", "/").endsWith(style.file as string)));
+      setError(`${missing?.name ?? "Selected LoRA"} needs ${missing?.file ?? "its LoRA file"} in ComfyUI's LoRA folder.`);
       setStatus("error");
       return;
     }
@@ -419,6 +501,7 @@ export default function Home() {
     const runToken = ++runTokenRef.current;
     setError("");
     setResult(null);
+    setRunningMode(mode);
     setRunStartedAt(Date.now());
     setElapsedSeconds(0);
 
@@ -460,7 +543,8 @@ export default function Home() {
           fastMode,
           hiresScale,
           mode,
-          styleId,
+          styleIds: selectedStyleIds,
+          sliderSelections,
           baseModelId,
           referenceFidelity,
         }),
@@ -494,6 +578,7 @@ export default function Home() {
           setResult(completed);
           setSessionOutputs((current) => [completed, ...current].slice(0, 4));
           setStatus("complete");
+          setRunningMode(null);
           setRunStartedAt(null);
           setElapsedSeconds(estimatedTotalSeconds);
           setSeed(Math.floor(Math.random() * 900_000_000_000_000));
@@ -507,8 +592,9 @@ export default function Home() {
       throw new Error("Generation timed out before an output was returned.");
     } catch (caught) {
       setStatus("error");
+      setRunningMode(null);
       setRunStartedAt(null);
-      const message = caught instanceof Error ? caught.message : "Something went wrong.";
+      const message = friendlyRuntimeError(caught instanceof Error ? caught.message : "Something went wrong.");
       let bridgeIsOnline = false;
       for (let attempt = 0; attempt < 2 && !bridgeIsOnline; attempt += 1) {
         try {
@@ -533,6 +619,7 @@ export default function Home() {
     runTokenRef.current += 1;
     await bridgeRequest("/api/comfy?path=/interrupt", bridgeUrl, bridgeToken, { method: "POST" }).catch(() => undefined);
     setStatus("idle");
+    setRunningMode(null);
     setRunStartedAt(null);
     setElapsedSeconds(0);
     setError("");
@@ -621,6 +708,31 @@ export default function Home() {
         </div>
       )}
 
+      {sliderDialogStyle?.slider && (
+        <div className="slider-backdrop" role="presentation" onClick={() => setSliderDialogStyleId("")}>
+          <section className="slider-dialog" role="dialog" aria-modal="true" aria-labelledby="slider-title" onClick={(event) => event.stopPropagation()}>
+            <p className="eyebrow">Slider LoRA</p>
+            <h2 id="slider-title">{sliderDialogStyle.slider.label}</h2>
+            <p>{sliderDialogStyle.description}</p>
+            <div className="slider-options">
+              {sliderDialogStyle.slider.options.map((option) => (
+                <button
+                  key={option.id}
+                  className={sliderSelections[sliderDialogStyle.id] === option.id ? "selected" : ""}
+                  type="button"
+                  onClick={() => {
+                    setSliderSelections((current) => ({ ...current, [sliderDialogStyle.id]: option.id }));
+                    setSliderDialogStyleId("");
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+
       <section className="workspace">
         <aside className="control-panel">
           <div className="panel-heading">
@@ -688,16 +800,22 @@ export default function Home() {
           </div>
           <div className="style-strip">
             {availableStyles.map((style) => (
-              <button key={style.id} className={`style-option ${styleId === style.id ? "selected" : ""}`} type="button" onClick={() => { setStyleId(style.id); setError(""); setStatus("idle"); }}>
+              <button
+                key={style.id}
+                className={`style-option ${(style.id === "original" ? selectedStyleIds.length === 0 : selectedStyleIds.includes(style.id)) ? "selected" : ""}`}
+                type="button"
+                data-description={style.description || `${style.name} LoRA for ${selectedBaseModel.name}.`}
+                onClick={() => toggleStyle(style)}
+              >
                 <i style={{ background: style.swatch }} />
                 <strong>{style.name}</strong>
                 {style.id !== "original" && <small>{!style.file || installedLoras.some((name) => name.replaceAll("\\", "/").endsWith(style.file as string)) ? "LoRA" : "Setup"}</small>}
               </button>
             ))}
           </div>
-          {selectedStyle.id !== "original" && (
+          {selectedStyles.length > 0 && (
             <div className="style-note">
-              <span>{selectedStyleInstalled ? `Installed for ${selectedBaseModel.name}` : `${selectedStyle.file} required`}</span>
+              <span>{selectedStylesInstalled ? `${selectedStyles.length} LoRA${selectedStyles.length === 1 ? "" : "s"} selected for ${selectedBaseModel.name}` : "One or more selected LoRAs needs setup"}</span>
             </div>
           )}
 
@@ -708,7 +826,16 @@ export default function Home() {
 
           {advancedOpen && (
             <div className="advanced-grid">
+              {mode !== "img-img" && (
+                <div className="aspect-section">
+                  <span>Aspect ratio</span>
+                  <div className="aspect-buttons">
+                    {ASPECT_PRESETS.map((preset) => <button key={preset.label} className={aspectLabel === preset.label ? "selected" : ""} type="button" onClick={() => applyAspectRatio(preset)}>{preset.label}</button>)}
+                  </div>
+                </div>
+              )}
               {mode !== "img-img" && <>
+                <div className="advanced-subheading">Custom Resolution</div>
                 <label>Width<input type="number" value={width} step={16} min={256} max={1536} onChange={(event) => setWidth(Number(event.target.value))} /></label>
                 <label>Height<input type="number" value={height} step={16} min={256} max={1536} onChange={(event) => setHeight(Number(event.target.value))} /></label>
               </>}
@@ -760,7 +887,7 @@ export default function Home() {
               </div>
             )}
 
-            {isRunning && (
+            {isRunning && !generationAwayFromTab && (
               <div className="generation-overlay">
                 <LoaderCircle className="spinner" size={34} />
                 <strong>{statusCopy[status]}</strong>
@@ -788,6 +915,14 @@ export default function Home() {
           <div className="activity-heading"><div><p className="eyebrow">Session</p><h2>Recent generations</h2></div><Clock3 size={20} /></div>
 
           <div className="recent-strip">
+            {generationAwayFromTab && (
+              <div className="running-card">
+                <LoaderCircle className="spinner" size={18} />
+                <strong>{statusCopy[status]}</strong>
+                <span>{Math.round(progress)}% · {runningMode?.replace("-", " → ")}</span>
+                <div className="progress-track mini"><i style={{ width: `${progress}%` }} /></div>
+              </div>
+            )}
             {sessionOutputs.length ? sessionOutputs.map((output, index) => (
               <button key={output.id} className={`recent-card ${result?.id === output.id ? "selected" : ""}`} type="button" onClick={() => setResult(output)}>
                 {output.kind === "video" ? <video src={output.url} muted preload="metadata" /> : <img src={output.url} alt="Generated thumbnail" />}
