@@ -128,6 +128,19 @@ Remaining:
 - Run real generation acceptance tests for txt-img, img-img, img-vid, and txt-vid.
 - Capture tester logs and screenshots for failures.
 
+## Phase 4D - PhotoReal packaging guardrails
+
+Goal: make RedCraft runtime compatibility a packaged release guarantee instead of a manual user check.
+
+Completed:
+
+- Added explicit PhotoReal model-pack compatibility metadata for the RedCraft/Krea2 checkpoint and Qwen3VL text encoder pair.
+- Updated the model-pack installer to validate those exact files after extraction and fail fast with repair guidance if either file is missing, wrong-size, or wrong-hash.
+- Updated the installed verification script to always check the RedCraft/Krea2 pair, even when the slower full-pack hash pass is skipped.
+- Updated the app-side RedCraft mismatch message to tell users to repair or reinstall the current PhotoReal pack from the same Shadowframe release.
+
+Result: a stale or mismatched PhotoReal pack should be caught by Setup, Repair, or the packaged verifier before users have to debug ComfyUI internals.
+
 ## Phase 5 Planning - Installer Hub and Storage Locations
 
 Goal: replace the manual three-step install handoff with a single guided installer experience that can install Core and then chain selected model packs into user-selected storage locations.

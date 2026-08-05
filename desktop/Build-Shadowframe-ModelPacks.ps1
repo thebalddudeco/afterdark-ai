@@ -143,6 +143,17 @@ $definitions = @(
     Name = "PhotoReal"; PackId = "photoreal-models"; DisplayName = "PhotoReal Image and Video Models"; Version = "1.0.0"
     OutputName = "Shadowframe-PhotoReal-Models"; Payload = "Shadowframe-PhotoReal-Models.tar"; Files = $photoRealFiles
     DistributionPolicy = "private-use"
+    CompatibilityChecks = @(
+      [ordered]@{
+        id = "redcraft-krea2-runtime-pair"
+        displayName = "RedCraft/Krea2 runtime pair"
+        repairMessage = "Repair or reinstall the current PhotoReal model pack from this release, then restart Shadowframe."
+        requiredFiles = @(
+          "diffusion_models/redcraft23INT8INT4FP8_30Krea2.safetensors"
+          "text_encoders/qwen3vl_4b_fp8_scaled.safetensors"
+        )
+      }
+    )
     Sources = @(
       [ordered]@{ name = "RedCraft 2/3"; url = "https://civitai.red/models/958009/redcraft-or-2-or-3-int8int4fp8-scaled"; license = "Creator terms; redistribution permission not confirmed" }
       [ordered]@{ name = "Moody Real Mix"; url = "https://civitai.com/models/621441/moody-real-mix"; license = "Creator terms; redistribution permission not confirmed" }
@@ -214,6 +225,23 @@ foreach ($definition in $definitions) {
     Write-Host "Verifying the completed payload..."
     $payloadHash = Get-Sha256 $payload
     $installedBytes = ($manifestFiles | Measure-Object bytes -Sum).Sum
+    $compatibilityChecks = @()
+    if ($definition.PSObject.Properties.Name -contains "CompatibilityChecks") {
+      foreach ($check in $definition.CompatibilityChecks) {
+        $requiredFiles = @()
+        foreach ($requiredPath in $check.requiredFiles) {
+          $match = $manifestFiles | Where-Object { $_.relativePath -eq $requiredPath } | Select-Object -First 1
+          if (!$match) { throw "Compatibility check '$($check.id)' references a file that is not in the pack: $requiredPath" }
+          $requiredFiles += $match
+        }
+        $compatibilityChecks += [ordered]@{
+          id = $check.id
+          displayName = $check.displayName
+          repairMessage = $check.repairMessage
+          requiredFiles = $requiredFiles
+        }
+      }
+    }
     $manifest = [ordered]@{
       schemaVersion = 1
       packId = $definition.PackId
@@ -228,6 +256,7 @@ foreach ($definition in $definitions) {
       files = $manifestFiles
       sources = $definition.Sources
     }
+    if ($compatibilityChecks.Count -gt 0) { $manifest.compatibilityChecks = $compatibilityChecks }
     $manifestPath = Join-Path $output "Shadowframe-ModelPack.json"
     $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
     $setupName = "Install Shadowframe $($definition.Name) Models.exe"
@@ -240,6 +269,19 @@ foreach ($definition in $definitions) {
       $notice += "PRIVATE BUILD: Do not publish or redistribute this model archive until each creator explicitly permits redistribution of the original model files."
     }
     $notice | Set-Content -LiteralPath (Join-Path $output "THIRD-PARTY-NOTICES.txt") -Encoding UTF8
+
+    $compatibilityReadme = ""
+    if ($compatibilityChecks.Count -gt 0) {
+      $compatibilityReadme = @"
+
+Compatibility checks:
+$(
+  ($compatibilityChecks | ForEach-Object {
+    "  - $($_.displayName): $($_.repairMessage)"
+  }) -join "`r`n"
+)
+"@
+    }
 
     @"
 Shadowframe AI - $($definition.DisplayName)
@@ -257,6 +299,7 @@ Silent install:
 
 SHA256SUMS.txt can be used to verify downloaded files.
 See THIRD-PARTY-NOTICES.txt before sharing this package.
+$compatibilityReadme
 "@ | Set-Content -LiteralPath (Join-Path $output "README.txt") -Encoding UTF8
 
     $checksumFiles = @($setupName, $definition.Payload, "Shadowframe-ModelPack.json", "THIRD-PARTY-NOTICES.txt", "README.txt")

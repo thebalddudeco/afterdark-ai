@@ -65,6 +65,55 @@ function Get-Sha256([string]$Path) {
   }
 }
 
+function Get-PhotoRealCompatibilityChecks($ReceiptData) {
+  if ($ReceiptData.CompatibilityChecks) { return @($ReceiptData.CompatibilityChecks) }
+  if ($ReceiptData.PackId -ne "photoreal-models") { return @() }
+  return @(
+    [pscustomobject]@{
+      Id = "redcraft-krea2-runtime-pair"
+      DisplayName = "RedCraft/Krea2 runtime pair"
+      RepairMessage = "Repair or reinstall the current PhotoReal model pack from this release, then restart Shadowframe."
+      RequiredFiles = @(
+        [pscustomobject]@{
+          RelativePath = "diffusion_models/redcraft23INT8INT4FP8_30Krea2.safetensors"
+          Bytes = 13141826368
+          Sha256 = "F6088960C0FEBD27CBD372FC758BB07D012F2D8AE3CD10C45C903D48B94409EA"
+        }
+        [pscustomobject]@{
+          RelativePath = "text_encoders/qwen3vl_4b_fp8_scaled.safetensors"
+          Bytes = 5242467968
+          Sha256 = "54BD5144DF0BBC25DD6CCADFCB826B521445A1B06AE5A42570BDD2974CA87094"
+        }
+      )
+    }
+  )
+}
+
+function Test-CompatibilityChecks($ReceiptData, [string]$ModelRoot) {
+  foreach ($check in (Get-PhotoRealCompatibilityChecks $ReceiptData)) {
+    $missing = 0
+    $sizeMismatch = 0
+    $hashMismatch = 0
+    foreach ($file in $check.RequiredFiles) {
+      $installed = Join-Path $ModelRoot $file.RelativePath.Replace("/", "\")
+      if (!(Test-Path -LiteralPath $installed -PathType Leaf)) {
+        $missing++
+        continue
+      }
+      $item = Get-Item -LiteralPath $installed
+      if ($item.Length -ne [int64]$file.Bytes) {
+        $sizeMismatch++
+        continue
+      }
+      $hash = Get-Sha256 $installed
+      if (!$hash.Equals($file.Sha256, [System.StringComparison]::OrdinalIgnoreCase)) { $hashMismatch++ }
+    }
+    $passed = ($missing -eq 0 -and $sizeMismatch -eq 0 -and $hashMismatch -eq 0)
+    $detail = if ($passed) { "" } else { "$missing missing, $sizeMismatch wrong size, $hashMismatch wrong hash. $($check.RepairMessage)" }
+    Write-Check "$($check.DisplayName)" $passed $detail
+  }
+}
+
 Write-Host ""
 Write-Host "Shadowframe AI Installation Check" -ForegroundColor Cyan
 Write-Host ""
@@ -143,6 +192,7 @@ foreach ($pack in $expectedPacks) {
   } else {
     Write-Warn "$($pack.Name) hash verification skipped" "Run this script with -FullHash for the slower full-file check."
   }
+  Test-CompatibilityChecks $receiptData (Join-Path $dataRoot "models")
 }
 
 Write-Host ""

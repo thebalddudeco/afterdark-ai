@@ -62,10 +62,12 @@ internal sealed record ModelPackManifest(
     int FileCount,
     string DistributionPolicy,
     List<ModelPackFile> Files,
-    List<ModelPackSource> Sources);
+    List<ModelPackSource> Sources,
+    List<ModelPackCompatibilityCheck>? CompatibilityChecks = null);
 
 internal sealed record ModelPackFile(string RelativePath, long Bytes, string Sha256);
 internal sealed record ModelPackSource(string Name, string Url, string License);
+internal sealed record ModelPackCompatibilityCheck(string Id, string DisplayName, string RepairMessage, List<ModelPackFile> RequiredFiles);
 
 internal sealed class ModelPackOptions
 {
@@ -156,6 +158,21 @@ internal static class ModelPackEngine
             if (file.Bytes <= 0 || !Regex.IsMatch(file.Sha256, "^[A-Fa-f0-9]{64}$"))
                 throw new InvalidDataException($"Invalid model metadata: {file.RelativePath}");
         }
+        foreach (var check in manifest.CompatibilityChecks ?? Enumerable.Empty<ModelPackCompatibilityCheck>())
+        {
+            if (!Regex.IsMatch(check.Id, "^[a-z0-9][a-z0-9-]{1,80}$"))
+                throw new InvalidDataException("A model-pack compatibility check has an invalid identifier.");
+            if (check.RequiredFiles.Count == 0)
+                throw new InvalidDataException($"Compatibility check '{check.DisplayName}' has no required files.");
+            foreach (var file in check.RequiredFiles)
+            {
+                var normalized = file.RelativePath.Replace('/', Path.DirectorySeparatorChar);
+                if (Path.IsPathRooted(normalized) || normalized.Split(Path.DirectorySeparatorChar).Any(segment => segment == ".."))
+                    throw new InvalidDataException($"Unsafe compatibility-check model path: {file.RelativePath}");
+                if (file.Bytes <= 0 || !Regex.IsMatch(file.Sha256, "^[A-Fa-f0-9]{64}$"))
+                    throw new InvalidDataException($"Invalid compatibility-check metadata: {file.RelativePath}");
+            }
+        }
     }
 
     public static string ReceiptPath(string dataRoot, string packId) => Path.Combine(dataRoot, "State", "ModelPacks", $"{packId}.json");
@@ -201,6 +218,7 @@ internal static class ModelPackEngine
                 File.Move(source, target, true);
                 installed.Add(target);
             }
+            ValidateCompatibilityChecks(modelsRoot, manifest);
 
             var receipt = ReceiptPath(dataRoot, manifest.PackId);
             Directory.CreateDirectory(Path.GetDirectoryName(receipt)!);
@@ -211,6 +229,7 @@ internal static class ModelPackEngine
                 manifest.Version,
                 installedAt = DateTimeOffset.Now,
                 manifest.Files,
+                manifest.CompatibilityChecks,
                 manifest.Sources
             }, JsonOptions.Default));
             CacheUninstaller(dataRoot, manifest);
@@ -260,6 +279,26 @@ internal static class ModelPackEngine
         if (!result.StartsWith(fullRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("The model pack contains an unsafe path.");
         return result;
+    }
+
+    private static void ValidateCompatibilityChecks(string modelsRoot, ModelPackManifest manifest)
+    {
+        foreach (var check in manifest.CompatibilityChecks ?? Enumerable.Empty<ModelPackCompatibilityCheck>())
+        {
+            foreach (var file in check.RequiredFiles)
+            {
+                var target = SafeModelPath(modelsRoot, file.RelativePath.Replace('/', Path.DirectorySeparatorChar));
+                if (!File.Exists(target))
+                    throw new InvalidDataException($"{check.DisplayName} is incomplete. {check.RepairMessage}");
+                var info = new FileInfo(target);
+                if (info.Length != file.Bytes)
+                    throw new InvalidDataException($"{check.DisplayName} has a wrong-size file: {file.RelativePath}. {check.RepairMessage}");
+                using var stream = File.OpenRead(target);
+                var hash = Convert.ToHexString(SHA256.HashData(stream));
+                if (!hash.Equals(file.Sha256, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidDataException($"{check.DisplayName} has a mismatched file: {file.RelativePath}. {check.RepairMessage}");
+            }
+        }
     }
 
     private static void CacheUninstaller(string dataRoot, ModelPackManifest manifest)

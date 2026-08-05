@@ -342,7 +342,7 @@ export async function POST(request: Request) {
     if (!upstream.ok) {
       const detailText = JSON.stringify(result);
       const error = MODEL_SHAPE_MISMATCH.test(detailText)
-        ? "The selected checkpoint does not match the text encoder/runtime architecture. For RedCraft, confirm the installed RedCraft file is the Krea2-compatible version that matches qwen3vl_4b_fp8_scaled.safetensors."
+        ? "The PhotoReal model pack is stale or mismatched. Repair or reinstall the current PhotoReal model pack from this Shadowframe release, then restart Shadowframe."
         : "ComfyUI rejected the workflow.";
       return respond({ error, details: result }, { status: upstream.status });
     }
