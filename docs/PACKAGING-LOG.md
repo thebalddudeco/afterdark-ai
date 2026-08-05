@@ -508,3 +508,32 @@ Notes:
 
 - No model payloads changed in this prompt-tuning patch.
 
+## Phase 5L - Outfit Replace UI Simplification
+
+Goal: make Strict Outfit Replace behave like a focused two-image tool instead of a normal prompt generator.
+
+Completed:
+
+- Removed the visible positive and negative prompt boxes from Outfit Replace mode.
+- Prevented hidden prompt text from other tabs from being sent into Outfit Replace jobs.
+- Moved Outfit Replace to the final tab position after Text → Video.
+- Added aspect-ratio presets under Advanced Settings for Outfit Replace.
+- Kept custom width/height sizing hidden for Outfit Replace.
+- Replaced raw `Unauthorized` / `FluxVTONode` runtime text with a user-facing Comfy account sign-in message.
+
+Validation:
+
+- Vinext production build completed.
+- GitHub Pages production build completed.
+- Local Core rebuild completed.
+- Local Core installer rebuild completed.
+- Rebuilt Core installer manifest version: `0.3.3`.
+- Rebuilt Core installer payload file count: 77,797.
+- Rebuilt Core installer payload SHA-256: `129BDDF6362886F6AB054E7D403ACF19DE1B422566410DF31F130AB9BB617BA8`.
+- Rebuilt `release\Shadowframe-Beta-Handoff`.
+- Beta handoff Core tar checksum matches `129BDDF6362886F6AB054E7D403ACF19DE1B422566410DF31F130AB9BB617BA8`.
+
+Notes:
+
+- No model payloads changed in this UI/error-message patch.
+

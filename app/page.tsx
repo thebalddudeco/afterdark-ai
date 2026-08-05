@@ -138,6 +138,9 @@ function comfyRuntimeError(entry: unknown) {
 }
 
 function friendlyRuntimeError(message: string) {
+  if (/Unauthorized|FluxVTONode|FluxVTO/i.test(message)) {
+    return "Outfit Replace requires ComfyUI account access for the Flux VTO node. Open ComfyUI, sign in to your Comfy account, then restart Shadowframe and try again.";
+  }
   if (/size mismatch|copying a param with shape/i.test(message)) {
     return "The PhotoReal model pack is stale or mismatched. Shadowframe can repair it automatically.";
   }
@@ -606,8 +609,8 @@ export default function Home() {
         body: JSON.stringify({
           imageName,
           garmentImageName,
-          positivePrompt: positivePrompt.trim(),
-          negativePrompt: negativePrompt.trim(),
+          positivePrompt: isOutfitMode ? "" : positivePrompt.trim(),
+          negativePrompt: isOutfitMode ? "" : negativePrompt.trim(),
           width,
           height,
           length,
@@ -646,7 +649,7 @@ export default function Home() {
             ...media,
             id: generation.prompt_id,
             url: mediaUrl,
-            prompt: isOutfitMode ? (positivePrompt.trim() || "Strict outfit replacement") : positivePrompt.trim(),
+            prompt: isOutfitMode ? "Strict outfit replacement" : positivePrompt.trim(),
           };
           setResult(completed);
           setSessionOutputs((current) => [completed, ...current].slice(0, 4));
@@ -786,9 +789,9 @@ export default function Home() {
         <nav className="mode-switcher" aria-label="Generation mode">
           <button className={`mode-button ${mode === "txt-img" ? "active" : ""}`} type="button" onClick={() => selectMode("txt-img")}><Sparkles size={15} /> Text → Image</button>
           <button className={`mode-button ${mode === "img-img" ? "active" : ""}`} type="button" onClick={() => selectMode("img-img")}><ImageIcon size={15} /> Image → Image</button>
-          <button className={`mode-button ${mode === "outfit" ? "active" : ""}`} type="button" onClick={() => selectMode("outfit")}><ImageIcon size={15} /> Outfit Replace</button>
           <button className={`mode-button ${mode === "img-vid" ? "active" : ""}`} type="button" onClick={() => selectMode("img-vid")}><Video size={15} /> Image → Video</button>
           <button className={`mode-button ${mode === "txt-vid" ? "active" : ""}`} type="button" onClick={() => selectMode("txt-vid")}><Film size={15} /> Text → Video</button>
+          <button className={`mode-button ${mode === "outfit" ? "active" : ""}`} type="button" onClick={() => selectMode("outfit")}><ImageIcon size={15} /> Outfit Replace</button>
         </nav>
         <button className={`connection ${comfyOnline ? "online" : "offline"}`} type="button" onClick={() => { setConnectionError(""); setConnectionOpen(true); }}>
           {comfyOnline ? <Wifi size={15} /> : <WifiOff size={15} />}
@@ -923,24 +926,26 @@ export default function Home() {
             {garmentPreview && <button className="clear-image" type="button" onClick={resetGarmentImage}><X size={14} /> Remove</button>}
           </>}
 
-          <label className="field-label" htmlFor="positive-prompt">Positive prompt <span>{isOutfitMode ? "Optional" : "Required"}</span></label>
-          <div className="prompt-wrap">
-            <textarea
-              id="positive-prompt"
-              value={positivePrompt}
-              onChange={(event) => setPositivePrompt(event.target.value)}
-              placeholder={isOutfitMode ? "Optional: add fit notes only, like tighter fit, glossy latex, longer sleeves…" : createsVideo ? "Describe the motion, camera, lighting, and final look…" : mode === "img-img" ? "Describe exactly how the source image should change…" : "Describe the subject, composition, lighting, and final look…"}
-              maxLength={2000}
-            />
-            <small>{positivePrompt.length}/2000</small>
-          </div>
+          {!isOutfitMode && <>
+            <label className="field-label" htmlFor="positive-prompt">Positive prompt <span>Required</span></label>
+            <div className="prompt-wrap">
+              <textarea
+                id="positive-prompt"
+                value={positivePrompt}
+                onChange={(event) => setPositivePrompt(event.target.value)}
+                placeholder={createsVideo ? "Describe the motion, camera, lighting, and final look…" : mode === "img-img" ? "Describe exactly how the source image should change…" : "Describe the subject, composition, lighting, and final look…"}
+                maxLength={2000}
+              />
+              <small>{positivePrompt.length}/2000</small>
+            </div>
 
-          <label className="field-label" htmlFor="negative-prompt">Negative prompt</label>
-          <div className="prompt-wrap compact">
-            <textarea id="negative-prompt" value={negativePrompt} onChange={(event) => setNegativePrompt(event.target.value)} maxLength={2000} />
-            <small>{negativePrompt.length}/2000</small>
-          </div>
-          <p className="content-policy">Adult content is supported. Minors, sexual violence or coercion, and sexual content involving animals are prohibited.</p>
+            <label className="field-label" htmlFor="negative-prompt">Negative prompt</label>
+            <div className="prompt-wrap compact">
+              <textarea id="negative-prompt" value={negativePrompt} onChange={(event) => setNegativePrompt(event.target.value)} maxLength={2000} />
+              <small>{negativePrompt.length}/2000</small>
+            </div>
+            <p className="content-policy">Adult content is supported. Minors, sexual violence or coercion, and sexual content involving animals are prohibited.</p>
+          </>}
 
           <label className="field-label" htmlFor="base-model">Base model</label>
           <select className="base-model-select" id="base-model" value={baseModelId} onChange={(event) => selectBaseModel(event.target.value)}>
@@ -979,7 +984,7 @@ export default function Home() {
 
           {advancedOpen && (
             <div className="advanced-grid">
-              {mode !== "img-img" && !isOutfitMode && (
+              {mode !== "img-img" && (
                 <div className="aspect-section">
                   <span>Aspect ratio</span>
                   <div className="aspect-buttons">
@@ -1025,7 +1030,7 @@ export default function Home() {
               <span className="live-dot" />
               <span>{statusCopy[status]}</span>
             </div>
-            <div className="stage-tags"><span>{aspectLabel}</span>{createsVideo ? <><span>{length} frames</span><span>{fastMode ? "4-step" : "20-step"}</span></> : <><span>{hiresScale}× output</span><span>{mode === "txt-img" ? "12-step" : "40-step"}</span></>}</div>
+            <div className="stage-tags"><span>{aspectLabel}</span>{createsVideo ? <><span>{length} frames</span><span>{fastMode ? "4-step" : "20-step"}</span></> : isOutfitMode ? <><span>strict swap</span><span>source aligned</span></> : <><span>{hiresScale}× output</span><span>{mode === "txt-img" ? "12-step" : "40-step"}</span></>}</div>
           </div>
 
           <div className={`media-stage ${!imagePreview && !result ? "empty" : ""}`}>

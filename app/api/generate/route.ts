@@ -379,7 +379,10 @@ export async function POST(request: Request) {
     const result = await upstream.json() as Record<string, unknown>;
     if (!upstream.ok) {
       const detailText = JSON.stringify(result);
-      const error = MODEL_SHAPE_MISMATCH.test(detailText)
+      const outfitAuthError = mode === "outfit" && /Unauthorized|FluxVTONode|FluxVTO/i.test(detailText);
+      const error = outfitAuthError
+        ? "Outfit Replace requires ComfyUI account access for the Flux VTO node. Open ComfyUI, sign in to your Comfy account, then restart Shadowframe and try again."
+        : MODEL_SHAPE_MISMATCH.test(detailText)
         ? "The PhotoReal model pack is stale or mismatched. Shadowframe can repair it automatically."
         : "ComfyUI rejected the workflow.";
       return respond({

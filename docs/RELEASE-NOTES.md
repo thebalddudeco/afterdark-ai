@@ -12,11 +12,13 @@ The local PhotoReal model-pack artifact was rebuilt for this release. Its payloa
 
 PhotoReal Setup and the packaged installation verifier now perform a targeted RedCraft/Krea2 compatibility check for the exact RedCraft checkpoint and Qwen3VL encoder pair. If the app detects a stale or mismatched PhotoReal pack, it opens a self-repair dialog that can rerun the PhotoReal model-pack repair locally through the Shadowframe Bridge.
 
-The local Core installer artifact was also rebuilt for this release. Its payload SHA-256 is `A25AC586745E5309B6C6BF7AF5534F0D810C7A435BA64711B9BC9A8C79BC3842`.
+The local Core installer artifact was also rebuilt for this release. Its payload SHA-256 is `129BDDF6362886F6AB054E7D403ACF19DE1B422566410DF31F130AB9BB617BA8`.
 
 Strict Outfit Replace is now available as its own tool. It takes a source model photo plus a garment reference image, then sends a locked backend wardrobe-replacement prompt so the app treats the job as clothing replacement rather than a fresh portrait generation.
 
 Strict Outfit Replace now also asks the backend workflow to preserve realistic adult fabric tension and anatomical garment impressions for tight, sheer, lingerie, swimwear, t-shirt, dress, or similar wardrobe swaps.
+
+The Outfit Replace panel has been simplified: prompt boxes are hidden, aspect-ratio presets live under Advanced Settings, custom sizing is hidden for this strict two-image tool, and the tab now appears at the far right of the generator switcher. Raw Flux VTO authorization errors are translated into a Comfy account sign-in message.
 
 ## Previous Release Candidate: 0.3.2
 
