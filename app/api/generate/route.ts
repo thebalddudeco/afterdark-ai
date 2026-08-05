@@ -23,6 +23,10 @@ const CHILD_CONTENT = /\b(?:child|children|kid|kids|minor|minors|underage|pretee
 const SEXUAL_VIOLENCE = /\b(?:rape|raped|raping|sexual assault|sexually assault|forced sex|nonconsensual|non-consensual|without consent|sexual violence|sexual coercion)\b/i;
 const ANIMAL_SEXUAL_CONTENT = /\b(?:bestiality|zoophilia|zoophile|animal sex|sex with (?:an? )?(?:animal|dog|cat|horse|pony|wolf|fox|goat|sheep|cow|pig))\b/i;
 const MODEL_SHAPE_MISMATCH = /size mismatch|copying a param with shape/i;
+const PHOTO_REAL_REPAIR_ACTION = {
+  packId: "photoreal-models",
+  label: "Repair PhotoReal Pack",
+};
 
 function prohibitedPromptReason(prompt: string) {
   if (CHILD_CONTENT.test(prompt)) return "Content involving minors is not permitted.";
@@ -185,7 +189,8 @@ export async function POST(request: Request) {
       }
       if (!clipNames.includes(imageClipName)) {
         return respond({
-          error: `RedCraft needs ${imageClipName} in ComfyUI's text_encoders folder.`,
+          error: `RedCraft needs ${imageClipName} in the PhotoReal model pack.`,
+          repairAction: PHOTO_REAL_REPAIR_ACTION,
         }, { status: 409 });
       }
     }
@@ -342,9 +347,13 @@ export async function POST(request: Request) {
     if (!upstream.ok) {
       const detailText = JSON.stringify(result);
       const error = MODEL_SHAPE_MISMATCH.test(detailText)
-        ? "The PhotoReal model pack is stale or mismatched. Repair or reinstall the current PhotoReal model pack from this Shadowframe release, then restart Shadowframe."
+        ? "The PhotoReal model pack is stale or mismatched. Shadowframe can repair it automatically."
         : "ComfyUI rejected the workflow.";
-      return respond({ error, details: result }, { status: upstream.status });
+      return respond({
+        error,
+        repairAction: MODEL_SHAPE_MISMATCH.test(detailText) ? PHOTO_REAL_REPAIR_ACTION : undefined,
+        details: result,
+      }, { status: upstream.status });
     }
     return respond(result);
   } catch (error) {

@@ -10,9 +10,9 @@ Validation update: a local RedCraft text-to-image smoke test was accepted by Com
 
 The local PhotoReal model-pack artifact was rebuilt for this release. Its payload SHA-256 is `4A3249B1A003704FF0FFB51ABBA756784321EB70B7F525FB78A56F0264A379F3`.
 
-PhotoReal Setup and the packaged installation verifier now perform a targeted RedCraft/Krea2 compatibility check for the exact RedCraft checkpoint and Qwen3VL encoder pair. If the pack is stale or mismatched, users are told to repair or reinstall the current PhotoReal pack from the release instead of manually inspecting ComfyUI folders.
+PhotoReal Setup and the packaged installation verifier now perform a targeted RedCraft/Krea2 compatibility check for the exact RedCraft checkpoint and Qwen3VL encoder pair. If the app detects a stale or mismatched PhotoReal pack, it opens a self-repair dialog that can rerun the PhotoReal model-pack repair locally through the Shadowframe Bridge.
 
-The local Core installer artifact was also rebuilt for this release. Its payload SHA-256 is `FF38FC137E713887B996F3095452D6D7CDD74EADE67D365609BFB01FFF032DB5`.
+The local Core installer artifact was also rebuilt for this release. Its payload SHA-256 is `DC0F52B0AFF5F495C10FFADF9172AA03FFC2D0C92ECE4B0C8CE45F2B06B6B02F`.
 
 ## Previous Release Candidate: 0.3.2
 
@@ -91,4 +91,6 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 GitHub is appropriate for source code, documentation, and small installer metadata. Large model payloads should be hosted separately because the current model archives are approximately 10.00 GiB and 64.33 GiB.
 
 The Wan pack uses sources identified as Apache-2.0. The Anima pack is marked private-use until explicit redistribution permission is confirmed.
+
+
 

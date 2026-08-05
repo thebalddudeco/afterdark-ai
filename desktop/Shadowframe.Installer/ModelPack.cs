@@ -228,6 +228,9 @@ internal static class ModelPackEngine
                 manifest.DisplayName,
                 manifest.Version,
                 installedAt = DateTimeOffset.Now,
+                packageRoot = AppContext.BaseDirectory,
+                setupPath = Environment.ProcessPath,
+                payloadPath = payload,
                 manifest.Files,
                 manifest.CompatibilityChecks,
                 manifest.Sources

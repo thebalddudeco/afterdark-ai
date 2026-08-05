@@ -39,7 +39,7 @@ The model storage root should usually be local to the GPU machine. A network sha
 - `release\Shadowframe-Wan-Models` — 10 model files, 64.33 GiB payload.
 - `release\Shadowframe-PhotoReal-Models` — 38 model files, 69.77 GiB payload, rebuilt for Core `0.3.3` with LTX installed as a checkpoint and Qwen3VL included for RedCraft.
 
-Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack. Core Setup discovers model-pack installers named `Install Shadowframe * Models.exe` in adjacent package folders and launches them silently with the chosen Shadowframe library location. The current rebuilt Core `0.3.3` payload SHA-256 is `FF38FC137E713887B996F3095452D6D7CDD74EADE67D365609BFB01FFF032DB5`.
+Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack. Core Setup discovers model-pack installers named `Install Shadowframe * Models.exe` in adjacent package folders and launches them silently with the chosen Shadowframe library location. The current rebuilt Core `0.3.3` payload SHA-256 is `DC0F52B0AFF5F495C10FFADF9172AA03FFC2D0C92ECE4B0C8CE45F2B06B6B02F`.
 
 The PhotoReal pack also includes a targeted RedCraft/Krea2 compatibility check. During install and repair, the pack verifies that `diffusion_models/redcraft23INT8INT4FP8_30Krea2.safetensors` and `text_encoders/qwen3vl_4b_fp8_scaled.safetensors` are the exact expected files. This prevents the common RedCraft size-mismatch failure from becoming a generation-time surprise for users.
 
@@ -155,5 +155,6 @@ Downloaded LoRA filenames:
 - Wan production pack: full 64.33 GiB extraction, installed-file size checks, and production uninstall passed.
 - Both production packs: full payload SHA-256, installed byte totals, archive file counts, and exact archive-to-manifest path comparisons passed.
 - Installer project: Release build completed with zero warnings and zero errors.
+
 
 

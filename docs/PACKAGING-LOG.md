@@ -137,9 +137,9 @@ Completed:
 - Added explicit PhotoReal model-pack compatibility metadata for the RedCraft/Krea2 checkpoint and Qwen3VL text encoder pair.
 - Updated the model-pack installer to validate those exact files after extraction and fail fast with repair guidance if either file is missing, wrong-size, or wrong-hash.
 - Updated the installed verification script to always check the RedCraft/Krea2 pair, even when the slower full-pack hash pass is skipped.
-- Updated the app-side RedCraft mismatch message to tell users to repair or reinstall the current PhotoReal pack from the same Shadowframe release.
+- Updated the app-side RedCraft mismatch handling to open a one-click PhotoReal repair dialog instead of requiring users to manually run the installer.
 
-Result: a stale or mismatched PhotoReal pack should be caught by Setup, Repair, or the packaged verifier before users have to debug ComfyUI internals.
+Result: a stale or mismatched PhotoReal pack should be caught by Setup, Repair, the packaged verifier, or the in-app repair flow before users have to debug ComfyUI internals.
 
 ## Phase 5 Planning - Installer Hub and Storage Locations
 
@@ -403,3 +403,4 @@ Notes:
 
 - RedCraft/Krea2 requires a ComfyUI runtime with Krea2 CLIPLoader support. The rebuilt Core now targets ComfyUI `0.30.0` instead of `0.18.5`.
 - The PhotoReal pack remains marked `private-use` until redistribution rights are explicitly confirmed for every third-party model and LoRA binary.
+

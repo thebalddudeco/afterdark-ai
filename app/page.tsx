@@ -42,6 +42,11 @@ type SessionOutput = MediaOutput & {
   prompt: string;
 };
 
+type RepairAction = {
+  packId: string;
+  label: string;
+};
+
 type ModeSettings = {
   baseModelId: string;
   selectedStyleIds: string[];
@@ -132,7 +137,7 @@ function comfyRuntimeError(entry: unknown) {
 
 function friendlyRuntimeError(message: string) {
   if (/size mismatch|copying a param with shape/i.test(message)) {
-    return "The selected checkpoint does not match the text encoder/runtime architecture. For RedCraft, confirm the installed RedCraft file is the Krea2-compatible version that matches qwen3vl_4b_fp8_scaled.safetensors.";
+    return "The PhotoReal model pack is stale or mismatched. Shadowframe can repair it automatically.";
   }
   return message;
 }
@@ -171,6 +176,9 @@ export default function Home() {
   const [fastMode, setFastMode] = useState(true);
   const [status, setStatus] = useState<RunStatus>("idle");
   const [error, setError] = useState("");
+  const [repairAction, setRepairAction] = useState<RepairAction | null>(null);
+  const [repairingPack, setRepairingPack] = useState(false);
+  const [repairMessage, setRepairMessage] = useState("");
   const [comfyOnline, setComfyOnline] = useState<boolean | null>(null);
   const [bridgeUrl, setBridgeUrl] = useState("");
   const [bridgeToken, setBridgeToken] = useState("");
@@ -431,6 +439,8 @@ export default function Home() {
     setSelectedStyleIds([]);
     setResult(null);
     setError("");
+    setRepairAction(null);
+    setRepairMessage("");
     if (!isRunning) setStatus("idle");
     if (nextBaseModelId === "wai-anima" || nextBaseModelId === "anima-aesthetic") setHiresScale(1.5);
     if (nextBaseModelId === "ltx23-gtanimation") {
@@ -452,6 +462,8 @@ export default function Home() {
 
   const toggleStyle = (style: StylePreset) => {
     setError("");
+    setRepairAction(null);
+    setRepairMessage("");
     if (!isRunning) setStatus("idle");
     if (style.id === "original") {
       setSelectedStyleIds([]);
@@ -500,6 +512,8 @@ export default function Home() {
 
     const runToken = ++runTokenRef.current;
     setError("");
+    setRepairAction(null);
+    setRepairMessage("");
     setResult(null);
     setRunningMode(mode);
     setRunStartedAt(Date.now());
@@ -549,8 +563,9 @@ export default function Home() {
           referenceFidelity,
         }),
       });
-      const generation = (await generationResponse.json()) as { prompt_id?: string; error?: string };
+      const generation = (await generationResponse.json()) as { prompt_id?: string; error?: string; repairAction?: RepairAction };
       if (!generationResponse.ok || !generation.prompt_id) {
+        if (generation.repairAction) setRepairAction(generation.repairAction);
         throw new Error(generation.error || "ComfyUI rejected the workflow.");
       }
 
@@ -594,7 +609,11 @@ export default function Home() {
       setStatus("error");
       setRunningMode(null);
       setRunStartedAt(null);
-      const message = friendlyRuntimeError(caught instanceof Error ? caught.message : "Something went wrong.");
+      const rawMessage = caught instanceof Error ? caught.message : "Something went wrong.";
+      const message = friendlyRuntimeError(rawMessage);
+      if (/PhotoReal model pack is stale|size mismatch|copying a param with shape/i.test(rawMessage) || /PhotoReal model pack is stale/i.test(message)) {
+        setRepairAction((current) => current ?? { packId: "photoreal-models", label: "Repair PhotoReal Pack" });
+      }
       let bridgeIsOnline = false;
       for (let attempt = 0; attempt < 2 && !bridgeIsOnline; attempt += 1) {
         try {
@@ -623,6 +642,34 @@ export default function Home() {
     setRunStartedAt(null);
     setElapsedSeconds(0);
     setError("");
+    setRepairAction(null);
+    setRepairMessage("");
+  };
+
+  const repairPhotoRealPack = async () => {
+    if (!repairAction || repairingPack) return;
+    setRepairingPack(true);
+    setRepairMessage("Repairing PhotoReal locally. Large model files can take a few minutes.");
+    try {
+      const response = await bridgeRequest("/api/repair-pack", bridgeUrl, bridgeToken, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packId: repairAction.packId }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as { message?: string; error?: string };
+      if (!response.ok) throw new Error(payload.error || "PhotoReal repair failed.");
+      setRepairMessage(payload.message || "PhotoReal was repaired. Try the RedCraft generation again.");
+      setRepairAction(null);
+      setError("");
+      setStatus("idle");
+      const health = await bridgeRequest("/api/comfy?path=/system_stats", bridgeUrl, bridgeToken, { cache: "no-store" }).catch(() => null);
+      setComfyOnline(Boolean(health?.ok));
+    } catch (caught) {
+      setRepairMessage("");
+      setError(caught instanceof Error ? caught.message : "PhotoReal repair failed.");
+    } finally {
+      setRepairingPack(false);
+    }
   };
 
   if (showSplash) {
@@ -704,6 +751,24 @@ export default function Home() {
               {connectionTesting ? <><LoaderCircle className="spinner" size={16} /> Testing connection</> : <><Wifi size={16} /> Save and connect</>}
             </button>
             <small>The key works like a password. It is kept only in this browser session and is never saved to GitHub.</small>
+          </section>
+        </div>
+      )}
+
+      {repairAction && (
+        <div className="repair-backdrop" role="presentation">
+          <section className="repair-dialog" role="dialog" aria-modal="true" aria-labelledby="repair-title">
+            <span className="dialog-icon"><RotateCcw size={21} /></span>
+            <p className="eyebrow">Self repair available</p>
+            <h2 id="repair-title">Repair PhotoReal Pack</h2>
+            <p>RedCraft hit a model/runtime mismatch. Shadowframe can rerun the PhotoReal model-pack repair locally using the package it was installed from.</p>
+            {repairMessage && <div className="repair-status">{repairMessage}</div>}
+            <div className="repair-actions">
+              <button type="button" onClick={repairPhotoRealPack} disabled={repairingPack}>
+                {repairingPack ? <><LoaderCircle className="spinner" size={16} /> Repairing…</> : <><RotateCcw size={16} /> {repairAction.label}</>}
+              </button>
+              <button type="button" className="secondary" onClick={() => setRepairAction(null)} disabled={repairingPack}>Not now</button>
+            </div>
           </section>
         </div>
       )}
@@ -858,7 +923,8 @@ export default function Home() {
             </div>
           )}
 
-          {error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message">{error}{repairAction && <button type="button" onClick={repairPhotoRealPack} disabled={repairingPack}>{repairingPack ? "Repairing…" : repairAction.label}</button>}</div>}
+          {repairMessage && !repairAction && <div className="repair-message">{repairMessage}</div>}
 
           <button className="generate-button" type="button" onClick={isRunning ? cancelGeneration : generate}>
             {isRunning ? <><X size={18} /> Cancel generation</> : !comfyOnline ? <><WifiOff size={18} /> Connect bridge</> : <><Play size={18} fill="currentColor" /> Generate {createsVideo ? "video" : "image"}</>}
