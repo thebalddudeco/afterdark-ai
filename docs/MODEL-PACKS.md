@@ -7,7 +7,7 @@ Shadowframe is distributed as three Windows packages:
 3. **Wan 2.2 Video Models** — Wan 2.2 image-to-video and text-to-video high/low-noise models, the shared UMT5 encoder/VAE, and Lightx2v acceleration LoRAs.
 4. **PhotoReal Image and Video Models** — RedCraft, Moody Real Mix, LTX 2.3 GTAnimation, shared Qwen support files, and their configured PhotoReal LoRAs.
 
-Install Core first. Core Setup now asks for a Shadowframe library location and can run adjacent Anima, Wan, and future PhotoReal model-pack installers automatically. Model packs install into `<Shadowframe library location>\models`, are independently repairable, and appear separately in Windows Installed Apps.
+Install Core first. Core Setup now asks for a Shadowframe library location and can run adjacent Anima, Wan, and PhotoReal model-pack installers automatically. Model packs install into `<Shadowframe library location>\models`, are independently repairable, and appear separately in Windows Installed Apps.
 
 This allows a user to install the application on one drive, keep large model files on another, and keep generated files somewhere convenient.
 
@@ -37,9 +37,9 @@ The model storage root should usually be local to the GPU machine. A network sha
 
 - `release\Shadowframe-Anima-Models` — 14 model files, 10.00 GiB payload.
 - `release\Shadowframe-Wan-Models` — 10 model files, 64.33 GiB payload.
-- `release\Shadowframe-PhotoReal-Models` — 37 model files, 64.89 GiB payload, rebuilt for Core `0.3.2` with LTX installed as a checkpoint.
+- `release\Shadowframe-PhotoReal-Models` — 38 model files, 69.77 GiB payload, rebuilt for Core `0.3.3` with LTX installed as a checkpoint and Qwen3VL included for RedCraft.
 
-Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack. Core Setup discovers model-pack installers named `Install Shadowframe * Models.exe` in adjacent package folders and launches them silently with the chosen Shadowframe library location. The current rebuilt Core `0.3.2` payload SHA-256 is `5D383D066862287FB8B488656CBDFC544EDCA26A23E5A746B2B589CA9E318A7B`.
+Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack. Core Setup discovers model-pack installers named `Install Shadowframe * Models.exe` in adjacent package folders and launches them silently with the chosen Shadowframe library location. The current rebuilt Core `0.3.3` payload SHA-256 is `1C128A7525936DF02DB385758D702103CB2EB1760A225993F8E232D96437A8BB`.
 
 ## Build
 
@@ -79,6 +79,7 @@ Base model:
 Folder placement:
 
 - Base diffusion model: `models/diffusion_models`
+- Text encoder: `models/text_encoders/qwen3vl_4b_fp8_scaled.safetensors`
 - LoRAs: `models/loras/RED CRAFT`
 
 Downloaded LoRA filenames:

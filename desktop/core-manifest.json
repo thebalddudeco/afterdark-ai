@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "coreVersion": "0.3.2",
+  "coreVersion": "0.3.3",
   "architecture": "win-x64",
   "runtime": {
-    "comfyUiVersion": "0.18.5",
+    "comfyUiVersion": "0.30.0",
     "pythonVersion": "3.12.11",
     "nodeMajorVersion": 22,
     "comfyUiEntryPoint": "Runtime/ComfyUI/main.py",
@@ -40,6 +40,11 @@
     {
       "packId": "wan-models",
       "displayName": "Wan 2.2 Video Models",
+      "version": "1.0.0"
+    },
+    {
+      "packId": "photoreal-models",
+      "displayName": "PhotoReal Image and Video Models",
       "version": "1.0.0"
     }
   ]

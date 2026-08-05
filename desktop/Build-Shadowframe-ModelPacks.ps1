@@ -75,6 +75,7 @@ $photoRealFiles = @(
   New-PackFile (Join-Path $ComfyModelsRoot "diffusion_models\ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors") "checkpoints/ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors"
   New-PackFile (Join-Path $ComfyModelsRoot "diffusion_models\qwen_image_2512_fp8_e4m3fn.safetensors") "diffusion_models/qwen_image_2512_fp8_e4m3fn.safetensors"
   New-PackFile (Join-Path $ComfyModelsRoot "text_encoders\qwen_2.5_vl_7b_fp8_scaled.safetensors") "text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "text_encoders\qwen3vl_4b_fp8_scaled.safetensors") "text_encoders/qwen3vl_4b_fp8_scaled.safetensors"
   New-PackFile (Join-Path $ComfyModelsRoot "vae\qwen_image_vae.safetensors") "vae/qwen_image_vae.safetensors"
   New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\skintone_v2_krea2_loraholic.safetensors") "loras/RED CRAFT/skintone_v2_krea2_loraholic.safetensors"
   New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\mons_pubis_krea2_loraholic.safetensors") "loras/RED CRAFT/mons_pubis_krea2_loraholic.safetensors"
@@ -218,7 +219,7 @@ foreach ($definition in $definitions) {
       packId = $definition.PackId
       displayName = $definition.DisplayName
       version = $definition.Version
-      minimumCoreVersion = "0.3.2"
+      minimumCoreVersion = "0.3.3"
       payloadFile = $definition.Payload
       sha256 = $payloadHash
       installedBytes = $installedBytes

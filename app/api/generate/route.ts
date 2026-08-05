@@ -146,7 +146,7 @@ export async function POST(request: Request) {
         ? "anima-aesthetic-v1.1.safetensors"
         : photoModelName;
     const imageClipName = baseModelId === "redcraft"
-      ? "qwen3vl_4b_bf16.safetensors"
+      ? "qwen3vl_4b_fp8_scaled.safetensors"
       : isPhotoImageFamily
         ? "qwen_2.5_vl_7b_fp8_scaled.safetensors"
         : "qwen_3_06b_base.safetensors";

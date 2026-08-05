@@ -347,3 +347,46 @@ Validation:
 Notes:
 
 - No model payloads changed in this hotfix. The current beta machine's ComfyUI runtime does not expose the `krea2` CLIP type, and the required `qwen3vl_4b_bf16.safetensors` text encoder is not installed yet.
+
+## Phase 5G - Krea2 Runtime Upgrade
+
+Goal: make RedCraft PhotoReal generation work on the beta machine and ship the missing runtime dependency in the PhotoReal model pack.
+
+Completed:
+
+- Backed up the previous local ComfyUI source to `A:\Shadowframe AI\.shadowframe\backups\ComfyUI-20260804-215447`.
+- Updated the local ComfyUI source from upstream commit `ba1d0ef`.
+- Installed the updated ComfyUI Python requirements into the existing private Python environment.
+- Confirmed the local ComfyUI runtime reports version `0.30.0`.
+- Downloaded `qwen3vl_4b_fp8_scaled.safetensors` from the official `Comfy-Org/Krea-2` Hugging Face repository.
+- Updated RedCraft routing to use `qwen3vl_4b_fp8_scaled.safetensors`.
+- Added `text_encoders/qwen3vl_4b_fp8_scaled.safetensors` to the PhotoReal model-pack payload.
+- Bumped app, launcher, installer, Core manifest, and model-pack minimum Core metadata to `0.3.3`.
+- Added PhotoReal to the Core manifest's model-pack list.
+
+Validation:
+
+- Vinext production build completed.
+- GitHub Pages production build completed.
+- Local Core rebuild completed.
+- Local Core installer rebuild completed.
+- Local PhotoReal model-pack rebuild completed.
+- RedCraft text-to-image smoke test was accepted by ComfyUI and completed successfully.
+- RedCraft smoke test output: `ShadowframeAI_REDCRAFT_00001_.png`.
+- Rebuilt `release\Shadowframe-PhotoReal-Models`.
+- Rebuilt PhotoReal payload file count: 38.
+- Rebuilt PhotoReal payload size: 69.77 GiB.
+- Rebuilt PhotoReal payload SHA-256: `4A3249B1A003704FF0FFB51ABBA756784321EB70B7F525FB78A56F0264A379F3`.
+- Rebuilt PhotoReal manifest minimum Core version: `0.3.3`.
+- Rebuilt Core installer manifest version: `0.3.3`.
+- Rebuilt Core installer payload file count: 77,795.
+- Rebuilt Core installer payload SHA-256: `1C128A7525936DF02DB385758D702103CB2EB1760A225993F8E232D96437A8BB`.
+- Rebuilt `release\Shadowframe-Beta-Handoff`.
+- Refreshed beta handoff checksum entries: 105.
+- Beta handoff Core tar checksum matches `1C128A7525936DF02DB385758D702103CB2EB1760A225993F8E232D96437A8BB`.
+- Beta handoff PhotoReal tar checksum matches `4A3249B1A003704FF0FFB51ABBA756784321EB70B7F525FB78A56F0264A379F3`.
+
+Notes:
+
+- RedCraft/Krea2 requires a ComfyUI runtime with Krea2 CLIPLoader support. The rebuilt Core now targets ComfyUI `0.30.0` instead of `0.18.5`.
+- The PhotoReal pack remains marked `private-use` until redistribution rights are explicitly confirmed for every third-party model and LoRA binary.

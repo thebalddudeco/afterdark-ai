@@ -1,6 +1,18 @@
 # Shadowframe AI Release Notes
 
-## Release Candidate: 0.3.2
+## Release Candidate: 0.3.3
+
+This distro refresh versions Shadowframe as `0.3.3` and upgrades the bundled ComfyUI runtime target to `0.30.0` so Krea2-based PhotoReal workflows can run.
+
+RedCraft now uses the official Qwen3VL 4B FP8 text encoder path, and the PhotoReal model pack includes `qwen3vl_4b_fp8_scaled.safetensors` so fresh installs have the same dependency that fixed the beta machine.
+
+Validation update: a local RedCraft text-to-image smoke test was accepted by ComfyUI and completed successfully after the runtime upgrade, producing `ShadowframeAI_REDCRAFT_00001_.png`.
+
+The local PhotoReal model-pack artifact was rebuilt for this release. Its payload SHA-256 is `4A3249B1A003704FF0FFB51ABBA756784321EB70B7F525FB78A56F0264A379F3`.
+
+The local Core installer artifact was also rebuilt for this release. Its payload SHA-256 is `1C128A7525936DF02DB385758D702103CB2EB1760A225993F8E232D96437A8BB`.
+
+## Previous Release Candidate: 0.3.2
 
 This distro refresh versions Shadowframe as `0.3.2` and activates the LTX 2.3 GTAnimation Image → Video workflow. LTX is now a real selectable video base model, its LoRAs are wired through the backend, and the PhotoReal model-pack script installs the LTX model as a checkpoint so ComfyUI can expose the matching model and VAE path.
 
@@ -25,6 +37,7 @@ Shadowframe is split into three packages:
 - Shadowframe Core: desktop app, bundled ComfyUI runtime, private bridge, local web service, workflow code, scripts, and runtime manifest.
 - Anima Image Models: WAI-ANIMA, Anima Aesthetic, Qwen encoder/VAE, and configured Anima LoRAs.
 - Wan 2.2 Video Models: Wan 2.2 I2V/T2V high and low noise models, UMT5 encoder, Wan VAE, and Lightx2v LoRAs.
+- PhotoReal Image and Video Models: RedCraft, Moody Real Mix, LTX 2.3 GTAnimation, Qwen/Qwen3VL support files, and configured PhotoReal LoRAs.
 
 Core must be installed first. Model packs install independently into `%LOCALAPPDATA%\Shadowframe\models`.
 
@@ -36,6 +49,8 @@ Core must be installed first. Model packs install independently into `%LOCALAPPD
 - `release\Shadowframe-Anima-Models\Shadowframe-Anima-Models.tar`
 - `release\Shadowframe-Wan-Models\Install Shadowframe Wan Models.exe`
 - `release\Shadowframe-Wan-Models\Shadowframe-Wan-Models.tar`
+- `release\Shadowframe-PhotoReal-Models\Install Shadowframe PhotoReal Models.exe`
+- `release\Shadowframe-PhotoReal-Models\Shadowframe-PhotoReal-Models.tar`
 - `release\Shadowframe-Installer\Sample Prompts\redcraft-prompts`
 - `release\Shadowframe-Installer\Sample Prompts\ltx-prompts`
 - `release\Shadowframe-Installer\Sample Prompts\moody-prompts`
@@ -57,8 +72,9 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 - Beta handoff package builder completed and produced `release\Shadowframe-Beta-Handoff`.
 - Beta installation verifier runs and reports actionable install readiness checks.
 - Starter prompt folders were added to the current local installer distro and the Core beta handoff folder.
-- Version metadata updated to `0.3.2` across package, Core manifest, launcher, installer, and model-pack minimum Core metadata.
+- Version metadata updated to `0.3.3` across package, Core manifest, launcher, installer, and model-pack minimum Core metadata.
 - LTX Image → Video workflow validation passed in ComfyUI, including an LTX LoRA selection.
+- RedCraft Krea2 workflow validation passed in ComfyUI after upgrading the local runtime to `0.30.0`.
 
 ## Remaining Acceptance Tests
 
