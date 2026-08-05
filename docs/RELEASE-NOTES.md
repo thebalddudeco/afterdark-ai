@@ -12,7 +12,7 @@ The local PhotoReal model-pack artifact was rebuilt for this release. Its payloa
 
 PhotoReal Setup and the packaged installation verifier now perform a targeted RedCraft/Krea2 compatibility check for the exact RedCraft checkpoint and Qwen3VL encoder pair. If the app detects a stale or mismatched PhotoReal pack, it opens a self-repair dialog that can rerun the PhotoReal model-pack repair locally through the Shadowframe Bridge.
 
-The local Core installer artifact was also rebuilt for this release. Its payload SHA-256 is `3666EF6433A72D0A6709D8D7F83363C23EB5E5FE6782FB229F6A7C16F068A4D8`.
+The local Core installer artifact was also rebuilt for this release. Its payload SHA-256 is `8E014ABB330B3070FA14C9367E5A8C83769913B442B9D1C793DB439EDD1A6DF8`.
 
 ## Previous Release Candidate: 0.3.2
 

@@ -428,3 +428,27 @@ Notes:
 
 - No model payloads changed in this hotfix.
 
+## Phase 5I - Invisible Scrollbar Hotfix
+
+Goal: remove visible UI scrollbars without disabling scrolling or textarea resize handles.
+
+Completed:
+
+- Hid scrollbars in the left control panel, prompt textareas, and recent-generation film strip.
+- Prevented horizontal overflow inside the left control panel.
+- Locked the app root to the viewport height so the host window does not gain extra page scrollbars.
+
+Validation:
+
+- Vinext production build completed.
+- GitHub Pages production build completed.
+- Local Core rebuild completed.
+- Local Core installer rebuild completed.
+- Rebuilt Core installer manifest version: `0.3.3`.
+- Rebuilt Core installer payload file count: 77,796.
+- Rebuilt Core installer payload SHA-256: `8E014ABB330B3070FA14C9367E5A8C83769913B442B9D1C793DB439EDD1A6DF8`.
+
+Notes:
+
+- No model payloads changed in this hotfix.
+
