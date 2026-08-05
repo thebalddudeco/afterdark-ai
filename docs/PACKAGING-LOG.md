@@ -404,3 +404,27 @@ Notes:
 - RedCraft/Krea2 requires a ComfyUI runtime with Krea2 CLIPLoader support. The rebuilt Core now targets ComfyUI `0.30.0` instead of `0.18.5`.
 - The PhotoReal pack remains marked `private-use` until redistribution rights are explicitly confirmed for every third-party model and LoRA binary.
 
+## Phase 5H - Full-Bleed Shell Hotfix
+
+Goal: remove the black gutters around the Shadowframe splash shell and keep the local distro and user release package in sync.
+
+Completed:
+
+- Changed the splash shell from a centered presentation card to a full-window surface.
+- Removed the splash shell's outer border radius, border, margin, and box shadow so the app fills the host window edge-to-edge.
+- Kept the local app shell full width at tablet breakpoints so responsive rules do not reintroduce side gutters.
+
+Validation:
+
+- Vinext production build completed.
+- GitHub Pages production build completed.
+- Local Core rebuild completed.
+- Local Core installer rebuild completed.
+- Rebuilt Core installer manifest version: `0.3.3`.
+- Rebuilt Core installer payload file count: 77,796.
+- Rebuilt Core installer payload SHA-256: `3666EF6433A72D0A6709D8D7F83363C23EB5E5FE6782FB229F6A7C16F068A4D8`.
+
+Notes:
+
+- No model payloads changed in this hotfix.
+

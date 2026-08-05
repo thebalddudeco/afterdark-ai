@@ -20,9 +20,9 @@ button, textarea, input { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { color: inherit; }
 
-.splash-shell { width: min(1560px, calc(100vw - 48px)); min-height: calc(100vh - 48px); margin: 24px auto; overflow: hidden; border: 2px solid transparent; border-radius: 30px; color: #fff; background: linear-gradient(#0a0a0b, #0a0a0b) padding-box, linear-gradient(90deg, #311304 0%, #b24712 50%, #311304 100%) border-box; box-shadow: 0 28px 80px rgba(34,26,20,.2); }
+.splash-shell { width: 100vw; min-height: 100vh; margin: 0; overflow: hidden; border: 0; border-radius: 0; color: #fff; background: #0a0a0b; box-shadow: none; }
 .splash-nav { min-height: 76px; display: flex; align-items: center; justify-content: space-between; padding: 0 34px; border-bottom: 1px solid rgba(255,255,255,.07); }
-.splash-hero { min-height: calc(100vh - 226px); display: grid; grid-template-columns: minmax(350px, .82fr) minmax(520px, 1.18fr); align-items: center; gap: clamp(40px, 7vw, 110px); padding: clamp(55px, 7vw, 108px); background: radial-gradient(circle at 78% 42%, rgba(255,102,25,.13), transparent 33%), radial-gradient(circle at 5% 80%, rgba(255,255,255,.035), transparent 26%); }
+.splash-hero { min-height: calc(100vh - 174px); display: grid; grid-template-columns: minmax(350px, .82fr) minmax(520px, 1.18fr); align-items: center; gap: clamp(40px, 7vw, 110px); padding: clamp(55px, 7vw, 108px); background: radial-gradient(circle at 78% 42%, rgba(255,102,25,.13), transparent 33%), radial-gradient(circle at 5% 80%, rgba(255,255,255,.035), transparent 26%); }
 .splash-copy { position: relative; z-index: 2; }
 .splash-kicker { display: flex; align-items: center; gap: 9px; margin-bottom: 22px; color: #c5c5c8; font-size: 10px; font-weight: 720; letter-spacing: .15em; text-transform: uppercase; }
 .splash-kicker span { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 5px rgba(255,118,36,.11); }
@@ -218,7 +218,7 @@ h1, h2, h3, p { margin-top: 0; }
 @media (max-width: 1120px) {
   .splash-hero { grid-template-columns: .9fr 1.1fr; gap: 30px; padding: 60px 48px; }
   .splash-gallery { min-height: 500px; }
-  .app-shell { width: calc(100vw - 24px); margin: 12px auto; }
+  .app-shell { width: 100vw; margin: 0; }
   .workspace { grid-template-columns: 330px minmax(420px, 1fr); }
   .activity-panel { grid-column: 1 / -1; }
   .activity-heading { margin-bottom: 14px; }
