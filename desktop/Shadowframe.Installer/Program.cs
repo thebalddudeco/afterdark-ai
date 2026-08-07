@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Formats.Tar;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -237,6 +238,30 @@ internal sealed record InstallProgress(int Percent, string Message);
 
 internal static class InstallerEngine
 {
+    private static readonly HttpClient DownloadClient = new()
+    {
+        Timeout = Timeout.InfiniteTimeSpan
+    };
+
+    private static readonly PublicModelPackDefinition[] PublicModelPacks =
+    {
+        new(
+            "anima-public",
+            "Anima public models",
+            "Install Shadowframe Anima Public Models.exe",
+            "TheBaldDudeCo/shadowframe-anima-public-models"),
+        new(
+            "wan-public",
+            "Wan public models",
+            "Install Shadowframe Wan Public Models.exe",
+            "TheBaldDudeCo/shadowframe-wan-public-models"),
+        new(
+            "photoreal-public",
+            "PhotoReal public models",
+            "Install Shadowframe PhotoReal Public Models.exe",
+            "TheBaldDudeCo/shadowframe-photoreal-public-models")
+    };
+
     public static void Install(InstallOptions options, PackageManifest manifest, IProgress<InstallProgress>? progress)
     {
         var payloadPath = Path.Combine(AppContext.BaseDirectory, manifest.PayloadFile);
@@ -425,6 +450,8 @@ internal static class InstallerEngine
     private static void InstallAdjacentModelPacks(InstallOptions options, IProgress<InstallProgress>? progress)
     {
         var packs = DiscoverModelPackInstallers().ToList();
+        if (packs.Count == 0 && Program.LoadReleaseProfile().Equals("public", StringComparison.OrdinalIgnoreCase))
+            packs = AcquirePublicModelPackInstallers(options, progress).ToList();
         if (packs.Count == 0) return;
         for (var index = 0; index < packs.Count; index++)
         {
@@ -466,6 +493,97 @@ internal static class InstallerEngine
             var match = Array.FindIndex(preferredOrder, item => name.Contains(item, StringComparison.OrdinalIgnoreCase));
             return match < 0 ? preferredOrder.Length : match;
         }).ThenBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static IEnumerable<string> AcquirePublicModelPackInstallers(InstallOptions options, IProgress<InstallProgress>? progress)
+    {
+        var cacheRoot = Path.Combine(Path.GetFullPath(options.DataRoot), "InstallCache", "PublicModelPacks", $"core-{Program.ProductVersion}");
+        Directory.CreateDirectory(cacheRoot);
+        var installers = new List<string>();
+        for (var index = 0; index < PublicModelPacks.Length; index++)
+        {
+            var definition = PublicModelPacks[index];
+            var packRoot = Path.Combine(cacheRoot, definition.PackId);
+            Directory.CreateDirectory(packRoot);
+            var setupPath = Path.Combine(packRoot, definition.InstallerFileName);
+            if (!File.Exists(setupPath))
+                File.Copy(Environment.ProcessPath!, setupPath, true);
+
+            progress?.Report(new(90 + index, $"Fetching {definition.DisplayName}…"));
+            var manifestPath = Path.Combine(packRoot, ModelPackApplication.ManifestName);
+            DownloadFile(BuildHuggingFaceUrl(definition.RepositoryId, ModelPackApplication.ManifestName), manifestPath, $"Downloading {definition.DisplayName} manifest…", progress, 90 + index, 91 + index);
+
+            var manifest = JsonSerializer.Deserialize<ModelPackManifest>(File.ReadAllText(manifestPath), JsonOptions.Default)
+                           ?? throw new InvalidDataException($"The downloaded manifest for {definition.DisplayName} is invalid.");
+            ModelPackEngine.ValidateManifest(manifest);
+
+            var payloadPath = Path.Combine(packRoot, manifest.PayloadFile);
+            if (!File.Exists(payloadPath) || !FileMatchesHash(payloadPath, manifest.Sha256))
+            {
+                DownloadFile(BuildHuggingFaceUrl(definition.RepositoryId, manifest.PayloadFile), payloadPath, $"Downloading {definition.DisplayName} payload…", progress, 91 + index, 92 + index);
+                if (!FileMatchesHash(payloadPath, manifest.Sha256))
+                    throw new InvalidDataException($"{definition.DisplayName} failed its integrity check after download.");
+            }
+
+            installers.Add(setupPath);
+        }
+
+        return installers;
+    }
+
+    private static string BuildHuggingFaceUrl(string repositoryId, string fileName)
+    {
+        var encodedSegments = fileName
+            .Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(Uri.EscapeDataString);
+        return $"https://huggingface.co/datasets/{repositoryId}/resolve/main/{string.Join("/", encodedSegments)}?download=true";
+    }
+
+    private static bool FileMatchesHash(string path, string expectedSha256)
+    {
+        if (!File.Exists(path)) return false;
+        using var stream = File.OpenRead(path);
+        var hash = Convert.ToHexString(SHA256.HashData(stream));
+        return hash.Equals(expectedSha256, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void DownloadFile(string url, string destination, string label, IProgress<InstallProgress>? progress, int percentStart, int percentEnd)
+    {
+        var tempFile = destination + ".partial";
+        if (File.Exists(tempFile))
+            File.Delete(tempFile);
+        Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        using var response = DownloadClient.Send(request, HttpCompletionOption.ResponseHeadersRead);
+        response.EnsureSuccessStatusCode();
+
+        var totalBytes = response.Content.Headers.ContentLength;
+        using var source = response.Content.ReadAsStream();
+        using var target = File.Create(tempFile);
+        var buffer = new byte[1024 * 1024];
+        long completed = 0;
+        int read;
+        while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            target.Write(buffer, 0, read);
+            completed += read;
+            if (totalBytes is > 0)
+            {
+                var ratio = Math.Clamp(completed / (double)totalBytes.Value, 0d, 1d);
+                var percent = percentStart + (int)Math.Round((percentEnd - percentStart) * ratio);
+                progress?.Report(new(percent, $"{label} {PrerequisiteChecker.FormatBytes(completed)} of {PrerequisiteChecker.FormatBytes(totalBytes.Value)}"));
+            }
+            else
+            {
+                progress?.Report(new(percentStart, $"{label} {PrerequisiteChecker.FormatBytes(completed)} downloaded"));
+            }
+        }
+
+        target.Flush(true);
+        if (File.Exists(destination))
+            File.Delete(destination);
+        File.Move(tempFile, destination);
     }
 
     public static int Uninstall(InstallOptions options)
@@ -537,6 +655,8 @@ internal static class InstallerEngine
         }
     }
 }
+
+internal sealed record PublicModelPackDefinition(string PackId, string DisplayName, string InstallerFileName, string RepositoryId);
 
 internal static class Shortcut
 {

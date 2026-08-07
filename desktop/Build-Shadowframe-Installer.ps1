@@ -187,7 +187,7 @@ Keep these three files together:
 
 SHA256SUMS.txt contains optional download-integrity checksums.
 
-Run Shadowframe Setup.exe. If Anima, Wan, or PhotoReal model-pack installers are next to this installer package, Core Setup can run them automatically.
+Run Shadowframe Setup.exe. Public builds automatically fetch the public Anima, Wan, and PhotoReal model packs from Hugging Face during setup when they are not already bundled beside the installer. Creator/private builds can still chain adjacent model-pack installers automatically.
 Sample Prompts contains $(if ($PublicRelease) { "SFW" } else { "SFW and NSFW" }) starter prompt folders that users can copy into Shadowframe.
 
 Silent install:

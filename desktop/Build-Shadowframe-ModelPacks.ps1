@@ -5,7 +5,8 @@ param(
   [string]$WanDownloadRoot = "",
   [string]$WorkRoot = "",
   [switch]$SkipSetupBuild,
-  [switch]$ReusePayload
+  [switch]$ReusePayload,
+  [switch]$PublicRelease
 )
 
 $ErrorActionPreference = "Stop"
@@ -56,7 +57,31 @@ $animaFiles = @(
   New-PackFile (Join-Path $ComfyModelsRoot "loras\Anima_Ripping_Clothes_v1.safetensors") "loras/Anima_Ripping_Clothes_v1.safetensors"
 )
 
+$animaPublicFiles = @(
+  New-PackFile (Join-Path $ComfyModelsRoot "diffusion_models\anima-aesthetic-v1.1.safetensors") "diffusion_models/anima-aesthetic-v1.1.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "text_encoders\qwen_3_06b_base.safetensors") "text_encoders/qwen_3_06b_base.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "vae\qwen_image_vae.safetensors") "vae/qwen_image_vae.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Anima_Xipa_Style_v2.safetensors") "loras/Anima_Xipa_Style_v2.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Anima_BuAnime_Soft_v3.safetensors") "loras/Anima_BuAnime_Soft_v3.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Anima_Suuru_Style_v1.safetensors") "loras/Anima_Suuru_Style_v1.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Anima_LineLore_v1.safetensors") "loras/Anima_LineLore_v1.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Anima_Micro_Details_v1.safetensors") "loras/Anima_Micro_Details_v1.safetensors"
+)
+
 $wanFiles = @(
+  New-PackFile (Join-Path $ComfyModelsRoot "unet\wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors") "diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "unet\wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors") "diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors"
+  New-PackFile (Join-Path $WanDownloadRoot "diffusion_models\wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors") "diffusion_models/wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors"
+  New-PackFile (Join-Path $WanDownloadRoot "diffusion_models\wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors") "diffusion_models/wan2.2_t2v_low_noise_14B_fp8_scaled.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "text_encoders\umt5_xxl_fp8_e4m3fn_scaled.safetensors") "text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "vae\wan_2.1_vae.safetensors") "vae/wan_2.1_vae.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors") "loras/wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors") "loras/wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors"
+  New-PackFile (Join-Path $WanDownloadRoot "loras\wan2.2_t2v_lightx2v_4steps_lora_v1.1_high_noise.safetensors") "loras/wan2.2_t2v_lightx2v_4steps_lora_v1.1_high_noise.safetensors"
+  New-PackFile (Join-Path $WanDownloadRoot "loras\wan2.2_t2v_lightx2v_4steps_lora_v1.1_low_noise.safetensors") "loras/wan2.2_t2v_lightx2v_4steps_lora_v1.1_low_noise.safetensors"
+)
+
+$wanPublicFiles = @(
   New-PackFile (Join-Path $ComfyModelsRoot "unet\wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors") "diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors"
   New-PackFile (Join-Path $ComfyModelsRoot "unet\wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors") "diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors"
   New-PackFile (Join-Path $WanDownloadRoot "diffusion_models\wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors") "diffusion_models/wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors"
@@ -110,8 +135,37 @@ $photoRealFiles = @(
   New-PackFile (Join-Path $ComfyModelsRoot "loras\LTX 2.3\Bonnie_Rabbit_LTX_v1.safetensors") "loras/LTX 2.3/Bonnie_Rabbit_LTX_v1.safetensors"
 )
 
+$photoRealPublicFiles = @(
+  New-PackFile (Join-Path $ComfyModelsRoot "diffusion_models\redcraft23INT8INT4FP8_30Krea2.safetensors") "diffusion_models/redcraft23INT8INT4FP8_30Krea2.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "diffusion_models\moodyRealMix_xhsEdition.safetensors") "diffusion_models/moodyRealMix_xhsEdition.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "diffusion_models\ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors") "checkpoints/ltx23Gtanimation25Frames_ltxv23INT4Convrot.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "diffusion_models\qwen_image_2512_fp8_e4m3fn.safetensors") "diffusion_models/qwen_image_2512_fp8_e4m3fn.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "text_encoders\qwen_2.5_vl_7b_fp8_scaled.safetensors") "text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "text_encoders\qwen3vl_4b_fp8_scaled.safetensors") "text_encoders/qwen3vl_4b_fp8_scaled.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "vae\qwen_image_vae.safetensors") "vae/qwen_image_vae.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\skintone_v2_krea2_loraholic.safetensors") "loras/RED CRAFT/skintone_v2_krea2_loraholic.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\Purple_Grainy_Kr2_AM.safetensors") "loras/RED CRAFT/Purple_Grainy_Kr2_AM.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\Purple_Graphics_KR2.safetensors") "loras/RED CRAFT/Purple_Graphics_KR2.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\Krea2_Cinematic_Artstyle.safetensors") "loras/RED CRAFT/Krea2_Cinematic_Artstyle.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\krea2_rt_v1_5_epoch_10.safetensors") "loras/RED CRAFT/krea2_rt_v1_5_epoch_10.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\RED CRAFT\@motocross_saito_v0_0_0_cr_0010.safetensors") "loras/RED CRAFT/@motocross_saito_v0_0_0_cr_0010.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\60sPsyZBase.safetensors") "loras/Moody Pro Mix/60sPsyZBase.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\chain collar.safetensors") "loras/Moody Pro Mix/chain collar.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\Chun Li V2.safetensors") "loras/Moody Pro Mix/Chun Li V2.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\crowd street.safetensors") "loras/Moody Pro Mix/crowd street.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\egypt queen v2.safetensors") "loras/Moody Pro Mix/egypt queen v2.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\Fashion Generator.safetensors") "loras/Moody Pro Mix/Fashion Generator.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\Nostalgic_Cinema_zit_final.safetensors") "loras/Moody Pro Mix/Nostalgic_Cinema_zit_final.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\Moody Pro Mix\skintone_v2_loraholic.safetensors") "loras/Moody Pro Mix/skintone_v2_loraholic.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\LTX 2.3\ltx-face-prior-f1-profile-correction-step11019.safetensors") "loras/LTX 2.3/ltx-face-prior-f1-profile-correction-step11019.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\LTX 2.3\ltx23-i2v-swing-in-out-os.safetensors") "loras/LTX 2.3/ltx23-i2v-swing-in-out-os.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\LTX 2.3\ltx23-i2v-swing-up-down-os.safetensors") "loras/LTX 2.3/ltx23-i2v-swing-up-down-os.safetensors"
+  New-PackFile (Join-Path $ComfyModelsRoot "loras\LTX 2.3\mila_ltx23_lora.safetensors") "loras/LTX 2.3/mila_ltx23_lora.safetensors"
+)
+
 $definitions = @(
   [pscustomobject]@{
+    Selector = "Anima"
     Name = "Anima"; PackId = "anima-models"; DisplayName = "Anima Image Models"; Version = "1.0.0"
     OutputName = "Shadowframe-Anima-Models"; Payload = "Shadowframe-Anima-Models.tar"; Files = $animaFiles
     DistributionPolicy = "private-use"
@@ -131,6 +185,7 @@ $definitions = @(
     )
   }
   [pscustomobject]@{
+    Selector = "Wan"
     Name = "Wan"; PackId = "wan-models"; DisplayName = "Wan 2.2 Video Models"; Version = "1.0.0"
     OutputName = "Shadowframe-Wan-Models"; Payload = "Shadowframe-Wan-Models.tar"; Files = $wanFiles
     DistributionPolicy = "redistributable"
@@ -140,6 +195,7 @@ $definitions = @(
     )
   }
   [pscustomobject]@{
+    Selector = "PhotoReal"
     Name = "PhotoReal"; PackId = "photoreal-models"; DisplayName = "PhotoReal Image and Video Models"; Version = "1.0.0"
     OutputName = "Shadowframe-PhotoReal-Models"; Payload = "Shadowframe-PhotoReal-Models.tar"; Files = $photoRealFiles
     DistributionPolicy = "private-use"
@@ -165,7 +221,50 @@ $definitions = @(
   }
 )
 
-if ($Pack -ne "All") { $definitions = @($definitions | Where-Object Name -eq $Pack) }
+if ($PublicRelease) {
+  $definitions = @(
+    [pscustomobject]@{
+      Selector = "Anima"
+      Name = "Anima Public"; PackId = "anima-models-public"; DisplayName = "Anima Public Image Models"; Version = "1.0.0"
+      OutputName = "Shadowframe-Anima-Models-Public-0.3.5"; Payload = "Shadowframe-Anima-Models-Public.tar"; Files = $animaPublicFiles
+      DistributionPolicy = "public-release-candidate"
+      Sources = @(
+        [ordered]@{ name = "Anima Aesthetic"; url = "https://civitai.com/models/2458426/anima"; license = "Pending creator redistribution confirmation for public hosting" }
+        [ordered]@{ name = "Xipa Style"; url = "https://civitai.com/models/2487573?modelVersionId=3179330"; license = "Pending creator redistribution confirmation for public hosting" }
+        [ordered]@{ name = "BuAnime Soft"; url = "https://civitai.com/models/2645819?modelVersionId=3178787"; license = "Pending creator redistribution confirmation for public hosting" }
+        [ordered]@{ name = "Suuru Style"; url = "https://civitai.com/models/2420817?modelVersionId=3125420"; license = "Pending creator redistribution confirmation for public hosting" }
+        [ordered]@{ name = "LineLore"; url = "https://civitai.com/models/1175632?modelVersionId=3010462"; license = "Pending creator redistribution confirmation for public hosting" }
+        [ordered]@{ name = "Micro Details"; url = "https://civitai.com/models/1377820?modelVersionId=3128378"; license = "Pending creator redistribution confirmation for public hosting" }
+      )
+    }
+    [pscustomobject]@{
+      Selector = "Wan"
+      Name = "Wan Public"; PackId = "wan-models-public"; DisplayName = "Wan 2.2 Public Video Models"; Version = "1.0.0"
+      OutputName = "Shadowframe-Wan-Models-Public-0.3.5"; Payload = "Shadowframe-Wan-Models-Public.tar"; Files = $wanPublicFiles
+      DistributionPolicy = "redistributable"
+      Sources = @(
+        [ordered]@{ name = "Wan 2.2 ComfyUI Repackaged"; url = "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged"; license = "Apache-2.0" }
+        [ordered]@{ name = "Wan 2.2 Lightx2v LoRAs"; url = "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged"; license = "Apache-2.0" }
+      )
+    }
+    [pscustomobject]@{
+      Selector = "PhotoReal"
+      Name = "PhotoReal Public"; PackId = "photoreal-models-public"; DisplayName = "PhotoReal Public Image and Video Models"; Version = "1.0.0"
+      OutputName = "Shadowframe-PhotoReal-Models-Public-0.3.5"; Payload = "Shadowframe-PhotoReal-Models-Public.tar"; Files = $photoRealPublicFiles
+      DistributionPolicy = "public-release-candidate"
+      Sources = @(
+        [ordered]@{ name = "RedCraft 2/3"; url = "https://civitai.red/models/958009/redcraft-or-2-or-3-int8int4fp8-scaled"; license = "Pending creator redistribution confirmation for public hosting" }
+        [ordered]@{ name = "Moody Real Mix"; url = "https://civitai.com/models/621441/moody-real-mix"; license = "Pending creator redistribution confirmation for public hosting" }
+        [ordered]@{ name = "LTX 2.3 GTAnimation"; url = "https://civitai.red/models/1295569/ltx-23-gtanimation-or-25-frames-in-5s-12g-vram"; license = "Pending creator redistribution confirmation for public hosting" }
+        [ordered]@{ name = "Public-safe RedCraft LoRAs"; url = "https://civitai.red/"; license = "Pending creator redistribution confirmation for public hosting" }
+        [ordered]@{ name = "Public-safe Moody Real LoRAs"; url = "https://civitai.com/"; license = "Pending creator redistribution confirmation for public hosting" }
+        [ordered]@{ name = "Public-safe LTX 2.3 LoRAs"; url = "https://civitai.red/"; license = "Pending creator redistribution confirmation for public hosting" }
+      )
+    }
+  )
+}
+
+if ($Pack -ne "All") { $definitions = @($definitions | Where-Object Selector -eq $Pack) }
 
 $setupPublish = Join-Path $releaseRoot "model-pack-installer-publish"
 if (!$SkipSetupBuild) {
@@ -264,7 +363,11 @@ foreach ($definition in $definitions) {
 
     $notice = @("Shadowframe AI - $($definition.DisplayName)", "", "Sources and licenses:")
     foreach ($source in $definition.Sources) { $notice += "- $($source.name): $($source.url) [$($source.license)]" }
-    if ($definition.DistributionPolicy -ne "redistributable") {
+    if ($definition.DistributionPolicy -eq "public-release-candidate") {
+      $notice += ""
+      $notice += "PUBLIC RELEASE CANDIDATE: This pack is sanitized for the public SFW Shadowframe release and intentionally excludes adult-oriented Anima LoRAs and creator-only workflow add-ons."
+    }
+    elseif ($definition.DistributionPolicy -ne "redistributable") {
       $notice += ""
       $notice += "PRIVATE BUILD: Do not publish or redistribute this model archive until each creator explicitly permits redistribution of the original model files."
     }
