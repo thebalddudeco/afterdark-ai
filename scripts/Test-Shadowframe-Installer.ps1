@@ -1,5 +1,6 @@
 param(
-  [string]$InstallerDirectory = ""
+  [string]$InstallerDirectory = "",
+  [switch]$NoModelPacks
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,6 +28,7 @@ if (!$resolvedTarget.StartsWith($resolvedTemp, [StringComparison]::OrdinalIgnore
 $dataRoot = Join-Path $env:LOCALAPPDATA "Shadowframe"
 $dataFilesBefore = if (Test-Path -LiteralPath $dataRoot) { (Get-ChildItem -LiteralPath $dataRoot -File -Recurse -ErrorAction SilentlyContinue).Count } else { 0 }
 $commonArguments = "/SILENT /NOSHORTCUTS /NODESKTOP /INSTALLDIR=`"$resolvedTarget`""
+if ($NoModelPacks) { $commonArguments += " /NOMODELPACKS" }
 
 function Invoke-Setup([string]$arguments, [string]$stage) {
   $process = Start-Process -FilePath $setup -ArgumentList $arguments -Wait -PassThru

@@ -1,5 +1,38 @@
 # Shadowframe Packaging Log
 
+## Release-Ready 0.3.5 Final Stress-Test + Publish Sync
+
+Goal: confirm that the public release package, its auto-fetch model-pack flow, and the published download metadata all match the actual tested bundle.
+
+Completed:
+
+- Fixed a public-installer download handoff race in `desktop\\Shadowframe.Installer\\Program.cs` by disposing the partial-download stream before replace/move.
+- Added retry-safe package replacement for downloaded public pack installers.
+- Added an optional public-pack filter path so a single Hugging Face pack can be targeted during automated installer fetch tests.
+- Fixed bundled ComfyUI startup argument quoting in `scripts\\Start-Shadowframe-Core.ps1` so installs under paths with spaces start correctly.
+- Fixed a public app SSR crash caused by `aspectLabel` being referenced before initialization in `app\\page.tsx`.
+- Added a `-NoModelPacks` path to `scripts\\Test-Shadowframe-Installer.ps1` for clean Core-only verification.
+- Added `scripts\\Test-Shadowframe-PublicInstallerFetch.ps1` to validate the public installer plus Hugging Face auto-fetch path end to end.
+- Rebuilt the public Core bundle and public installer bundle after the fixes.
+- Re-ran public validation and confirmed:
+  - `pnpm lint` passes with warnings only
+  - `pnpm build:pages` passes
+  - Core isolation install/startup test passes
+  - public installer Hugging Face fetch test passes
+  - public Anima, Wan, and PhotoReal artifact verification passes
+
+Artifacts:
+
+- `Shadowframe Setup.exe` — `C4279AD600A13A7B5CA73E4B09CC5CB959D673DDAB0DB81F9DC329BE10B8D96D`
+- `Shadowframe-Core.tar` — `84091BA13BF8803436E4D665DF509CC3A59AB97C9B566EA29A888D2D4B24FE83`
+- `Shadowframe-Package.json` — `C7169AA83A172011D162DBAC4FC3283E4FE6AE07541850AF0241A63EB4E61117`
+- `Shadowframe-ReleaseProfile.json` — `10F33B2B8841D5FF0E41A7C8357407C151A90371A9B01F0B174258ADCE090788`
+
+Decision:
+
+- Treat this rebuilt `release\\Shadowframe-Installer-Public-0.3.5` folder as the final public `v0.3.5` handoff.
+- Publish GitHub release metadata and Hugging Face bundle contents from this exact build only.
+
 ## Release-Ready 0.3.5 Clean Public Handoff Rebuild
 
 Goal: produce a fresh, versioned public installer handoff for `v0.3.5` directly from the current repository state.

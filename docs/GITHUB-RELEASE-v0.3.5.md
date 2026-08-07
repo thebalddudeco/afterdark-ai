@@ -43,6 +43,9 @@ Use the Hugging Face bundle as the main install download. GitHub is the release 
 - `pnpm lint` passes with warnings only.
 - `pnpm build:pages` passes.
 - Public installer packaging completed successfully.
+- Core isolation install/startup test passes.
+- Public installer Hugging Face fetch test passes.
+- Public Anima, Wan, and PhotoReal pack artifacts pass manifest and checksum verification.
 
 ## Public installer artifacts
 
@@ -56,9 +59,9 @@ Primary end-user download:
 
 SHA-256:
 
-- `Shadowframe Setup.exe` — `7A65BDACD325987BEE94ECA9175FD817CF08377F9EE43D32E4EB00FBBAF81A3C`
-- `Shadowframe-Core.tar` — `99E8CC0935D1CA0DE72A091430FE5D528832DEC4F1D6A4A485E3B739F5DB6B39`
-- `Shadowframe-Package.json` — `7D9848C50D1C04CDAE185E262499083FA05EDC9D6162A03EAF8E03CFD6095918`
+- `Shadowframe Setup.exe` — `C4279AD600A13A7B5CA73E4B09CC5CB959D673DDAB0DB81F9DC329BE10B8D96D`
+- `Shadowframe-Core.tar` — `84091BA13BF8803436E4D665DF509CC3A59AB97C9B566EA29A888D2D4B24FE83`
+- `Shadowframe-Package.json` — `C7169AA83A172011D162DBAC4FC3283E4FE6AE07541850AF0241A63EB4E61117`
 - `Shadowframe-ReleaseProfile.json` — `10F33B2B8841D5FF0E41A7C8357407C151A90371A9B01F0B174258ADCE090788`
 
 ## Notes
@@ -66,3 +69,4 @@ SHA-256:
 - The public installer bundle contains `Shadowframe-ReleaseProfile.json` with `public`.
 - The public bundle contains `Sample Prompts\\SFW` and does not include `Sample Prompts\\NSFW`.
 - Large model payloads remain separate from GitHub-friendly source distribution.
+- GitHub remains the release-notes/checksum hub; Hugging Face is the primary full-bundle download for end users.

@@ -57,6 +57,16 @@ function Resolve-CorePath([string]$relativePath) {
   return Join-Path $coreRoot ($relativePath.Replace('/', [IO.Path]::DirectorySeparatorChar))
 }
 
+function Join-ProcessArguments([string[]]$Arguments) {
+  return ($Arguments | ForEach-Object {
+    if ($_ -match '[\s"]') {
+      '"' + ($_ -replace '"', '\"') + '"'
+    } else {
+      $_
+    }
+  }) -join ' '
+}
+
 function Stop-RecordedProcesses {
   if (!(Test-Path -LiteralPath $statePath)) { return }
   try {
@@ -126,7 +136,7 @@ $comfyArguments = @(
   "--listen", "127.0.0.1",
   "--port", "$comfyPort"
 )
-$comfyProcess = Start-Process -FilePath $pythonPath -ArgumentList $comfyArguments -WorkingDirectory $comfyRoot -WindowStyle Hidden -RedirectStandardOutput $comfyLog -RedirectStandardError $comfyErrorLog -PassThru
+$comfyProcess = Start-Process -FilePath $pythonPath -ArgumentList (Join-ProcessArguments $comfyArguments) -WorkingDirectory $comfyRoot -WindowStyle Hidden -RedirectStandardOutput $comfyLog -RedirectStandardError $comfyErrorLog -PassThru
 
 $comfyReady = $false
 for ($attempt = 0; $attempt -lt 180; $attempt += 1) {
@@ -167,7 +177,7 @@ $env:PORT = "$bridgePort"
 $env:SHADOWFRAME_APP_PROFILE = $releaseProfile
 $env:NEXT_PUBLIC_SHADOWFRAME_PROFILE = $releaseProfile
 try {
-  $bridgeProcess = Start-Process -FilePath $nodePath -ArgumentList @($bridgeEntry, "start") -WorkingDirectory $bridgeRoot -WindowStyle Hidden -RedirectStandardOutput $serverLog -RedirectStandardError $serverErrorLog -PassThru
+  $bridgeProcess = Start-Process -FilePath $nodePath -ArgumentList (Join-ProcessArguments @($bridgeEntry, "start")) -WorkingDirectory $bridgeRoot -WindowStyle Hidden -RedirectStandardOutput $serverLog -RedirectStandardError $serverErrorLog -PassThru
 } finally {
   $env:SHADOWFRAME_BRIDGE_TOKEN = $previousToken
   $env:SHADOWFRAME_ALLOWED_ORIGINS = $previousOrigins

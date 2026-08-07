@@ -506,17 +506,18 @@ export default function Home() {
   const publicGarmentHint = currentTool.garmentHint ?? "Upload the clothing reference image.";
   const publicInputType = isOutfitMode ? "Dual image input" : requiresImage ? "Image input" : "Text input";
   const publicOutputType = createsVideo ? "Video output" : "Image output";
-  const publicStageTags = isOutfitMode
-    ? [aspectLabel, "guided swap", "SFW only"]
-    : createsVideo
-      ? [aspectLabel, "guided motion", "SFW only"]
-      : [aspectLabel, "guided render", "SFW only"];
 
   const aspectLabel = useMemo(() => {
     const divisor = (a: number, b: number): number => (b === 0 ? a : divisor(b, a % b));
     const d = divisor(width, height);
     return `${width / d}:${height / d}`;
   }, [width, height]);
+
+  const publicStageTags = isOutfitMode
+    ? [aspectLabel, "guided swap", "SFW only"]
+    : createsVideo
+      ? [aspectLabel, "guided motion", "SFW only"]
+      : [aspectLabel, "guided render", "SFW only"];
 
   useEffect(() => {
     let active = true;

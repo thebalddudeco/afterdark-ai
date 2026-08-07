@@ -34,8 +34,17 @@ All notable Shadowframe AI packaging and application changes are tracked here.
 
 ### Fixed
 
+- Fixed a public-installer download race that could leave auto-fetched public model-pack installers locked before handoff.
+- Fixed bundled ComfyUI startup argument quoting so public installs work correctly from paths containing spaces.
+- Fixed a public app SSR crash caused by `aspectLabel` being referenced before initialization.
 - Fixed the release-state mismatch where source code advertised Outfit Replace before its dependency chain was ready for new-user installs.
 - Fixed the risk of shipping a partially supported release by gating the mode at both the UI and API layers.
+
+### Validation
+
+- Public Core isolation install/startup test passes.
+- Public installer Hugging Face fetch test passes.
+- Public Anima, Wan, and PhotoReal artifact verification passes.
 
 ## 0.3.2 - LTX Video Workflow Activation
 

@@ -497,12 +497,16 @@ internal static class InstallerEngine
 
     private static IEnumerable<string> AcquirePublicModelPackInstallers(InstallOptions options, IProgress<InstallProgress>? progress)
     {
+        var enabledPackIds = LoadRequestedPublicPackIds();
         var cacheRoot = Path.Combine(Path.GetFullPath(options.DataRoot), "InstallCache", "PublicModelPacks", $"core-{Program.ProductVersion}");
         Directory.CreateDirectory(cacheRoot);
         var installers = new List<string>();
-        for (var index = 0; index < PublicModelPacks.Length; index++)
+        var selectedPacks = PublicModelPacks
+            .Where(pack => enabledPackIds.Count == 0 || enabledPackIds.Contains(pack.PackId) || enabledPackIds.Contains(pack.RepositoryId) || enabledPackIds.Contains(pack.DisplayName))
+            .ToArray();
+        for (var index = 0; index < selectedPacks.Length; index++)
         {
-            var definition = PublicModelPacks[index];
+            var definition = selectedPacks[index];
             var packRoot = Path.Combine(cacheRoot, definition.PackId);
             Directory.CreateDirectory(packRoot);
             var setupPath = Path.Combine(packRoot, definition.InstallerFileName);
@@ -529,6 +533,15 @@ internal static class InstallerEngine
         }
 
         return installers;
+    }
+
+    private static HashSet<string> LoadRequestedPublicPackIds()
+    {
+        var raw = Environment.GetEnvironmentVariable("SHADOWFRAME_PUBLIC_PACK_FILTER");
+        if (string.IsNullOrWhiteSpace(raw)) return new(StringComparer.OrdinalIgnoreCase);
+        return raw
+            .Split(new[] { ',', ';', '|'}, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
     private static string BuildHuggingFaceUrl(string repositoryId, string fileName)
@@ -560,30 +573,55 @@ internal static class InstallerEngine
 
         var totalBytes = response.Content.Headers.ContentLength;
         using var source = response.Content.ReadAsStream();
-        using var target = File.Create(tempFile);
         var buffer = new byte[1024 * 1024];
         long completed = 0;
         int read;
-        while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+        using (var target = File.Create(tempFile))
         {
-            target.Write(buffer, 0, read);
-            completed += read;
-            if (totalBytes is > 0)
+            while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
             {
-                var ratio = Math.Clamp(completed / (double)totalBytes.Value, 0d, 1d);
-                var percent = percentStart + (int)Math.Round((percentEnd - percentStart) * ratio);
-                progress?.Report(new(percent, $"{label} {PrerequisiteChecker.FormatBytes(completed)} of {PrerequisiteChecker.FormatBytes(totalBytes.Value)}"));
+                target.Write(buffer, 0, read);
+                completed += read;
+                if (totalBytes is > 0)
+                {
+                    var ratio = Math.Clamp(completed / (double)totalBytes.Value, 0d, 1d);
+                    var percent = percentStart + (int)Math.Round((percentEnd - percentStart) * ratio);
+                    progress?.Report(new(percent, $"{label} {PrerequisiteChecker.FormatBytes(completed)} of {PrerequisiteChecker.FormatBytes(totalBytes.Value)}"));
+                }
+                else
+                {
+                    progress?.Report(new(percentStart, $"{label} {PrerequisiteChecker.FormatBytes(completed)} downloaded"));
+                }
             }
-            else
+            target.Flush(true);
+        }
+        ReplaceFileWithRetries(tempFile, destination);
+    }
+
+    private static void ReplaceFileWithRetries(string source, string destination)
+    {
+        for (var attempt = 0; attempt < 6; attempt++)
+        {
+            try
             {
-                progress?.Report(new(percentStart, $"{label} {PrerequisiteChecker.FormatBytes(completed)} downloaded"));
+                if (File.Exists(destination))
+                    File.Delete(destination);
+                File.Move(source, destination);
+                return;
+            }
+            catch (IOException) when (attempt < 5)
+            {
+                Thread.Sleep(500 * (attempt + 1));
+            }
+            catch (UnauthorizedAccessException) when (attempt < 5)
+            {
+                Thread.Sleep(500 * (attempt + 1));
             }
         }
 
-        target.Flush(true);
         if (File.Exists(destination))
             File.Delete(destination);
-        File.Move(tempFile, destination);
+        File.Move(source, destination);
     }
 
     public static int Uninstall(InstallOptions options)

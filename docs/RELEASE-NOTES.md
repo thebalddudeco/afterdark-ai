@@ -16,11 +16,11 @@ The current clean public handoff folder is:
 
 - `release\\Shadowframe-Installer-Public-0.3.5`
 
-The rebuilt public installer executable SHA-256 is `5D903C035503A2F1D4BABA8CA722035F3C5FA406033BB80AC75F24949EB915D9`.
+The rebuilt public installer executable SHA-256 is `C4279AD600A13A7B5CA73E4B09CC5CB959D673DDAB0DB81F9DC329BE10B8D96D`.
 
-The rebuilt public Core installer payload SHA-256 is `99E8CC0935D1CA0DE72A091430FE5D528832DEC4F1D6A4A485E3B739F5DB6B39`.
+The rebuilt public Core installer payload SHA-256 is `84091BA13BF8803436E4D665DF509CC3A59AB97C9B566EA29A888D2D4B24FE83`.
 
-The rebuilt public package manifest SHA-256 is `7D9848C50D1C04CDAE185E262499083FA05EDC9D6162A03EAF8E03CFD6095918`.
+The rebuilt public package manifest SHA-256 is `C7169AA83A172011D162DBAC4FC3283E4FE6AE07541850AF0241A63EB4E61117`.
 
 The rebuilt public release-profile marker SHA-256 is `10F33B2B8841D5FF0E41A7C8357407C151A90371A9B01F0B174258ADCE090788`.
 
@@ -31,6 +31,9 @@ Validation for this handoff refresh:
 - `pnpm lint` passes with warnings only.
 - `pnpm build:pages` passes.
 - Public installer packaging completed successfully on August 7, 2026.
+- Public Core isolation install/startup test passed on August 7, 2026.
+- Public installer Hugging Face fetch test passed on August 7, 2026.
+- Public Anima, Wan, and PhotoReal pack artifacts passed verification on August 7, 2026.
 
 ## Previous Release Candidate: 0.3.4
 
