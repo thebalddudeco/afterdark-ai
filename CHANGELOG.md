@@ -2,6 +2,41 @@
 
 All notable Shadowframe AI packaging and application changes are tracked here.
 
+## 0.3.5 - Public Release Finalization
+
+### Added
+
+- Added a dedicated public-installer packaging lane with explicit `public` profile markers in both the staged Core bundle and final installer bundle.
+- Added public-release upload validation before files reach ComfyUI, with human-readable guidance for unsupported file types, oversize files, extreme aspect ratios, or blocked upload names.
+- Added a public-release QA checklist covering profile markers, SFW-only sample prompts, guided-tool UI checks, and upload validation behavior.
+
+### Changed
+
+- Bumped Shadowframe Core, installer, launcher, package metadata, and model-pack minimum Core metadata to `0.3.5`.
+- Updated the Windows installer UI so the public package clearly identifies itself as the public edition and uses safer prompt-folder wording.
+- Updated the public installer package to ship SFW sample prompts only.
+- Updated release notes and packaging documentation so the public-release build path and handoff folder are explicit.
+
+### Validation
+
+- Public web build completes.
+- Installer project compiles successfully in Release configuration.
+- Public installer package rebuild completed successfully in `release\\Shadowframe-Installer-Public`.
+- Public installer package contains `Shadowframe-ReleaseProfile.json` with `public` and no `Sample Prompts\\NSFW` folder.
+
+## 0.3.4 - Release Safety Pass
+
+### Changed
+
+- Bumped Shadowframe Core, installer, launcher, package metadata, and model-pack minimum Core metadata to `0.3.4`.
+- Aligned release documentation with the actual shippable feature set for this build.
+- Kept the CatVTON Outfit Replace source integration in the repository, but disabled the feature in the release build by default until its runtime dependencies are fully packaged for clean installs.
+
+### Fixed
+
+- Fixed the release-state mismatch where source code advertised Outfit Replace before its dependency chain was ready for new-user installs.
+- Fixed the risk of shipping a partially supported release by gating the mode at both the UI and API layers.
+
 ## 0.3.2 - LTX Video Workflow Activation
 
 ### Added

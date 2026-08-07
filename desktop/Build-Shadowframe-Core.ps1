@@ -1,5 +1,7 @@
 param(
   [string]$OutputDirectory = "",
+  [ValidateSet("creator", "public")]
+  [string]$Profile = "creator",
   [string]$ComfyUiSource = "$env:LOCALAPPDATA\Programs\ComfyUI\resources\ComfyUI",
   [string]$ComfyUiFrontendSource = "$env:LOCALAPPDATA\Programs\ComfyUI\resources\UI",
   [string]$PythonBaseSource = "$env:APPDATA\uv\python\cpython-3.12.11-windows-x86_64-none",
@@ -40,11 +42,14 @@ Write-Host "Building the Shadowframe web service..."
 $nodeBin = Split-Path -Parent $NodeSource
 $fallback = "$env:USERPROFILE\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback"
 $previousPath = $env:PATH
+$previousPublicProfile = $env:NEXT_PUBLIC_SHADOWFRAME_PROFILE
 $env:PATH = "$nodeBin;$fallback;$env:PATH"
+$env:NEXT_PUBLIC_SHADOWFRAME_PROFILE = $Profile
 try {
   & (Join-Path $fallback "pnpm.cmd") build
   if ($LASTEXITCODE -ne 0) { throw "The Shadowframe web service build failed." }
 } finally {
+  $env:NEXT_PUBLIC_SHADOWFRAME_PROFILE = $previousPublicProfile
   $env:PATH = $previousPath
 }
 
@@ -60,6 +65,7 @@ New-Item -ItemType Directory -Path $resolvedOutput -Force | Out-Null
 Write-Host "Staging the application and Core manifest..."
 Copy-Item -LiteralPath (Join-Path $projectRoot "Shadowframe.exe") -Destination (Join-Path $resolvedOutput "Shadowframe.exe") -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "core-manifest.json") -Destination (Join-Path $resolvedOutput "runtime-manifest.json") -Force
+@{ profile = $Profile } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $resolvedOutput "release-profile.json") -Encoding UTF8
 New-Item -ItemType Directory -Path (Join-Path $resolvedOutput "scripts") -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $projectRoot "scripts\Start-Shadowframe-Core.ps1") -Destination (Join-Path $resolvedOutput "scripts\Start-Shadowframe-Core.ps1") -Force
 Copy-Item -LiteralPath (Join-Path $projectRoot "scripts\Stop-Shadowframe-Core.ps1") -Destination (Join-Path $resolvedOutput "scripts\Stop-Shadowframe-Core.ps1") -Force
@@ -70,6 +76,11 @@ $runtimeRoot = Join-Path $resolvedOutput "Runtime"
 Copy-Directory $PythonBaseSource (Join-Path $runtimeRoot "PythonBase")
 Copy-Directory (Join-Path $PythonEnvironmentSource "Lib\site-packages") (Join-Path $runtimeRoot "PythonBase\Lib\site-packages") @("/XD", "__pycache__")
 Copy-Directory $ComfyUiSource (Join-Path $runtimeRoot "ComfyUI") @("/XD", ".git", "__pycache__")
+$vendoredCustomNodes = Join-Path $projectRoot "vendor\custom_nodes"
+if (Test-Path -LiteralPath $vendoredCustomNodes) {
+  Write-Host "Staging Shadowframe custom nodes..."
+  Copy-Directory $vendoredCustomNodes (Join-Path $runtimeRoot "ComfyUI\custom_nodes") @("/XD", ".git", ".github", ".idea", "__pycache__")
+}
 if (Test-Path -LiteralPath $ComfyUiFrontendSource) {
   Copy-Directory $ComfyUiFrontendSource (Join-Path $runtimeRoot "UI")
 }
@@ -108,12 +119,19 @@ $comfyLicense = Join-Path $ComfyUiSource "LICENSE"
 if (Test-Path -LiteralPath $comfyLicense) {
   Copy-Item -LiteralPath $comfyLicense -Destination (Join-Path $thirdParty "ComfyUI-LICENSE.txt") -Force
 }
+$catvtonReadme = Join-Path $projectRoot "vendor\custom_nodes\Comfyui-CatVTON\README.md"
+if (Test-Path -LiteralPath $catvtonReadme) {
+  Copy-Item -LiteralPath $catvtonReadme -Destination (Join-Path $thirdParty "Comfyui-CatVTON-README.md") -Force
+}
 
 @"
 Shadowframe Core — Phase 1 staging package
 
-This package owns its ComfyUI, Python, Node.js, workflows, and local bridge runtime.
+This package owns its ComfyUI, Python, Node.js, workflows, local bridge runtime, and Shadowframe custom nodes.
 It intentionally contains no model checkpoints or LoRAs.
+
+Release profile:
+  $Profile
 
 Runtime data is stored in:
   %LOCALAPPDATA%\Shadowframe

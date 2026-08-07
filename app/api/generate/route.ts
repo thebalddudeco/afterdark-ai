@@ -7,6 +7,7 @@ import outfitReplacementWorkflowTemplate from "../../lib/outfit-replacement-work
 import { STYLE_PRESETS } from "../../lib/style-presets";
 import type { StylePreset } from "../../lib/style-presets";
 import { authorizeBridgeRequest, bridgeJson, bridgeOptions } from "../../lib/bridge-security";
+import { OUTFIT_REPLACE_ENABLED, PUBLIC_ALLOWED_BASE_MODELS, PUBLIC_SAFE_STYLE_IDS } from "../../lib/feature-flags";
 
 const COMFYUI_URL = process.env.COMFYUI_URL || "http://127.0.0.1:8188";
 
@@ -23,32 +24,19 @@ const REFERENCE_FIDELITY: Record<ReferenceFidelity, { denoise: number; loraStren
 const CHILD_CONTENT = /\b(?:child|children|kid|kids|minor|minors|underage|preteen|teenager|schoolgirl|schoolboy|toddler|infant|baby|lolicon|shotacon)\b/i;
 const SEXUAL_VIOLENCE = /\b(?:rape|raped|raping|sexual assault|sexually assault|forced sex|nonconsensual|non-consensual|without consent|sexual violence|sexual coercion)\b/i;
 const ANIMAL_SEXUAL_CONTENT = /\b(?:bestiality|zoophilia|zoophile|animal sex|sex with (?:an? )?(?:animal|dog|cat|horse|pony|wolf|fox|goat|sheep|cow|pig))\b/i;
+const EXPLICIT_SEXUAL_CONTENT = /\b(?:nude|nudity|naked|topless|bottomless|nipples?|areola|breasts?|boobs?|cleavage|pussy|vagina|cameltoe|genitals?|penis|crotch|lingerie|thong|g-string|see-through|transparent clothes|porn|pornographic|fetish|bdsm|bondage|deepthroat|fellatio|oral sex|anal|cum|creampie|orgasm|masturbat|sex scene|sexualized)\b/i;
 const MODEL_SHAPE_MISMATCH = /size mismatch|copying a param with shape/i;
 const PHOTO_REAL_REPAIR_ACTION = {
   packId: "photoreal-models",
   label: "Repair PhotoReal Pack",
 };
-
-const STRICT_OUTFIT_REPLACEMENT_PROMPT = `Wardrobe replacement only. Replace the existing clothing with the garment shown in the reference image while preserving every other aspect of the photograph exactly as captured.
-
-Do not change composition, framing, crop, camera position, camera angle, focal length, perspective, pose, head position, facial expression, body position, body proportions, eye direction, hair placement, lighting direction, depth of field, background, environmental elements, or subject identity.
-
-Maintain identical image geometry and pixel-space alignment. The subject must remain in the exact same position within the frame with the same crop and camera distance.
-
-The only modification permitted is the clothing. Preserve the original shoulders, arms, neckline position, chest position, torso shape, skin visibility, and body contours. The garment must conform naturally to the existing pose rather than altering the pose to fit the garment.
-
-When the replacement garment is lingerie, swimwear, bikini, bodysuit, t-shirt, dress, or any tight/stretch/transparent fabric, render realistic adult fabric tension and anatomical contouring. Preserve natural body pressure under the garment, including visible nipple impressions, breast shape through fabric, cameltoe or vulva/pubic mound impressions where the garment is tight, seam pressure, fabric stretch, cling, translucency, and compression consistent with the referenced garment. These details should appear as garment-surface impressions and realistic fabric deformation, not as a different body, pose, crop, or new scene.
-
-Do not zoom in, zoom out, recrop, reframe, rotate, reposition, or regenerate the subject. Do not create a new portrait. Do not reinterpret the scene.
-
-Treat this as a clothing swap on an existing photograph, not a new image generation.
-
-Match the garment from the reference image while maintaining the exact original photograph underneath. All facial features, skin texture, hair strands, body proportions, perspective, background blur, and lighting relationships must remain unchanged.`;
+const IS_PUBLIC_RELEASE = (process.env.SHADOWFRAME_APP_PROFILE || process.env.NEXT_PUBLIC_SHADOWFRAME_PROFILE) === "public";
 
 function prohibitedPromptReason(prompt: string) {
   if (CHILD_CONTENT.test(prompt)) return "Content involving minors is not permitted.";
   if (SEXUAL_VIOLENCE.test(prompt)) return "Sexual violence, rape, and non-consensual content are not permitted.";
   if (ANIMAL_SEXUAL_CONTENT.test(prompt)) return "Sexual content involving animals is not permitted.";
+  if (IS_PUBLIC_RELEASE && EXPLICIT_SEXUAL_CONTENT.test(prompt)) return "Public Shadowframe supports only safe-for-work requests.";
   return "";
 }
 
@@ -114,6 +102,9 @@ export async function POST(request: Request) {
       referenceFidelity?: ReferenceFidelity;
     };
     const mode = body.mode || "img-vid";
+    if (mode === "outfit" && !OUTFIT_REPLACE_ENABLED) {
+      return respond({ error: "Outfit Replace is disabled in this release build while its clean-install runtime package is being finalized." }, { status: 409 });
+    }
     const needsImage = mode === "img-vid" || mode === "img-img" || mode === "outfit";
     const needsGarment = mode === "outfit";
     if ((mode !== "outfit" && !body.positivePrompt) || (needsImage && !body.imageName) || (needsGarment && !body.garmentImageName)) {
@@ -128,17 +119,23 @@ export async function POST(request: Request) {
       return respond({ error: prohibitedReason }, { status: 400 });
     }
 
-    const defaultBaseModel = mode === "txt-img" || mode === "img-img" ? "anima-aesthetic" : mode === "outfit" ? "flux-vton" : mode === "txt-vid" ? "wan22-t2v" : "wan22-i2v";
+    const defaultBaseModel = mode === "txt-img" || mode === "img-img" ? "anima-aesthetic" : mode === "outfit" ? "catvton" : mode === "txt-vid" ? "wan22-t2v" : "wan22-i2v";
     const baseModelId = body.baseModelId || defaultBaseModel;
     const supportedBaseModels: Record<string, string[]> = {
       "txt-img": ["wai-anima", "anima-aesthetic", "redcraft", "moody-pro"],
       "img-img": ["wai-anima", "anima-aesthetic", "redcraft", "moody-pro"],
-      "outfit": ["flux-vton"],
+      "outfit": ["catvton"],
       "img-vid": ["wan22-i2v", "ltx23-gtanimation"],
       "txt-vid": ["wan22-t2v"],
     };
     if (!supportedBaseModels[mode].includes(baseModelId)) {
       return respond({ error: "The selected base model workflow is not installed yet." }, { status: 400 });
+    }
+    if (IS_PUBLIC_RELEASE) {
+      const publicAllowedBases = PUBLIC_ALLOWED_BASE_MODELS[mode] as readonly string[];
+      if (!publicAllowedBases.includes(baseModelId)) {
+        return respond({ error: "This tool is locked to its approved public-release workflow." }, { status: 400 });
+      }
     }
     const isWaiAnima = baseModelId === "wai-anima";
     const isAnimaFamily = (mode === "txt-img" || mode === "img-img") && (isWaiAnima || baseModelId === "anima-aesthetic");
@@ -146,6 +143,9 @@ export async function POST(request: Request) {
     const isImageFamily = isAnimaFamily || isPhotoImageFamily;
     const isLtxImageVideo = mode === "img-vid" && baseModelId === "ltx23-gtanimation";
     const requestedStyleIds = Array.isArray(body.styleIds) ? body.styleIds : (body.styleId ? [body.styleId] : ["original"]);
+    if (IS_PUBLIC_RELEASE && requestedStyleIds.some((id) => !PUBLIC_SAFE_STYLE_IDS.includes(id as (typeof PUBLIC_SAFE_STYLE_IDS)[number]))) {
+      return respond({ error: "That style is not available in the public release." }, { status: 400 });
+    }
     const selectedStyles = requestedStyleIds
       .filter((id) => id !== "original")
       .map((id) => STYLE_PRESETS.find((style) => style.id === id))
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
       return respond({ error: "This LoRA workflow is not installed yet." }, { status: 400 });
     }
     const sliderSelections = body.sliderSelections && typeof body.sliderSelections === "object" ? body.sliderSelections : {};
-    const effectivePositivePrompt = withStyleTrigger(body.positivePrompt, selectedStyles, sliderSelections);
+    const effectivePositivePrompt = withStyleTrigger(body.positivePrompt || "", selectedStyles, sliderSelections);
     const loraStyles = selectedStyles.filter((style) => style.file);
     const selectedTemplate = mode === "outfit"
       ? outfitReplacementWorkflowTemplate
@@ -222,12 +222,11 @@ export async function POST(request: Request) {
     }
 
     if (mode === "outfit") {
-      const userNote = body.positivePrompt?.trim();
       workflow["1"].inputs.image = body.imageName as string;
       workflow["2"].inputs.image = body.garmentImageName as string;
-      workflow["3"].inputs.prompt = userNote ? `${STRICT_OUTFIT_REPLACEMENT_PROMPT}\n\nAdditional garment fit note: ${userNote}` : STRICT_OUTFIT_REPLACEMENT_PROMPT;
-      workflow["3"].inputs.seed = seed;
-      workflow["4"].inputs.filename_prefix = "image/ShadowframeAI_OUTFIT";
+      workflow["5"].inputs.cloth_type = "overall";
+      workflow["6"].inputs.seed = seed;
+      workflow["7"].inputs.filename_prefix = "image/ShadowframeAI_OUTFIT";
     } else if (isImageFamily && mode === "img-img") {
       workflow["1"].inputs.image = body.imageName as string;
       workflow["2"].inputs.unet_name = imageModelName;
@@ -379,9 +378,9 @@ export async function POST(request: Request) {
     const result = await upstream.json() as Record<string, unknown>;
     if (!upstream.ok) {
       const detailText = JSON.stringify(result);
-      const outfitAuthError = mode === "outfit" && /Unauthorized|FluxVTONode|FluxVTO/i.test(detailText);
-      const error = outfitAuthError
-        ? "Outfit Replace requires ComfyUI account access for the Flux VTO node. Open ComfyUI, sign in to your Comfy account, then restart Shadowframe and try again."
+      const outfitDependencyError = mode === "outfit" && /LoadCatVTONPipeline|LoadAutoMasker|AutoMasker|CatVTON|DensePose|detectron2|No module named/i.test(detailText);
+      const error = outfitDependencyError
+        ? "Outfit Replace needs the local CatVTON runtime. Repair or reinstall the current Shadowframe Core package, then restart Shadowframe."
         : MODEL_SHAPE_MISMATCH.test(detailText)
         ? "The PhotoReal model pack is stale or mismatched. Shadowframe can repair it automatically."
         : "ComfyUI rejected the workflow.";

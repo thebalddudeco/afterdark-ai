@@ -25,6 +25,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent } from "react";
 import { BASE_MODELS, DEFAULT_BASE_MODEL, STYLE_PRESETS } from "./lib/style-presets";
 import type { GeneratorMode, StylePreset } from "./lib/style-presets";
+import { IS_PUBLIC_RELEASE, OUTFIT_REPLACE_ENABLED, PUBLIC_ALLOWED_BASE_MODELS, PUBLIC_SAFE_STYLE_IDS } from "./lib/feature-flags";
 
 type RunStatus = "idle" | "uploading" | "queued" | "generating" | "complete" | "error";
 type ReferenceFidelity = "high" | "balanced" | "creative";
@@ -59,6 +60,26 @@ type ModeSettings = {
 };
 
 type ImageSlot = "source" | "garment";
+type ToolDescriptor = {
+  mode: GeneratorMode;
+  label: string;
+  title: string;
+  description: string;
+  icon: "sparkles" | "image" | "video" | "film";
+  promptLabel?: string;
+  promptPlaceholder?: string;
+  promptHint?: string;
+  sourceLabel?: string;
+  sourceHint?: string;
+  garmentLabel?: string;
+  garmentHint?: string;
+  stageTitle: string;
+  stageHint: string;
+  outputHint: string;
+  historyEmptyTitle: string;
+  historyEmptyHint: string;
+  summaryPoints: string[];
+};
 
 const DEFAULT_NEGATIVE =
   "watermark, text, subtitles, letterbox, pillarbox, frame, border, split screen, noise, artifacts, blur, vignette, worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia, low quality, worst quality, blurry, bad anatomy, extra limbs, deformed, watermark, text, signature, bareness, artifacts, copyrights name, jpeg_artifacts, scan_artifacts, bad hands, missing fingers, extra digit, fewer digits, artistic error, ye-pop, deviantart, logo, patreon logo,monochrome, greyscale,censored, mosaic censoring, 色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走";
@@ -73,6 +94,12 @@ const ASPECT_PRESETS = [
   { label: "3:4", width: 1008, height: 1344 },
   { label: "1:2", width: 768, height: 1536 },
 ];
+const PUBLIC_UPLOAD_MAX_MB = 12;
+const PUBLIC_UPLOAD_MIN_DIMENSION = 256;
+const PUBLIC_UPLOAD_MAX_DIMENSION = 4096;
+const PUBLIC_UPLOAD_MAX_ASPECT_RATIO = 3.2;
+const PUBLIC_ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const PUBLIC_EXPLICIT_UPLOAD_NAME = /\b(?:nude|nudity|naked|topless|bottomless|breast|nipples?|areola|boobs?|pussy|vagina|cameltoe|genitals?|porn|deepthroat|bondage|see[- ]?through|transparent)\b/i;
 
 const STATUS_COPY: Record<RunStatus, string> = {
   idle: "Ready when you are",
@@ -81,6 +108,150 @@ const STATUS_COPY: Record<RunStatus, string> = {
   generating: "Creating your output",
   complete: "Output ready",
   error: "Generation stopped",
+};
+
+const CREATOR_MODE_LABELS: Record<GeneratorMode, string> = {
+  "txt-img": "Text → Image",
+  "img-img": "Image → Image",
+  "img-vid": "Image → Video",
+  "txt-vid": "Text → Video",
+  "outfit": "Outfit Replace",
+};
+
+const PUBLIC_TOOL_DESCRIPTORS: Record<GeneratorMode, ToolDescriptor> = {
+  "txt-img": {
+    mode: "txt-img",
+    label: "Anime Style",
+    title: "Create anime artwork",
+    description: "Turn a short idea into a polished, safe anime-style illustration.",
+    icon: "sparkles",
+    promptLabel: "What should we create?",
+    promptPlaceholder: "Example: a quiet ramen shop at night, warm lantern light, cozy cinematic anime mood…",
+    promptHint: "Keep it short. Focus on subject, mood, setting, and color.",
+    stageTitle: "Your anime artwork will appear here",
+    stageHint: "Describe a safe scene to begin.",
+    outputHint: "Styled image ready for download when complete.",
+    historyEmptyTitle: "No anime artwork yet",
+    historyEmptyHint: "Your finished anime renders will appear here during this session.",
+    summaryPoints: ["Short guided prompt", "Anime-safe rendering", "Local image generation"],
+  },
+  "img-img": {
+    mode: "img-img",
+    label: "Photo Restyle",
+    title: "Restyle a source image",
+    description: "Upload a source photo or illustration and give it a clean, guided anime finish.",
+    icon: "image",
+    promptLabel: "How should it be restyled?",
+    promptPlaceholder: "Example: soft anime shading, cherry blossom palette, cleaner linework, gentle expression…",
+    promptHint: "Describe the new look you want, not a whole new scene.",
+    sourceLabel: "Source image",
+    sourceHint: "Upload the image you want to restyle.",
+    stageTitle: "Your restyled image will appear here",
+    stageHint: "Add a source image and a short style note.",
+    outputHint: "Restyled image ready for download when complete.",
+    historyEmptyTitle: "No restyles yet",
+    historyEmptyHint: "Your transformed images will appear here during this session.",
+    summaryPoints: ["Keeps your source image", "Applies a guided new style", "Safe-for-work public output"],
+  },
+  "img-vid": {
+    mode: "img-vid",
+    label: "Bring Photo to Life",
+    title: "Animate a still image",
+    description: "Add gentle cinematic motion to a single image using a locked safe workflow.",
+    icon: "video",
+    promptLabel: "How should it move?",
+    promptPlaceholder: "Example: slow camera drift, soft wind in the hair, gentle blinking, cinematic atmosphere…",
+    promptHint: "Describe motion and mood. Keep it subtle and cinematic.",
+    sourceLabel: "Still image",
+    sourceHint: "Upload the image you want to animate.",
+    stageTitle: "Your motion clip will appear here",
+    stageHint: "Add an image and a short motion note.",
+    outputHint: "Animated clip ready for download when complete.",
+    historyEmptyTitle: "No motion clips yet",
+    historyEmptyHint: "Your generated motion clips will appear here during this session.",
+    summaryPoints: ["Image-to-video workflow", "Gentle motion only", "Local GPU rendering"],
+  },
+  "txt-vid": {
+    mode: "txt-vid",
+    label: "Motion Scene",
+    title: "Create a motion scene",
+    description: "Describe a safe cinematic scene and turn it into a short video clip.",
+    icon: "film",
+    promptLabel: "Describe the scene",
+    promptPlaceholder: "Example: a rainy neon alley, slow dolly camera move, reflective puddles, moody cinematic lighting…",
+    promptHint: "Keep it short and visual: subject, environment, movement, and mood.",
+    stageTitle: "Your motion scene will appear here",
+    stageHint: "Describe a safe cinematic moment to begin.",
+    outputHint: "Motion clip ready for download when complete.",
+    historyEmptyTitle: "No motion scenes yet",
+    historyEmptyHint: "Your generated scenes will appear here during this session.",
+    summaryPoints: ["Text-to-video workflow", "Short cinematic clips", "Curated public-safe output"],
+  },
+  "outfit": {
+    mode: "outfit",
+    label: "Wardrobe Swap",
+    title: "Swap clothing only",
+    description: "Replace clothing with a reference outfit while keeping the overall composition aligned.",
+    icon: "image",
+    sourceLabel: "Subject photo",
+    sourceHint: "Upload the person or source image you want to keep aligned.",
+    garmentLabel: "Clothing reference",
+    garmentHint: "Upload the outfit image you want to transfer.",
+    stageTitle: "Your wardrobe swap will appear here",
+    stageHint: "Add a subject photo and a clothing reference.",
+    outputHint: "Wardrobe swap image ready for download when complete.",
+    historyEmptyTitle: "No wardrobe swaps yet",
+    historyEmptyHint: "Your outfit-swapped images will appear here during this session.",
+    summaryPoints: ["Composition-preserving swap", "SFW clothing transfer", "No anatomy or nudity changes"],
+  },
+};
+
+const PUBLIC_MODE_DEFAULTS: Record<GeneratorMode, Partial<ModeSettings>> = {
+  "txt-img": {
+    baseModelId: "anima-aesthetic",
+    selectedStyleIds: ["anima-busoft"],
+    width: 1024,
+    height: 1024,
+    hiresScale: 1.5,
+    referenceFidelity: "balanced",
+    fastMode: true,
+  },
+  "img-img": {
+    baseModelId: "anima-aesthetic",
+    selectedStyleIds: ["anima-xipa"],
+    width: 1024,
+    height: 1024,
+    hiresScale: 1.5,
+    referenceFidelity: "balanced",
+    fastMode: true,
+  },
+  "img-vid": {
+    baseModelId: "wan22-i2v",
+    selectedStyleIds: ["wan22-2d"],
+    width: 720,
+    height: 1280,
+    length: 93,
+    referenceFidelity: "balanced",
+    fastMode: true,
+  },
+  "txt-vid": {
+    baseModelId: "wan22-t2v",
+    selectedStyleIds: [],
+    width: 640,
+    height: 640,
+    length: 81,
+    referenceFidelity: "balanced",
+    fastMode: true,
+  },
+  "outfit": {
+    baseModelId: "catvton",
+    selectedStyleIds: [],
+    width: 1024,
+    height: 1024,
+    hiresScale: 1,
+    referenceFidelity: "high",
+    fastMode: true,
+  },
 };
 
 function sleep(ms: number) {
@@ -92,6 +263,49 @@ function formatRemaining(seconds: number) {
   const minutes = Math.floor(seconds / 60);
   const remainder = Math.ceil(seconds % 60);
   return remainder ? `${minutes} min ${remainder} sec` : `${minutes} min`;
+}
+
+async function readImageDimensions(file: File) {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+      image.onerror = () => reject(new Error("That image could not be read."));
+      image.src = objectUrl;
+    });
+    return dimensions;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function validatePublicUploadFile(file: File, slot: ImageSlot) {
+  const slotLabel = slot === "garment" ? "reference outfit image" : "source image";
+  if (!PUBLIC_ALLOWED_IMAGE_TYPES.has(file.type)) {
+    return `Public Shadowframe accepts JPEG, PNG, or WebP files only for the ${slotLabel}.`;
+  }
+  if (file.size <= 0 || file.size > PUBLIC_UPLOAD_MAX_MB * 1024 * 1024) {
+    return `Public Shadowframe accepts ${slotLabel}s up to ${PUBLIC_UPLOAD_MAX_MB} MB.`;
+  }
+  if (PUBLIC_EXPLICIT_UPLOAD_NAME.test(file.name)) {
+    return `Rename that ${slotLabel} before uploading it to the public release.`;
+  }
+
+  const { width, height } = await readImageDimensions(file);
+  const aspectRatio = Math.max(width, height) / Math.max(1, Math.min(width, height));
+  if (width < PUBLIC_UPLOAD_MIN_DIMENSION || height < PUBLIC_UPLOAD_MIN_DIMENSION || width > PUBLIC_UPLOAD_MAX_DIMENSION || height > PUBLIC_UPLOAD_MAX_DIMENSION || aspectRatio > PUBLIC_UPLOAD_MAX_ASPECT_RATIO) {
+    return `Public Shadowframe accepts ${slotLabel}s between ${PUBLIC_UPLOAD_MIN_DIMENSION} and ${PUBLIC_UPLOAD_MAX_DIMENSION} pixels with a moderate aspect ratio.`;
+  }
+  return "";
+}
+
+function createSeed() {
+  return Math.floor(Math.random() * 900_000_000_000_000);
+}
+
+function createTimestamp() {
+  return Date.now();
 }
 
 function findMedia(value: unknown): MediaOutput | null {
@@ -138,8 +352,8 @@ function comfyRuntimeError(entry: unknown) {
 }
 
 function friendlyRuntimeError(message: string) {
-  if (/Unauthorized|FluxVTONode|FluxVTO/i.test(message)) {
-    return "Outfit Replace requires ComfyUI account access for the Flux VTO node. Open ComfyUI, sign in to your Comfy account, then restart Shadowframe and try again.";
+  if (/LoadCatVTONPipeline|LoadAutoMasker|AutoMasker|CatVTON|DensePose|detectron2|No module named/i.test(message)) {
+    return "Outfit Replace needs the local CatVTON runtime. Repair or reinstall the current Shadowframe Core package, then restart Shadowframe.";
   }
   if (/size mismatch|copying a param with shape/i.test(message)) {
     return "The PhotoReal model pack is stale or mismatched. Shadowframe can repair it automatically.";
@@ -158,11 +372,33 @@ function bridgeRequest(path: string, bridgeUrl: string, bridgeToken: string, ini
   return fetch(url, { ...init, headers });
 }
 
+function modeIcon(mode: GeneratorMode) {
+  switch (mode) {
+    case "txt-img":
+      return <Sparkles size={15} />;
+    case "img-img":
+    case "outfit":
+      return <ImageIcon size={15} />;
+    case "img-vid":
+      return <Video size={15} />;
+    case "txt-vid":
+      return <Film size={15} />;
+    default:
+      return <Sparkles size={15} />;
+  }
+}
+
 export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
-  const [mode, setMode] = useState<GeneratorMode>("img-vid");
-  const [baseModelId, setBaseModelId] = useState(DEFAULT_BASE_MODEL["img-vid"]);
-  const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>([]);
+  const initialMode: GeneratorMode = IS_PUBLIC_RELEASE ? "txt-img" : "img-vid";
+  const initialDefaults = PUBLIC_MODE_DEFAULTS[initialMode];
+  const [mode, setMode] = useState<GeneratorMode>(initialMode);
+  const [baseModelId, setBaseModelId] = useState(
+    IS_PUBLIC_RELEASE
+      ? (initialDefaults.baseModelId ?? DEFAULT_BASE_MODEL[initialMode])
+      : DEFAULT_BASE_MODEL["img-vid"],
+  );
+  const [selectedStyleIds, setSelectedStyleIds] = useState<string[]>(IS_PUBLIC_RELEASE ? (initialDefaults.selectedStyleIds ?? []) : []);
   const [sliderSelections, setSliderSelections] = useState<Record<string, string>>({});
   const [sliderDialogStyleId, setSliderDialogStyleId] = useState("");
   const [modeSettings, setModeSettings] = useState<Partial<Record<GeneratorMode, ModeSettings>>>({});
@@ -174,13 +410,13 @@ export default function Home() {
   const [positivePrompt, setPositivePrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState(DEFAULT_NEGATIVE);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [width, setWidth] = useState(720);
-  const [height, setHeight] = useState(1280);
-  const [length, setLength] = useState(93);
-  const [hiresScale, setHiresScale] = useState(2);
-  const [referenceFidelity, setReferenceFidelity] = useState<ReferenceFidelity>("balanced");
-  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 900_000_000_000_000));
-  const [fastMode, setFastMode] = useState(true);
+  const [width, setWidth] = useState(IS_PUBLIC_RELEASE ? (initialDefaults.width ?? 720) : 720);
+  const [height, setHeight] = useState(IS_PUBLIC_RELEASE ? (initialDefaults.height ?? 1280) : 1280);
+  const [length, setLength] = useState(IS_PUBLIC_RELEASE ? (initialDefaults.length ?? 93) : 93);
+  const [hiresScale, setHiresScale] = useState(IS_PUBLIC_RELEASE ? (initialDefaults.hiresScale ?? 2) : 2);
+  const [referenceFidelity, setReferenceFidelity] = useState<ReferenceFidelity>(IS_PUBLIC_RELEASE ? (initialDefaults.referenceFidelity ?? "balanced") : "balanced");
+  const [seed, setSeed] = useState(() => createSeed());
+  const [fastMode, setFastMode] = useState(IS_PUBLIC_RELEASE ? (initialDefaults.fastMode ?? true) : true);
   const [status, setStatus] = useState<RunStatus>("idle");
   const [error, setError] = useState("");
   const [repairAction, setRepairAction] = useState<RepairAction | null>(null);
@@ -213,14 +449,32 @@ export default function Home() {
   const requiresImage = mode.startsWith("img-") || isOutfitMode;
   const createsVideo = mode.endsWith("-vid");
   const outputKind = createsVideo ? "video" : "image";
+  const availableModes: GeneratorMode[] = OUTFIT_REPLACE_ENABLED
+    ? ["txt-img", "img-img", "img-vid", "txt-vid", "outfit"]
+    : ["txt-img", "img-img", "img-vid", "txt-vid"];
+  const publicModes = availableModes.filter((candidate) => candidate !== "outfit" || OUTFIT_REPLACE_ENABLED);
+  const visibleModes = IS_PUBLIC_RELEASE ? publicModes : availableModes;
   const statusCopy: Record<RunStatus, string> = {
     ...STATUS_COPY,
     generating: `Creating your ${outputKind}`,
     complete: `${outputKind[0].toUpperCase()}${outputKind.slice(1)} ready`,
   };
-  const availableBaseModels = BASE_MODELS.filter((model) => model.modes.includes(mode));
+  const allowedBaseModelsForMode = IS_PUBLIC_RELEASE
+    ? PUBLIC_ALLOWED_BASE_MODELS[mode]
+    : null;
+  const availableBaseModels = BASE_MODELS.filter((model) => {
+    if (!model.modes.includes(mode)) return false;
+    if (!OUTFIT_REPLACE_ENABLED && model.id === "catvton") return false;
+    if (IS_PUBLIC_RELEASE && allowedBaseModelsForMode && !allowedBaseModelsForMode.includes(model.id as never)) return false;
+    return true;
+  });
   const selectedBaseModel = BASE_MODELS.find((model) => model.id === baseModelId) ?? availableBaseModels[0];
-  const availableStyles = STYLE_PRESETS.filter((style) => (style.id === "original" || style.baseModelIds.includes(baseModelId)) && style.modes.includes(mode));
+  const availableStyles = STYLE_PRESETS.filter((style) => {
+    if (!(style.id === "original" || style.baseModelIds.includes(baseModelId))) return false;
+    if (!style.modes.includes(mode)) return false;
+    if (IS_PUBLIC_RELEASE && !PUBLIC_SAFE_STYLE_IDS.includes(style.id as (typeof PUBLIC_SAFE_STYLE_IDS)[number])) return false;
+    return true;
+  });
   const selectedStyles = selectedStyleIds
     .map((id) => STYLE_PRESETS.find((style) => style.id === id))
     .filter((style): style is StylePreset => Boolean(style) && style.baseModelIds.includes(baseModelId));
@@ -242,6 +496,21 @@ export default function Home() {
   const remainingSeconds = Math.max(0, estimatedTotalSeconds - elapsedSeconds);
   const generationAwayFromTab = isRunning && runningMode !== null && runningMode !== mode;
   const isLocalPage = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const currentTool = PUBLIC_TOOL_DESCRIPTORS[mode];
+  const publicPromptLabel = currentTool.promptLabel ?? "Creative direction";
+  const publicPromptPlaceholder = currentTool.promptPlaceholder ?? "Describe the look you want…";
+  const publicPromptHint = currentTool.promptHint ?? "Keep it short and visual.";
+  const publicSourceLabel = currentTool.sourceLabel ?? "Source image";
+  const publicSourceHint = currentTool.sourceHint ?? "Upload an image to begin.";
+  const publicGarmentLabel = currentTool.garmentLabel ?? "Clothing reference";
+  const publicGarmentHint = currentTool.garmentHint ?? "Upload the clothing reference image.";
+  const publicInputType = isOutfitMode ? "Dual image input" : requiresImage ? "Image input" : "Text input";
+  const publicOutputType = createsVideo ? "Video output" : "Image output";
+  const publicStageTags = isOutfitMode
+    ? [aspectLabel, "guided swap", "SFW only"]
+    : createsVideo
+      ? [aspectLabel, "guided motion", "SFW only"]
+      : [aspectLabel, "guided render", "SFW only"];
 
   const aspectLabel = useMemo(() => {
     const divisor = (a: number, b: number): number => (b === 0 ? a : divisor(b, a % b));
@@ -326,11 +595,19 @@ export default function Home() {
     return () => window.clearInterval(timer);
   }, [isRunning, runStartedAt]);
 
-  const acceptFile = (nextFile: File, slot: ImageSlot = "source") => {
+  const acceptFile = async (nextFile: File, slot: ImageSlot = "source") => {
     if (!nextFile.type.startsWith("image/")) {
       setError("Choose a JPG, PNG, or WebP image.");
       setStatus("error");
       return;
+    }
+    if (IS_PUBLIC_RELEASE) {
+      const uploadError = await validatePublicUploadFile(nextFile, slot);
+      if (uploadError) {
+        setError(uploadError);
+        setStatus("error");
+        return;
+      }
     }
     if (slot === "garment") {
       setGarmentFile(nextFile);
@@ -346,21 +623,21 @@ export default function Home() {
     setStatus("idle");
   };
 
-  const onFileInput = (event: ChangeEvent<HTMLInputElement>) => {
+  const onFileInput = async (event: ChangeEvent<HTMLInputElement>) => {
     const nextFile = event.target.files?.[0];
-    if (nextFile) acceptFile(nextFile);
+    if (nextFile) await acceptFile(nextFile);
   };
 
-  const onGarmentInput = (event: ChangeEvent<HTMLInputElement>) => {
+  const onGarmentInput = async (event: ChangeEvent<HTMLInputElement>) => {
     const nextFile = event.target.files?.[0];
-    if (nextFile) acceptFile(nextFile, "garment");
+    if (nextFile) await acceptFile(nextFile, "garment");
   };
 
-  const onDrop = (event: DragEvent<HTMLButtonElement>, slot: ImageSlot = "source") => {
+  const onDrop = async (event: DragEvent<HTMLButtonElement>, slot: ImageSlot = "source") => {
     event.preventDefault();
     setDragging(false);
     const nextFile = event.dataTransfer.files?.[0];
-    if (nextFile) acceptFile(nextFile, slot);
+    if (nextFile) await acceptFile(nextFile, slot);
   };
 
   const resetImage = () => {
@@ -391,6 +668,18 @@ export default function Home() {
   });
 
   const applyModeSettings = (nextMode: GeneratorMode, settings?: ModeSettings) => {
+    if (IS_PUBLIC_RELEASE) {
+      const publicDefaults = PUBLIC_MODE_DEFAULTS[nextMode];
+      setBaseModelId(publicDefaults.baseModelId ?? DEFAULT_BASE_MODEL[nextMode]);
+      setSelectedStyleIds(publicDefaults.selectedStyleIds ?? []);
+      setWidth(publicDefaults.width ?? width);
+      setHeight(publicDefaults.height ?? height);
+      setLength(publicDefaults.length ?? length);
+      setHiresScale(publicDefaults.hiresScale ?? hiresScale);
+      setReferenceFidelity(publicDefaults.referenceFidelity ?? "balanced");
+      setFastMode(publicDefaults.fastMode ?? true);
+      return;
+    }
     if (settings) {
       setBaseModelId(settings.baseModelId);
       setSelectedStyleIds(settings.selectedStyleIds);
@@ -461,6 +750,10 @@ export default function Home() {
   };
 
   const selectMode = (nextMode: GeneratorMode) => {
+    if (nextMode === "outfit" && !OUTFIT_REPLACE_ENABLED) {
+      setError("Outfit Replace is still being packaged for clean installs and is disabled in this release build.");
+      return;
+    }
     setModeSettings((current) => ({ ...current, [mode]: captureModeSettings() }));
     setMode(nextMode);
     setError("");
@@ -468,6 +761,7 @@ export default function Home() {
   };
 
   const selectBaseModel = (nextBaseModelId: string) => {
+    if (IS_PUBLIC_RELEASE) return;
     setBaseModelId(nextBaseModelId);
     setSelectedStyleIds([]);
     setResult(null);
@@ -485,16 +779,17 @@ export default function Home() {
       setHeight(1280);
       setLength(93);
     }
-    if (nextBaseModelId === "flux-vton") setHiresScale(1);
+    if (nextBaseModelId === "catvton") setHiresScale(1);
   };
 
   const enterGenerator = () => {
-    selectMode("txt-img");
+    selectMode(IS_PUBLIC_RELEASE ? "txt-img" : "txt-img");
     setShowSplash(false);
     if (!isLocalPage && (!bridgeUrl || !bridgeToken)) setConnectionOpen(true);
   };
 
   const toggleStyle = (style: StylePreset) => {
+    if (IS_PUBLIC_RELEASE) return;
     setError("");
     setRepairAction(null);
     setRepairMessage("");
@@ -550,12 +845,13 @@ export default function Home() {
     }
 
     const runToken = ++runTokenRef.current;
+    const runStartedTimestamp = createTimestamp();
     setError("");
     setRepairAction(null);
     setRepairMessage("");
     setResult(null);
     setRunningMode(mode);
-    setRunStartedAt(Date.now());
+    setRunStartedAt(runStartedTimestamp);
     setElapsedSeconds(0);
 
     try {
@@ -575,7 +871,10 @@ export default function Home() {
             method: "POST",
             body: uploadBody,
           });
-          if (!uploadResponse.ok) throw new Error("ComfyUI could not accept the source image.");
+          if (!uploadResponse.ok) {
+            const uploadFailure = await uploadResponse.json().catch(() => ({} as { error?: string }));
+            throw new Error(uploadFailure.error || "ComfyUI could not accept the source image.");
+          }
           const uploaded = (await uploadResponse.json()) as { name: string; subfolder?: string };
           imageName = uploaded.subfolder ? `${uploaded.subfolder}/${uploaded.name}` : uploaded.name;
           uploadedImageRef.current = { fingerprint, imageName };
@@ -595,7 +894,10 @@ export default function Home() {
             method: "POST",
             body: uploadBody,
           });
-          if (!uploadResponse.ok) throw new Error("ComfyUI could not accept the outfit reference image.");
+          if (!uploadResponse.ok) {
+            const uploadFailure = await uploadResponse.json().catch(() => ({} as { error?: string }));
+            throw new Error(uploadFailure.error || "ComfyUI could not accept the outfit reference image.");
+          }
           const uploaded = (await uploadResponse.json()) as { name: string; subfolder?: string };
           garmentImageName = uploaded.subfolder ? `${uploaded.subfolder}/${uploaded.name}` : uploaded.name;
           uploadedGarmentRef.current = { fingerprint, imageName: garmentImageName };
@@ -657,7 +959,8 @@ export default function Home() {
           setRunningMode(null);
           setRunStartedAt(null);
           setElapsedSeconds(estimatedTotalSeconds);
-          setSeed(Math.floor(Math.random() * 900_000_000_000_000));
+          const nextSeed = createSeed();
+          setSeed(nextSeed);
           return;
         }
         const serialized = JSON.stringify(entry ?? "");
@@ -771,9 +1074,9 @@ export default function Home() {
         </section>
 
         <section className="splash-feature-row" aria-label="Shadowframe features">
-          <div><Sparkles size={19} /><span><strong>Four creative modes</strong><small>Text and image generation</small></span></div>
-          <div><Cpu size={19} /><span><strong>Local GPU power</strong><small>Runs through your ComfyUI</small></span></div>
-          <div><LockKeyhole size={19} /><span><strong>Private by design</strong><small>Inputs remain on your machine</small></span></div>
+            <div><Sparkles size={19} /><span><strong>{IS_PUBLIC_RELEASE ? "Curated creative tools" : "Four creative modes"}</strong><small>{IS_PUBLIC_RELEASE ? "Guided local generation" : "Text and image generation"}</small></span></div>
+            <div><Cpu size={19} /><span><strong>Local GPU power</strong><small>Runs through your ComfyUI</small></span></div>
+            <div><LockKeyhole size={19} /><span><strong>Private by design</strong><small>Inputs remain on your machine</small></span></div>
         </section>
       </main>
     );
@@ -786,12 +1089,13 @@ export default function Home() {
           <img className="brand-mark-image" src="/brand/logo-mark-64.png" alt="" aria-hidden="true" />
           <span>SHADOWFRAME AI</span>
         </button>
-        <nav className="mode-switcher" aria-label="Generation mode">
-          <button className={`mode-button ${mode === "txt-img" ? "active" : ""}`} type="button" onClick={() => selectMode("txt-img")}><Sparkles size={15} /> Text → Image</button>
-          <button className={`mode-button ${mode === "img-img" ? "active" : ""}`} type="button" onClick={() => selectMode("img-img")}><ImageIcon size={15} /> Image → Image</button>
-          <button className={`mode-button ${mode === "img-vid" ? "active" : ""}`} type="button" onClick={() => selectMode("img-vid")}><Video size={15} /> Image → Video</button>
-          <button className={`mode-button ${mode === "txt-vid" ? "active" : ""}`} type="button" onClick={() => selectMode("txt-vid")}><Film size={15} /> Text → Video</button>
-          <button className={`mode-button ${mode === "outfit" ? "active" : ""}`} type="button" onClick={() => selectMode("outfit")}><ImageIcon size={15} /> Outfit Replace</button>
+        <nav className="mode-switcher" aria-label={IS_PUBLIC_RELEASE ? "Creative tools" : "Generation mode"}>
+          {visibleModes.map((modeId) => (
+            <button key={modeId} className={`mode-button ${mode === modeId ? "active" : ""}`} type="button" onClick={() => selectMode(modeId)}>
+              {modeIcon(modeId)}
+              {IS_PUBLIC_RELEASE ? PUBLIC_TOOL_DESCRIPTORS[modeId].label : CREATOR_MODE_LABELS[modeId]}
+            </button>
+          ))}
         </nav>
         <button className={`connection ${comfyOnline ? "online" : "offline"}`} type="button" onClick={() => { setConnectionError(""); setConnectionOpen(true); }}>
           {comfyOnline ? <Wifi size={15} /> : <WifiOff size={15} />}
@@ -865,14 +1169,28 @@ export default function Home() {
           <div className="panel-heading">
             <div>
               <p className="eyebrow">Create</p>
-              <h1>{mode === "txt-img" ? "Turn words into an image" : mode === "img-img" ? "Transform a source image" : mode === "outfit" ? "Replace outfit only" : mode === "txt-vid" ? "Turn words into motion" : "Bring a still image to life"}</h1>
+              <h1>{IS_PUBLIC_RELEASE ? currentTool.title : mode === "txt-img" ? "Turn words into an image" : mode === "img-img" ? "Transform a source image" : mode === "outfit" ? "Replace outfit only" : mode === "txt-vid" ? "Turn words into motion" : "Bring a still image to life"}</h1>
+              {IS_PUBLIC_RELEASE && <p className="tool-summary">{currentTool.description}</p>}
             </div>
             <Film size={22} />
           </div>
 
+          {IS_PUBLIC_RELEASE && (
+            <section className="public-tool-guide" aria-label={`${currentTool.label} guide`}>
+              <div className="public-tool-guide-header">
+                <strong>{currentTool.label}</strong>
+                <span>Public release tool</span>
+              </div>
+              <ul>
+                {currentTool.summaryPoints.map((point) => <li key={point}>{point}</li>)}
+              </ul>
+            </section>
+          )}
+
           {requiresImage && <>
             <input ref={fileInputRef} className="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp" onChange={onFileInput} />
-            {isOutfitMode && <label className="field-label">Source model photo <span>Required</span></label>}
+            {isOutfitMode && <label className="field-label">{IS_PUBLIC_RELEASE ? publicSourceLabel : "Source model photo"} <span>Required</span></label>}
+            {IS_PUBLIC_RELEASE && <p className="field-helper">{publicSourceHint}</p>}
             <button
             className={`dropzone ${dragging ? "dragging" : ""} ${imagePreview ? "has-image" : ""}`}
             type="button"
@@ -900,7 +1218,8 @@ export default function Home() {
 
           {isOutfitMode && <>
             <input ref={garmentInputRef} className="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp" onChange={onGarmentInput} />
-            <label className="field-label">Outfit reference <span>Required</span></label>
+            <label className="field-label">{IS_PUBLIC_RELEASE ? publicGarmentLabel : "Outfit reference"} <span>Required</span></label>
+            {IS_PUBLIC_RELEASE && <p className="field-helper">{publicGarmentHint}</p>}
             <button
               className={`dropzone ${garmentPreview ? "has-image" : ""}`}
               type="button"
@@ -927,53 +1246,71 @@ export default function Home() {
           </>}
 
           {!isOutfitMode && <>
-            <label className="field-label" htmlFor="positive-prompt">Positive prompt <span>Required</span></label>
+            <label className="field-label" htmlFor="positive-prompt">{IS_PUBLIC_RELEASE ? publicPromptLabel : "Positive prompt"} <span>Required</span></label>
+            {IS_PUBLIC_RELEASE && <p className="field-helper">{publicPromptHint}</p>}
             <div className="prompt-wrap">
               <textarea
                 id="positive-prompt"
                 value={positivePrompt}
                 onChange={(event) => setPositivePrompt(event.target.value)}
-                placeholder={createsVideo ? "Describe the motion, camera, lighting, and final look…" : mode === "img-img" ? "Describe exactly how the source image should change…" : "Describe the subject, composition, lighting, and final look…"}
+                placeholder={IS_PUBLIC_RELEASE
+                  ? publicPromptPlaceholder
+                  : createsVideo
+                    ? "Describe the motion, camera, lighting, and final look…"
+                    : mode === "img-img"
+                      ? "Describe exactly how the source image should change…"
+                      : "Describe the subject, composition, lighting, and final look…"}
                 maxLength={2000}
               />
               <small>{positivePrompt.length}/2000</small>
             </div>
 
-            <label className="field-label" htmlFor="negative-prompt">Negative prompt</label>
-            <div className="prompt-wrap compact">
-              <textarea id="negative-prompt" value={negativePrompt} onChange={(event) => setNegativePrompt(event.target.value)} maxLength={2000} />
-              <small>{negativePrompt.length}/2000</small>
-            </div>
-            <p className="content-policy">Adult content is supported. Minors, sexual violence or coercion, and sexual content involving animals are prohibited.</p>
+            {!IS_PUBLIC_RELEASE && <>
+              <label className="field-label" htmlFor="negative-prompt">Negative prompt</label>
+              <div className="prompt-wrap compact">
+                <textarea id="negative-prompt" value={negativePrompt} onChange={(event) => setNegativePrompt(event.target.value)} maxLength={2000} />
+                <small>{negativePrompt.length}/2000</small>
+              </div>
+              <p className="content-policy">Adult content is supported. Minors, sexual violence or coercion, and sexual content involving animals are prohibited.</p>
+            </>}
+            {IS_PUBLIC_RELEASE && <p className="content-policy">Public Shadowframe is SFW only. Unsafe text, unsafe uploads, and explicit content requests are blocked.</p>}
           </>}
 
-          <label className="field-label" htmlFor="base-model">Base model</label>
-          <select className="base-model-select" id="base-model" value={baseModelId} onChange={(event) => selectBaseModel(event.target.value)}>
-            {availableBaseModels.map((model) => <option key={model.id} value={model.id}>{model.name}{model.ready ? "" : " · setup required"}</option>)}
-          </select>
+          {!IS_PUBLIC_RELEASE && <>
+            <label className="field-label" htmlFor="base-model">Base model</label>
+            <select className="base-model-select" id="base-model" value={baseModelId} onChange={(event) => selectBaseModel(event.target.value)}>
+              {availableBaseModels.map((model) => <option key={model.id} value={model.id}>{model.name}{model.ready ? "" : " · setup required"}</option>)}
+            </select>
 
-          <div className="style-heading">
-            <label>Visual style</label>
-            <span>{selectedBaseModel.name}</span>
-          </div>
-          <div className="style-strip">
-            {availableStyles.map((style) => (
-              <button
-                key={style.id}
-                className={`style-option ${(style.id === "original" ? selectedStyleIds.length === 0 : selectedStyleIds.includes(style.id)) ? "selected" : ""}`}
-                type="button"
-                data-description={style.description || `${style.name} LoRA for ${selectedBaseModel.name}.`}
-                onClick={() => toggleStyle(style)}
-              >
-                <i style={{ background: style.swatch }} />
-                <strong>{style.name}</strong>
-                {style.id !== "original" && <small>{!style.file || installedLoras.some((name) => name.replaceAll("\\", "/").endsWith(style.file as string)) ? "LoRA" : "Setup"}</small>}
-              </button>
-            ))}
-          </div>
-          {selectedStyles.length > 0 && (
-            <div className="style-note">
-              <span>{selectedStylesInstalled ? `${selectedStyles.length} LoRA${selectedStyles.length === 1 ? "" : "s"} selected for ${selectedBaseModel.name}` : "One or more selected LoRAs needs setup"}</span>
+            <div className="style-heading">
+              <label>Visual style</label>
+              <span>{selectedBaseModel.name}</span>
+            </div>
+            <div className="style-strip">
+              {availableStyles.map((style) => (
+                <button
+                  key={style.id}
+                  className={`style-option ${(style.id === "original" ? selectedStyleIds.length === 0 : selectedStyleIds.includes(style.id)) ? "selected" : ""}`}
+                  type="button"
+                  data-description={style.description || `${style.name} LoRA for ${selectedBaseModel.name}.`}
+                  onClick={() => toggleStyle(style)}
+                >
+                  <i style={{ background: style.swatch }} />
+                  <strong>{style.name}</strong>
+                  {style.id !== "original" && <small>{!style.file || installedLoras.some((name) => name.replaceAll("\\", "/").endsWith(style.file as string)) ? "LoRA" : "Setup"}</small>}
+                </button>
+              ))}
+            </div>
+            {selectedStyles.length > 0 && (
+              <div className="style-note">
+                <span>{selectedStylesInstalled ? `${selectedStyles.length} LoRA${selectedStyles.length === 1 ? "" : "s"} selected for ${selectedBaseModel.name}` : "One or more selected LoRAs needs setup"}</span>
+              </div>
+            )}
+          </>}
+
+          {IS_PUBLIC_RELEASE && (
+            <div className="style-note public-tool-note">
+              <span>Locked workflow: {selectedBaseModel.name}{selectedStyles.length ? ` · ${selectedStyles.map((style) => style.name).join(", ")}` : ""}</span>
             </div>
           )}
 
@@ -984,7 +1321,7 @@ export default function Home() {
 
           {advancedOpen && (
             <div className="advanced-grid">
-              {mode !== "img-img" && (
+              {(mode !== "img-img" || IS_PUBLIC_RELEASE) && (
                 <div className="aspect-section">
                   <span>Aspect ratio</span>
                   <div className="aspect-buttons">
@@ -992,7 +1329,7 @@ export default function Home() {
                   </div>
                 </div>
               )}
-              {mode !== "img-img" && !isOutfitMode && <>
+              {!IS_PUBLIC_RELEASE && mode !== "img-img" && !isOutfitMode && <>
                 <div className="advanced-subheading">Custom Resolution</div>
                 <label>Width<input type="number" value={width} step={16} min={256} max={1536} onChange={(event) => setWidth(Number(event.target.value))} /></label>
                 <label>Height<input type="number" value={height} step={16} min={256} max={1536} onChange={(event) => setHeight(Number(event.target.value))} /></label>
@@ -1006,11 +1343,11 @@ export default function Home() {
                   </select>
                 </label>
               )}
-              {createsVideo ? <label>Frames<input type="number" value={length} step={4} min={17} max={241} onChange={(event) => setLength(Number(event.target.value))} /></label> : !isOutfitMode && (
+              {createsVideo ? <label>Frames<input type="number" value={length} step={4} min={17} max={241} onChange={(event) => setLength(Number(event.target.value))} /></label> : !isOutfitMode && !IS_PUBLIC_RELEASE && (
                 <label>Output scale<select value={hiresScale} onChange={(event) => setHiresScale(Number(event.target.value))}><option value={1}>1× original</option>{isAnimaBase ? <option value={1.5}>1.5× recommended</option> : <><option value={2}>2× high-res</option><option value={4}>4× ultra-res</option></>}</select></label>
               )}
-              <label>Seed<input type="number" value={seed} min={0} onChange={(event) => setSeed(Number(event.target.value))} /></label>
-              {createsVideo && <button className={`fast-toggle ${fastMode ? "enabled" : ""}`} type="button" onClick={() => setFastMode((enabled) => !enabled)}>
+              {!IS_PUBLIC_RELEASE && <label>Seed<input type="number" value={seed} min={0} onChange={(event) => setSeed(Number(event.target.value))} /></label>}
+              {!IS_PUBLIC_RELEASE && createsVideo && <button className={`fast-toggle ${fastMode ? "enabled" : ""}`} type="button" onClick={() => setFastMode((enabled) => !enabled)}>
                 <span><Sparkles size={15} /> Fast 4-step mode</span><i />
               </button>}
             </div>
@@ -1030,7 +1367,11 @@ export default function Home() {
               <span className="live-dot" />
               <span>{statusCopy[status]}</span>
             </div>
-            <div className="stage-tags"><span>{aspectLabel}</span>{createsVideo ? <><span>{length} frames</span><span>{fastMode ? "4-step" : "20-step"}</span></> : isOutfitMode ? <><span>strict swap</span><span>source aligned</span></> : <><span>{hiresScale}× output</span><span>{mode === "txt-img" ? "12-step" : "40-step"}</span></>}</div>
+            <div className="stage-tags">
+              {IS_PUBLIC_RELEASE
+                ? publicStageTags.map((tag) => <span key={tag}>{tag}</span>)
+                : <><span>{aspectLabel}</span>{createsVideo ? <><span>{length} frames</span><span>{fastMode ? "4-step" : "20-step"}</span></> : isOutfitMode ? <><span>strict swap</span><span>source aligned</span></> : <><span>{hiresScale}× output</span><span>{mode === "txt-img" ? "12-step" : "40-step"}</span></>}</>}
+            </div>
           </div>
 
           <div className={`media-stage ${!imagePreview && !result ? "empty" : ""}`}>
@@ -1041,8 +1382,8 @@ export default function Home() {
             ) : (
               <div className="empty-stage">
                 <span>{createsVideo ? <Video size={34} /> : <ImageIcon size={34} />}</span>
-                <h2>Your {createsVideo ? "video" : "image"} will appear here</h2>
-                <p>{isOutfitMode ? "Add a source photo and outfit reference to begin." : requiresImage ? "Add an image and prompt to begin." : "Add a prompt to begin."}</p>
+                <h2>{IS_PUBLIC_RELEASE ? currentTool.stageTitle : `Your ${createsVideo ? "video" : "image"} will appear here`}</h2>
+                <p>{IS_PUBLIC_RELEASE ? currentTool.stageHint : isOutfitMode ? "Add a source photo and outfit reference to begin." : requiresImage ? "Add an image and prompt to begin." : "Add a prompt to begin."}</p>
               </div>
             )}
 
@@ -1061,7 +1402,10 @@ export default function Home() {
           </div>
 
           <div className="stage-footer">
-            <div><strong>{result ? result.filename : "Output preview"}</strong><span>{result ? (result.kind === "video" ? "MP4 · H.264" : "High-resolution image") : createsVideo ? "Video · 720 × 1280 default" : isOutfitMode ? "Strict wardrobe replacement" : `Image · ${width * hiresScale} × ${height * hiresScale} target`}</span></div>
+            <div>
+              <strong>{result ? result.filename : IS_PUBLIC_RELEASE ? currentTool.label : "Output preview"}</strong>
+              <span>{result ? (result.kind === "video" ? "MP4 · H.264" : "High-resolution image") : IS_PUBLIC_RELEASE ? currentTool.outputHint : createsVideo ? "Video · 720 × 1280 default" : isOutfitMode ? "Strict wardrobe replacement" : `Image · ${width * hiresScale} × ${height * hiresScale} target`}</span>
+            </div>
             {result ? (
               <a className="download-button" href={result.url} download={result.filename}><Download size={17} /> Download {createsVideo ? "video" : "image"}</a>
             ) : (
@@ -1071,7 +1415,19 @@ export default function Home() {
         </section>
 
         <aside className="activity-panel">
-          <div className="activity-heading"><div><p className="eyebrow">Session</p><h2>Recent generations</h2></div><Clock3 size={20} /></div>
+          <div className="activity-heading"><div><p className="eyebrow">{IS_PUBLIC_RELEASE ? "Tool details" : "Session"}</p><h2>{IS_PUBLIC_RELEASE ? `${currentTool.label} history` : "Recent generations"}</h2></div><Clock3 size={20} /></div>
+
+          {IS_PUBLIC_RELEASE && (
+            <div className="public-tool-brief">
+              <strong>How this tool works</strong>
+              <p>{currentTool.description}</p>
+              <div className="public-tool-brief-grid">
+                <span>{publicInputType}</span>
+                <span>{publicOutputType}</span>
+                <span>SFW only</span>
+              </div>
+            </div>
+          )}
 
           <div className="recent-strip">
             {generationAwayFromTab && (
@@ -1088,7 +1444,11 @@ export default function Home() {
                 <span>0{index + 1}</span>
               </button>
             )) : (
-              <div className="empty-history">{createsVideo ? <Video size={25} /> : <ImageIcon size={25} />}<strong>No generations yet</strong><span>Your latest creations will collect here.</span></div>
+              <div className="empty-history">
+                {createsVideo ? <Video size={25} /> : <ImageIcon size={25} />}
+                <strong>{IS_PUBLIC_RELEASE ? currentTool.historyEmptyTitle : "No generations yet"}</strong>
+                <span>{IS_PUBLIC_RELEASE ? currentTool.historyEmptyHint : "Your latest creations will collect here."}</span>
+              </div>
             )}
           </div>
         </aside>

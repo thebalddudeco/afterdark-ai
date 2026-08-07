@@ -11,17 +11,45 @@
   },
   "3": {
     "inputs": {
-      "person": ["1", 0],
-      "garment": ["2", 0],
-      "prompt": "Wardrobe replacement only.",
-      "seed": 0
+      "catvton_path": "zhengchong/CatVTON"
     },
-    "class_type": "FluxVTONode",
-    "_meta": { "title": "Strict Outfit Replacement" }
+    "class_type": "LoadAutoMasker",
+    "_meta": { "title": "Load CatVTON Auto Masker" }
   },
   "4": {
     "inputs": {
-      "images": ["3", 0],
+      "sd15_inpaint_path": "runwayml/stable-diffusion-inpainting",
+      "catvton_path": "zhengchong/CatVTON",
+      "mixed_precision": "bf16"
+    },
+    "class_type": "LoadCatVTONPipeline",
+    "_meta": { "title": "Load CatVTON Pipeline" }
+  },
+  "5": {
+    "inputs": {
+      "pipe": ["3", 0],
+      "target_image": ["1", 0],
+      "cloth_type": "overall"
+    },
+    "class_type": "AutoMasker",
+    "_meta": { "title": "Auto Mask Source Outfit" }
+  },
+  "6": {
+    "inputs": {
+      "pipe": ["4", 0],
+      "target_image": ["1", 0],
+      "refer_image": ["2", 0],
+      "mask_image": ["5", 0],
+      "seed": 0,
+      "steps": 50,
+      "cfg": 2.5
+    },
+    "class_type": "CatVTON",
+    "_meta": { "title": "Strict Outfit Replacement" }
+  },
+  "7": {
+    "inputs": {
+      "images": ["6", 0],
       "filename_prefix": "image/ShadowframeAI_OUTFIT"
     },
     "class_type": "SaveImage",

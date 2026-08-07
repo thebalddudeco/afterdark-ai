@@ -247,7 +247,7 @@ foreach ($definition in $definitions) {
       packId = $definition.PackId
       displayName = $definition.DisplayName
       version = $definition.Version
-      minimumCoreVersion = "0.3.3"
+      minimumCoreVersion = "0.3.5"
       payloadFile = $definition.Payload
       sha256 = $payloadHash
       installedBytes = $installedBytes

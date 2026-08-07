@@ -1,6 +1,7 @@
 param(
   [switch]$SkipCoreBuild,
   [switch]$ReuseExistingPayload,
+  [switch]$PublicRelease,
   [string]$OutputDirectory = ""
 )
 
@@ -16,7 +17,9 @@ if (!$output.StartsWith($allowedRoot + '\', [StringComparison]::OrdinalIgnoreCas
 }
 
 if (!$SkipCoreBuild) {
-  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "Build-Shadowframe-Core.ps1")
+  $coreArguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "Build-Shadowframe-Core.ps1"))
+  if ($PublicRelease) { $coreArguments += @("-Profile", "public") }
+  & powershell.exe @coreArguments
   if ($LASTEXITCODE -ne 0) { throw "The Core package could not be built." }
 }
 if (!(Test-Path -LiteralPath (Join-Path $coreRoot "Shadowframe.exe"))) {
@@ -113,15 +116,16 @@ $files = Get-ChildItem -LiteralPath $coreRoot -File -Recurse
 $bytes = ($files | Measure-Object Length -Sum).Sum
 $hash = Get-Sha256 $payload
 $manifest = [ordered]@{
-  version = "0.3.3"
+  version = "0.3.5"
   payloadFile = "Shadowframe-Core.tar"
   sha256 = $hash
   uncompressedBytes = $bytes
   fileCount = $files.Count
 }
 $manifest | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output "Shadowframe-Package.json") -Encoding UTF8
+@{ profile = if ($PublicRelease) { "public" } else { "creator" } } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output "Shadowframe-ReleaseProfile.json") -Encoding UTF8
 
-function Copy-SamplePrompts([string]$SourceRoot, [string]$DestinationRoot) {
+function Copy-SamplePrompts([string]$SourceRoot, [string]$DestinationRoot, [bool]$PublicOnly) {
   if (!(Test-Path -LiteralPath $SourceRoot)) { return }
   if (Test-Path -LiteralPath $DestinationRoot) { Remove-Item -LiteralPath $DestinationRoot -Recurse -Force }
   New-Item -ItemType Directory -Path $DestinationRoot -Force | Out-Null
@@ -139,13 +143,15 @@ function Copy-SamplePrompts([string]$SourceRoot, [string]$DestinationRoot) {
       if ($file.Name.Equals("README.txt", [StringComparison]::OrdinalIgnoreCase)) { continue }
       $text = Get-Content -Raw -LiteralPath $file.FullName
       $category = if ($text -match $nsfwPattern -or $file.Name -match $nsfwPattern) { "NSFW" } else { "SFW" }
+      if ($PublicOnly -and $category -ne "SFW") { continue }
       $targetFolder = Join-Path (Join-Path $DestinationRoot $category) $set.Name
       New-Item -ItemType Directory -Path $targetFolder -Force | Out-Null
       Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $targetFolder $file.Name) -Force
     }
   }
 
-  foreach ($category in @("SFW", "NSFW")) {
+  $categories = if ($PublicOnly) { @("SFW") } else { @("SFW", "NSFW") }
+  foreach ($category in $categories) {
     $readme = Join-Path (Join-Path $DestinationRoot $category) "README.txt"
     New-Item -ItemType Directory -Path (Split-Path -Parent $readme) -Force | Out-Null
     @"
@@ -158,14 +164,16 @@ Folders are separated so new users can quickly choose safer showcase prompts or 
   }
 }
 
-Copy-SamplePrompts (Join-Path $projectRoot "samples") (Join-Path $output "Sample Prompts")
+Copy-SamplePrompts (Join-Path $projectRoot "samples") (Join-Path $output "Sample Prompts") $PublicRelease
 
 $setupHash = Get-Sha256 (Join-Path $output "Shadowframe Setup.exe")
 $manifestHash = Get-Sha256 (Join-Path $output "Shadowframe-Package.json")
+$profileHash = Get-Sha256 (Join-Path $output "Shadowframe-ReleaseProfile.json")
 @(
   "$setupHash  Shadowframe Setup.exe",
   "$hash  Shadowframe-Core.tar",
-  "$manifestHash  Shadowframe-Package.json"
+  "$manifestHash  Shadowframe-Package.json",
+  "$profileHash  Shadowframe-ReleaseProfile.json"
 ) | Set-Content -LiteralPath (Join-Path $output "SHA256SUMS.txt") -Encoding ASCII
 
 @"
@@ -175,11 +183,12 @@ Keep these three files together:
   Shadowframe Setup.exe
   Shadowframe-Core.tar
   Shadowframe-Package.json
+  Shadowframe-ReleaseProfile.json
 
 SHA256SUMS.txt contains optional download-integrity checksums.
 
 Run Shadowframe Setup.exe. If Anima, Wan, or PhotoReal model-pack installers are next to this installer package, Core Setup can run them automatically.
-Sample Prompts contains SFW and NSFW starter prompt folders that users can copy into Shadowframe.
+Sample Prompts contains $(if ($PublicRelease) { "SFW" } else { "SFW and NSFW" }) starter prompt folders that users can copy into Shadowframe.
 
 Silent install:
   "Shadowframe Setup.exe" /SILENT
@@ -192,4 +201,4 @@ Skip automatic model packs:
 "@ | Set-Content -LiteralPath (Join-Path $output "README.txt") -Encoding UTF8
 
 Write-Host "Installer payload SHA-256: $hash"
-Write-Host "Shadowframe Phase 2 installer created at: $output" -ForegroundColor Green
+Write-Host "Shadowframe installer created at: $output" -ForegroundColor Green

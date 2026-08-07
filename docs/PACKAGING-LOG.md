@@ -1,5 +1,71 @@
 # Shadowframe Packaging Log
 
+## Release-Ready 0.3.5 Public Finalization
+
+Goal: finish the public-release lane so the installer, runtime profile, prompt packaging, and release checklist all point to the same SFW public product.
+
+Completed:
+
+- Added upload validation in the public app and bridge path before files are forwarded into ComfyUI.
+- Added `release-profile.json` to staged Core output so the runtime can boot in the intended profile.
+- Added `Shadowframe-ReleaseProfile.json` to installer bundles so the public installer is explicitly marked.
+- Updated the installer window to identify the public build as the public edition and hide NSFW prompt access when not packaged.
+- Added `pnpm core:build:public` and `pnpm installer:build:public`.
+- Rebuilt the public installer handoff folder at `release\\Shadowframe-Installer-Public`.
+- Verified that the public installer output contains `Shadowframe-ReleaseProfile.json` with `public` and no `Sample Prompts\\NSFW` folder.
+- Bumped package, Core manifest, installer, launcher, and model-pack minimum Core metadata to `0.3.5`.
+
+Decision:
+
+- Treat `release\\Shadowframe-Installer-Public` as the current public handoff target.
+- Keep the creator/private local studio as the default source profile unless a release build explicitly opts into `public`.
+
+## Release-Ready 0.3.4 Safety Pass
+
+Goal: produce a release-safe handoff build instead of shipping source changes that still depend on manual runtime fixes.
+
+Completed:
+
+- Added a release feature flag for Outfit Replace.
+- Hid the Outfit Replace mode in the shipped UI unless explicitly re-enabled.
+- Blocked release-build API requests for Outfit Replace with a clear release-state message.
+- Bumped package, Core manifest, installer, launcher, and model-pack minimum Core metadata to `0.3.4`.
+- Updated release notes and model-pack documentation so the shipped release state matches reality.
+- Rebuilt the local Core installer package, all three model-pack installer manifests, and the beta handoff folder.
+- Rebuilt `release\\Shadowframe-Installer` with Core payload SHA-256 `9E33B16AEB04350C69639DC492997CBD2E8781D1728C76BDFD6459B99F3859BE`.
+- Confirmed model-pack payload reuse with refreshed `minimumCoreVersion` metadata: Anima `B8E601EC582EE99BFE43CBDCC18666A1AD0FB3A686E1F17DF4E95DCA8470BCED`, Wan `DE29D275063C3A2583EC7DA31C22B005748D1D99E212306C35853760267673D9`, PhotoReal `4A3249B1A003704FF0FFB51ABBA756784321EB70B7F525FB78A56F0264A379F3`.
+
+Decision:
+
+- Ship Shadowframe `0.3.4` without Outfit Replace enabled by default.
+- Keep the CatVTON source work in-repo behind the feature flag until its dependency chain is packaged cleanly for brand-new installs.
+
+## CatVTON Outfit Replace Runtime Investigation
+
+Goal: replace the Comfy-account-gated Flux VTO Outfit Replace workflow with the best local no-login alternative.
+
+Completed:
+
+- Selected CatVTON as the preferred no-login Outfit Replace engine because it is a dedicated virtual try-on workflow that uses source image, garment reference, and masking instead of a text-only inpainting prompt.
+- Vendored `Comfyui-CatVTON` into `vendor/custom_nodes/Comfyui-CatVTON`.
+- Updated Core staging so vendored Shadowframe custom nodes are copied into the packaged ComfyUI runtime.
+- Rewired the Outfit Replace workflow JSON from `FluxVTONode` to CatVTON nodes.
+- Updated app/base-model metadata from Flux VTO to CatVTON.
+- Removed the Comfy account/Flux VTO error path and replaced it with a local CatVTON runtime dependency message.
+- Patched the vendored CatVTON node to lazy-load heavier dependencies so ComfyUI can still start even if Outfit Replace dependencies are incomplete.
+- Installed and verified the lighter local Python dependencies: Diffusers, OpenCV, scikit-image, fvcore, iopath, yacs, pycocotools, and support libraries.
+- Confirmed the CatVTON custom node registers its four node classes: `LoadAutoMasker`, `LoadCatVTONPipeline`, `AutoMasker`, and `CatVTON`.
+
+Blocked:
+
+- Full CatVTON generation is not yet clean-release verified. Detectron2/DensePose requires either Microsoft C++ Build Tools for the current Python 3.12 environment or a prebuilt Python 3.10/3.11-compatible dependency pack.
+
+Decision:
+
+- Do not require users to sign into ComfyUI.
+- Do not require users to compile Detectron2 themselves.
+- Next packaging step should be a bundled CatVTON runtime/dependency pack or a Core runtime shift to a Python version with prebuilt Detectron/DensePose support.
+
 ## Phase 1 - Standalone Core
 
 Goal: remove the dependency on the developer PC's existing ComfyUI installation.

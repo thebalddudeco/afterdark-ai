@@ -1,5 +1,49 @@
 # Shadowframe AI Release Notes
 
+## Working Notes: CatVTON Outfit Replace
+
+Strict Outfit Replace has been moved away from the Comfy-account-gated Flux VTO node and is now wired to a local CatVTON workflow path. The app uses a source photo, garment reference image, automatic outfit mask, CatVTON try-on pass, and normal Shadowframe image output saving.
+
+The CatVTON custom node is vendored under `vendor/custom_nodes/Comfyui-CatVTON`, and Core staging now copies Shadowframe-vendored custom nodes into the bundled ComfyUI runtime.
+
+Current verification status: the web app build passes and the CatVTON custom node registers without startup-time dependency crashes. Full generation is not yet release-verified because Python 3.12 cannot build Detectron2/DensePose on this machine without Microsoft C++ Build Tools or a prebuilt compatible dependency pack. Do not publish this Outfit Replace update as a completed user release until CatVTON dependency packaging is resolved.
+
+## Release Candidate: 0.3.5
+
+This distro refresh versions Shadowframe as `0.3.5` and finalizes the public-release packaging lane. The public package is now clearly separated from the creator/private build: it starts in `public` profile mode, ships SFW sample prompts only, labels itself as the public edition in the installer, and validates uploads before they ever reach ComfyUI.
+
+The current public handoff folder is:
+
+- `release\\Shadowframe-Installer-Public`
+
+The rebuilt public Core installer payload SHA-256 is `F36543F3D7A811CF7387C8C8A84F3BA21EA4C312CB5C2EB2D3C69CB84BB29BFD`.
+
+The public installer bundle now also includes `Shadowframe-ReleaseProfile.json` with `public`, so the packaged installer and staged runtime agree on which profile should boot.
+
+## Previous Release Candidate: 0.3.4
+
+This distro refresh versions Shadowframe as `0.3.4` and turns the current repository into a release-safe build: the Core app, installer, launcher, and model-pack minimum-version metadata are aligned again, and the user-facing release only exposes the modes that are clean-install ready.
+
+The PhotoReal compatibility guard remains in place for the RedCraft/Qwen3VL pairing, so stale or mismatched PhotoReal installs can be repaired instead of failing with a raw checkpoint-size error during generation.
+
+The current source tree still contains the CatVTON Outfit Replace work, but Outfit Replace is disabled in the shipped release build until its local dependency chain is fully self-contained for new users. That keeps the public package honest: no Comfy login requirement, no manual Detectron2 build steps, and no half-working tab in the released app.
+
+Public-release packaging now has its own lane:
+
+- `pnpm installer:build:public` compiles the app in `public` profile mode
+- the staged Core bundle carries a `release-profile.json` marker
+- the installer bundle carries `Shadowframe-ReleaseProfile.json`
+- the desktop runtime starts the local bridge with the public profile enabled
+- the public installer ships SFW prompt samples only
+- public uploads are validated before they are proxied into ComfyUI
+- the public installer window now identifies itself as the public edition and hides any NSFW prompt button
+
+The rebuilt local Core setup executable SHA-256 is `19173AD9BAED241221B8334CF755CC72E023C023743A2F84C6EDE0EC12F07CF7`.
+
+The rebuilt local Core payload SHA-256 is `9E33B16AEB04350C69639DC492997CBD2E8781D1728C76BDFD6459B99F3859BE`.
+
+The rebuilt PhotoReal model-pack payload remains `4A3249B1A003704FF0FFB51ABBA756784321EB70B7F525FB78A56F0264A379F3`, and its minimum supported Core version is now `0.3.5`.
+
 ## Release Candidate: 0.3.3
 
 This distro refresh versions Shadowframe as `0.3.3` and upgrades the bundled ComfyUI runtime target to `0.30.0` so Krea2-based PhotoReal workflows can run.
@@ -79,10 +123,11 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 - Beta handoff package builder completed and produced `release\Shadowframe-Beta-Handoff`.
 - Beta installation verifier runs and reports actionable install readiness checks.
 - Starter prompt folders were added to the current local installer distro and the Core beta handoff folder.
-- Version metadata updated to `0.3.3` across package, Core manifest, launcher, installer, and model-pack minimum Core metadata.
+- Version metadata updated to `0.3.5` across package, Core manifest, launcher, installer, and model-pack minimum Core metadata.
 - LTX Image → Video workflow validation passed in ComfyUI, including an LTX LoRA selection.
 - RedCraft Krea2 workflow validation passed in ComfyUI after upgrading the local runtime to `0.30.0`.
-- Strict Outfit Replace build validation passed for the local app, GitHub Pages app, Core package, and Core installer package.
+- Release build hides Outfit Replace by default until its clean-install local runtime package is finalized.
+- Local release artifacts were rebuilt for this version, including Core Setup, the Core payload manifest, all three model-pack manifests, and the beta handoff folder.
 
 ## Remaining Acceptance Tests
 

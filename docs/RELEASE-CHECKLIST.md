@@ -16,7 +16,8 @@ Use this checklist before publishing a public build.
 - `dotnet build desktop\Shadowframe.Launcher\Shadowframe.Launcher.csproj -c Release` passes.
 - `dotnet build desktop\Shadowframe.Installer\Shadowframe.Installer.csproj -c Release` passes.
 - `pnpm core:build` produces `release\Shadowframe-Core`.
-- `pnpm installer:build` produces `release\Shadowframe-Installer`.
+- `pnpm installer:build` produces the creator/private installer package.
+- `pnpm installer:build:public` produces the public SFW installer package.
 - `pnpm models:build` produces the selected model-pack folders.
 - `pnpm beta:build` produces `release\Shadowframe-Beta-Handoff`.
 
@@ -32,6 +33,18 @@ Use this checklist before publishing a public build.
 - Clean-machine model-pack installs pass.
 - `Verify Installation.cmd` passes on the beta target after install.
 - txt-img, img-img, img-vid, and txt-vid generation each complete successfully.
+
+## Public release QA
+
+- `release\Shadowframe-Core\release-profile.json` contains `public` for the public installer build.
+- `release\Shadowframe-Installer-Public` contains `Shadowframe-ReleaseProfile.json`.
+- Public installer contains only `Sample Prompts\SFW` and no `Sample Prompts\NSFW` folder.
+- Public installer title/subtitle identify the package as the public edition.
+- Public install launches into guided tool tabs rather than raw creator controls.
+- Public build hides raw LoRA, negative prompt, and custom-size controls.
+- Public build blocks explicit prompt text with a clear SFW-only message.
+- Public build rejects invalid uploads with a human-readable message before generation starts.
+- Public build accepts a normal safe JPG/PNG/WebP upload and proceeds successfully.
 
 ## Distribution
 

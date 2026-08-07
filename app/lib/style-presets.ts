@@ -37,7 +37,7 @@ export const BASE_MODELS: BaseModelPreset[] = [
   { id: "anima-aesthetic", name: "Anima Aesthetic v1.1", modes: ["txt-img", "img-img"], ready: true },
   { id: "redcraft", name: "RedCraft 2/3", modes: ["txt-img", "img-img"], ready: true },
   { id: "moody-pro", name: "Moody Real Mix", modes: ["txt-img", "img-img"], ready: true },
-  { id: "flux-vton", name: "Strict Outfit Replace", modes: ["outfit"], ready: true },
+  { id: "catvton", name: "CatVTON Outfit Replace", modes: ["outfit"], ready: true },
   { id: "wan22-i2v", name: "Wan 2.2 I2V-A14B", modes: ["img-vid"], ready: true },
   { id: "ltx23-gtanimation", name: "LTX 2.3 GTAnimation", modes: ["img-vid"], ready: true },
   { id: "wan22-t2v", name: "Wan 2.2 T2V 14B", modes: ["txt-vid"], ready: true },
@@ -47,7 +47,7 @@ export const BASE_MODELS: BaseModelPreset[] = [
 export const DEFAULT_BASE_MODEL: Record<GeneratorMode, string> = {
   "txt-img": "anima-aesthetic",
   "img-img": "anima-aesthetic",
-  "outfit": "flux-vton",
+  "outfit": "catvton",
   "img-vid": "wan22-i2v",
   "txt-vid": "wan22-t2v",
 };

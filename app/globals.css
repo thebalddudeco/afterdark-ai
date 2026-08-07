@@ -101,6 +101,13 @@ button { color: inherit; }
 .eyebrow { margin: 0 0 5px; color: var(--orange-light); font-size: 10px; font-weight: 720; letter-spacing: .14em; text-transform: uppercase; }
 h1, h2, h3, p { margin-top: 0; }
 .panel-heading h1 { max-width: 250px; margin-bottom: 0; font-size: 23px; line-height: 1.08; letter-spacing: -.035em; }
+.tool-summary { margin: 10px 0 0; max-width: 280px; color: #8d8d92; font-size: 10px; line-height: 1.55; }
+.public-tool-guide { margin-bottom: 16px; padding: 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 15px; background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)); }
+.public-tool-guide-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.public-tool-guide-header strong { font-size: 11px; letter-spacing: .02em; }
+.public-tool-guide-header span { color: var(--orange-light); font-size: 8px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.public-tool-guide ul { margin: 0; padding-left: 17px; color: #b6b6bb; font-size: 10px; line-height: 1.55; }
+.public-tool-guide li + li { margin-top: 4px; }
 .dropzone { width: 100%; height: 140px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; overflow: hidden; border: 1px dashed rgba(255,255,255,.18); border-radius: 16px; color: #efefef; background: #19191b; cursor: pointer; transition: .18s ease; }
 .dropzone:hover, .dropzone.dragging { border-color: var(--orange); background: #211a16; transform: translateY(-1px); }
 .dropzone.has-image { border-style: solid; }
@@ -113,6 +120,7 @@ h1, h2, h3, p { margin-top: 0; }
 .clear-image:hover { color: #fff; }
 .field-label { display: flex; align-items: center; justify-content: space-between; margin: 17px 0 8px; color: #ddd; font-size: 11px; font-weight: 650; }
 .field-label span { color: var(--orange-light); font-size: 9px; font-weight: 550; }
+.field-helper { margin: -2px 0 8px; color: #77777d; font-size: 9px; line-height: 1.45; }
 .prompt-wrap { position: relative; }
 .prompt-wrap textarea { width: 100%; height: 104px; resize: vertical; overflow: auto; overflow-x: hidden; padding: 13px 13px 24px; border: 1px solid var(--line); border-radius: 13px; outline: none; color: #f5f5f5; background: var(--card); font-size: 11px; line-height: 1.55; transition: border-color .18s ease; }
 .prompt-wrap.compact textarea { height: 78px; }
@@ -193,6 +201,11 @@ h1, h2, h3, p { margin-top: 0; }
 .activity-panel { grid-column: 2; min-height: 144px; display: flex; flex-direction: column; padding: 14px 16px; }
 .activity-heading { margin-bottom: 14px; }
 .activity-heading h2 { margin: 0; font-size: 15px; letter-spacing: -.02em; }
+.public-tool-brief { margin-bottom: 12px; padding: 12px 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 15px; background: #171719; }
+.public-tool-brief strong { display: block; margin-bottom: 6px; font-size: 11px; }
+.public-tool-brief p { margin: 0 0 10px; color: #95959a; font-size: 10px; line-height: 1.5; }
+.public-tool-brief-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.public-tool-brief-grid span { padding: 6px 8px; border: 1px solid var(--line); border-radius: 999px; color: #bcbcc1; background: #1d1d20; font-size: 8px; letter-spacing: .03em; text-transform: uppercase; }
 .recent-strip { display: flex; min-height: 122px; gap: 9px; overflow-x: auto; overflow-y: hidden; padding-bottom: 7px; }
 .recent-card { width: 128px; min-width: 128px; min-height: 122px; position: relative; overflow: hidden; padding: 0; border: 1px solid var(--line); border-radius: 15px; background: #1c1c1f; cursor: pointer; }
 .recent-card.selected { border-color: var(--orange); }

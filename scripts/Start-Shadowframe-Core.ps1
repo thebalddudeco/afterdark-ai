@@ -8,10 +8,20 @@ $ErrorActionPreference = "Stop"
 
 $coreRoot = Split-Path -Parent $PSScriptRoot
 $manifestPath = Join-Path $coreRoot "runtime-manifest.json"
+$profilePath = Join-Path $coreRoot "release-profile.json"
 if (!(Test-Path -LiteralPath $manifestPath)) {
   throw "Shadowframe Core is incomplete: runtime-manifest.json is missing."
 }
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+$releaseProfile = "creator"
+if (Test-Path -LiteralPath $profilePath) {
+  try {
+    $profileData = Get-Content -Raw -LiteralPath $profilePath | ConvertFrom-Json
+    if ($profileData.profile -and ![string]::IsNullOrWhiteSpace([string]$profileData.profile)) {
+      $releaseProfile = [string]$profileData.profile
+    }
+  } catch {}
+}
 
 function Get-ShadowframeInstallValue([string]$Name, [string]$Fallback) {
   try {
@@ -148,10 +158,14 @@ $previousToken = $env:SHADOWFRAME_BRIDGE_TOKEN
 $previousOrigins = $env:SHADOWFRAME_ALLOWED_ORIGINS
 $previousComfy = $env:COMFYUI_URL
 $previousPort = $env:PORT
+$previousProfile = $env:SHADOWFRAME_APP_PROFILE
+$previousPublicProfile = $env:NEXT_PUBLIC_SHADOWFRAME_PROFILE
 $env:SHADOWFRAME_BRIDGE_TOKEN = $accessKey
 $env:SHADOWFRAME_ALLOWED_ORIGINS = "https://shadowframe.tech,https://www.shadowframe.tech,http://shadowframe.tech,http://www.shadowframe.tech,http://127.0.0.1:$bridgePort"
 $env:COMFYUI_URL = "http://127.0.0.1:$comfyPort"
 $env:PORT = "$bridgePort"
+$env:SHADOWFRAME_APP_PROFILE = $releaseProfile
+$env:NEXT_PUBLIC_SHADOWFRAME_PROFILE = $releaseProfile
 try {
   $bridgeProcess = Start-Process -FilePath $nodePath -ArgumentList @($bridgeEntry, "start") -WorkingDirectory $bridgeRoot -WindowStyle Hidden -RedirectStandardOutput $serverLog -RedirectStandardError $serverErrorLog -PassThru
 } finally {
@@ -159,6 +173,8 @@ try {
   $env:SHADOWFRAME_ALLOWED_ORIGINS = $previousOrigins
   $env:COMFYUI_URL = $previousComfy
   $env:PORT = $previousPort
+  $env:SHADOWFRAME_APP_PROFILE = $previousProfile
+  $env:NEXT_PUBLIC_SHADOWFRAME_PROFILE = $previousPublicProfile
 }
 
 $bridgeReady = $false

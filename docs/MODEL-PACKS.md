@@ -7,6 +7,8 @@ Shadowframe is distributed as three Windows packages:
 3. **Wan 2.2 Video Models** — Wan 2.2 image-to-video and text-to-video high/low-noise models, the shared UMT5 encoder/VAE, and Lightx2v acceleration LoRAs.
 4. **PhotoReal Image and Video Models** — RedCraft, Moody Real Mix, LTX 2.3 GTAnimation, shared Qwen support files, and their configured PhotoReal LoRAs.
 
+Strict Outfit Replace is implemented as a Core custom-node workflow rather than a normal model-pack LoRA flow. The selected no-login path is CatVTON. It does not require a Comfy account, but it does require the CatVTON runtime dependencies and first-run CatVTON/SD-inpainting weight downloads. The current Core source stages the CatVTON custom node, but a release-ready CatVTON dependency pack still needs to be finalized before Outfit Replace should be represented as fully supported for clean users. Because of that, Outfit Replace is disabled in the release build by default.
+
 Install Core first. Core Setup now asks for a Shadowframe library location and can run adjacent Anima, Wan, and PhotoReal model-pack installers automatically. Model packs install into `<Shadowframe library location>\models`, are independently repairable, and appear separately in Windows Installed Apps.
 
 This allows a user to install the application on one drive, keep large model files on another, and keep generated files somewhere convenient.
@@ -37,9 +39,9 @@ The model storage root should usually be local to the GPU machine. A network sha
 
 - `release\Shadowframe-Anima-Models` — 14 model files, 10.00 GiB payload.
 - `release\Shadowframe-Wan-Models` — 10 model files, 64.33 GiB payload.
-- `release\Shadowframe-PhotoReal-Models` — 38 model files, 69.77 GiB payload, rebuilt for Core `0.3.3` with LTX installed as a checkpoint and Qwen3VL included for RedCraft.
+- `release\Shadowframe-PhotoReal-Models` — 38 model files, 69.77 GiB payload, rebuilt for Core `0.3.5` with LTX installed as a checkpoint and Qwen3VL included for RedCraft.
 
-Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack. Core Setup discovers model-pack installers named `Install Shadowframe * Models.exe` in adjacent package folders and launches them silently with the chosen Shadowframe library location. The current rebuilt Core `0.3.3` payload SHA-256 is `129BDDF6362886F6AB054E7D403ACF19DE1B422566410DF31F130AB9BB617BA8`.
+Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack. Core Setup discovers model-pack installers named `Install Shadowframe * Models.exe` in adjacent package folders and launches them silently with the chosen Shadowframe library location. The current rebuilt Core payload SHA-256 for this release is `9E33B16AEB04350C69639DC492997CBD2E8781D1728C76BDFD6459B99F3859BE`.
 
 The PhotoReal pack also includes a targeted RedCraft/Krea2 compatibility check. During install and repair, the pack verifies that `diffusion_models/redcraft23INT8INT4FP8_30Krea2.safetensors` and `text_encoders/qwen3vl_4b_fp8_scaled.safetensors` are the exact expected files. This prevents the common RedCraft size-mismatch failure from becoming a generation-time surprise for users.
 

@@ -10,10 +10,11 @@ namespace Shadowframe.Installer;
 internal static class Program
 {
     public const string ProductName = "Shadowframe AI";
-    public const string ProductVersion = "0.3.3";
+    public const string ProductVersion = "0.3.5";
     public const string Publisher = "Shadowframe AI";
     public const string PayloadName = "Shadowframe-Core.tar";
     public const string ManifestName = "Shadowframe-Package.json";
+    public const string ReleaseProfileName = "Shadowframe-ReleaseProfile.json";
     public const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\ShadowframeAI";
 
     [STAThread]
@@ -65,6 +66,23 @@ internal static class Program
         if (!File.Exists(path)) throw new FileNotFoundException($"{ManifestName} must be beside Setup.", path);
         return JsonSerializer.Deserialize<PackageManifest>(File.ReadAllText(path), JsonOptions.Default)
                ?? throw new InvalidDataException("The Shadowframe package manifest is invalid.");
+    }
+
+    public static string LoadReleaseProfile()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, ReleaseProfileName);
+        if (!File.Exists(path)) return "creator";
+        try
+        {
+            var document = JsonDocument.Parse(File.ReadAllText(path));
+            if (document.RootElement.TryGetProperty("profile", out var profile) && profile.ValueKind == JsonValueKind.String)
+            {
+                var value = profile.GetString();
+                if (!string.IsNullOrWhiteSpace(value)) return value!;
+            }
+        }
+        catch { }
+        return "creator";
     }
 }
 
@@ -561,11 +579,13 @@ internal sealed class InstallerForm : Form
     private readonly CheckBox _desktop = new();
     private readonly CheckBox _modelPacks = new();
     private bool _installed;
+    private readonly bool _publicRelease;
 
     public InstallerForm(InstallOptions options, PackageManifest manifest)
     {
         _options = options;
         _manifest = manifest;
+        _publicRelease = Program.LoadReleaseProfile().Equals("public", StringComparison.OrdinalIgnoreCase);
         Text = "Shadowframe AI Setup";
         ClientSize = new Size(760, 680);
         MinimumSize = new Size(760, 680);
@@ -576,9 +596,9 @@ internal sealed class InstallerForm : Form
         Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!);
 
         var accent = Color.FromArgb(255, 102, 29);
-        var title = new Label { Text = "Install Shadowframe AI", Font = new Font("Segoe UI", 25, FontStyle.Bold), AutoSize = true, Location = new Point(42, 38) };
-        var subtitle = new Label { Text = "Private local image and video generation, powered by your GPU.", ForeColor = Color.FromArgb(180, 185, 195), AutoSize = true, Location = new Point(46, 88) };
-        var version = new Label { Text = $"CORE {manifest.Version}", ForeColor = accent, Font = new Font("Segoe UI Semibold", 9), AutoSize = true, Location = new Point(47, 124) };
+        var title = new Label { Text = _publicRelease ? "Install Shadowframe AI Public Edition" : "Install Shadowframe AI", Font = new Font("Segoe UI", 25, FontStyle.Bold), AutoSize = true, Location = new Point(42, 38) };
+        var subtitle = new Label { Text = _publicRelease ? "Safe local image and video creation, powered by your own GPU." : "Private local image and video generation, powered by your GPU.", ForeColor = Color.FromArgb(180, 185, 195), AutoSize = true, Location = new Point(46, 88) };
+        var version = new Label { Text = _publicRelease ? $"PUBLIC CORE {manifest.Version}" : $"CORE {manifest.Version}", ForeColor = accent, Font = new Font("Segoe UI Semibold", 9), AutoSize = true, Location = new Point(47, 124) };
 
         _checks.Location = new Point(47, 156);
         _checks.Size = new Size(665, 92);
@@ -623,7 +643,7 @@ internal sealed class InstallerForm : Form
         _desktop.Location = new Point(47, 470);
         _desktop.ForeColor = Color.FromArgb(205, 208, 215);
 
-        _modelPacks.Text = "Install adjacent Anima, Wan, and PhotoReal model packs automatically";
+        _modelPacks.Text = _publicRelease ? "Install adjacent public model packs automatically" : "Install adjacent Anima, Wan, and PhotoReal model packs automatically";
         _modelPacks.Checked = options.InstallModelPacks;
         _modelPacks.AutoSize = true;
         _modelPacks.Location = new Point(47, 500);
@@ -727,13 +747,21 @@ internal sealed class InstallerForm : Form
             };
             await Task.Run(() => InstallerEngine.Install(options, _manifest, progress));
             _installed = true;
-            _status.Text = "Check out our sample prompts here.";
+            _status.Text = _publicRelease ? "Check out the included public sample prompts here." : "Check out our sample prompts here.";
             _primary.Text = "Launch Shadowframe";
             _primary.Enabled = true;
             _cancel.Text = "Close";
             _cancel.Enabled = true;
             _sfwPrompts.Visible = Directory.Exists(PromptFolder("SFW"));
-            _nsfwPrompts.Visible = Directory.Exists(PromptFolder("NSFW"));
+            _nsfwPrompts.Visible = !_publicRelease && Directory.Exists(PromptFolder("NSFW"));
+            if (_sfwPrompts.Visible && !_nsfwPrompts.Visible)
+            {
+                _sfwPrompts.Text = _publicRelease ? "Open included prompts" : "Open sample prompts";
+            }
+            else
+            {
+                _sfwPrompts.Text = "Open SFW prompts";
+            }
         }
         catch (Exception exception)
         {

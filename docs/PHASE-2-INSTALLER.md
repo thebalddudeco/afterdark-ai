@@ -28,9 +28,9 @@ Setup installs to `%LOCALAPPDATA%\Programs\Shadowframe AI` by default and stores
 
 ## Build and test
 
-Run `pnpm installer:build` to rebuild Core and produce the installer distribution. Run `pnpm installer:test` only when no real Shadowframe installation is registered. The automated test installs into a unique temporary folder, launches the private runtime on alternate ports, performs a repair/update pass, uninstalls it, and verifies that application data is unchanged.
+Run `pnpm installer:build` to rebuild the creator-oriented installer distribution. Run `pnpm installer:build:public` to rebuild the curated public installer distribution with the `public` app profile enabled and SFW-only prompt samples. Run `pnpm installer:test` only when no real Shadowframe installation is registered. The automated test installs into a unique temporary folder, launches the private runtime on alternate ports, performs a repair/update pass, uninstalls it, and verifies that application data is unchanged.
 
-The `0.3.1` distro also places starter prompt folders beside the installer under `Sample Prompts` so new users can copy examples into Shadowframe after installation.
+The distro places starter prompt folders beside the installer under `Sample Prompts` so new users can copy examples into Shadowframe after installation. Public installer builds include SFW-only prompt folders.
 
 ## Silent deployment
 
