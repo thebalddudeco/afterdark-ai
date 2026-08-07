@@ -12,13 +12,25 @@ Current verification status: the web app build passes and the CatVTON custom nod
 
 This distro refresh versions Shadowframe as `0.3.5` and finalizes the public-release packaging lane. The public package is now clearly separated from the creator/private build: it starts in `public` profile mode, ships SFW sample prompts only, labels itself as the public edition in the installer, and validates uploads before they ever reach ComfyUI.
 
-The current public handoff folder is:
+The current clean public handoff folder is:
 
-- `release\\Shadowframe-Installer-Public`
+- `release\\Shadowframe-Installer-Public-0.3.5`
 
-The rebuilt public Core installer payload SHA-256 is `F36543F3D7A811CF7387C8C8A84F3BA21EA4C312CB5C2EB2D3C69CB84BB29BFD`.
+The rebuilt public installer executable SHA-256 is `5D903C035503A2F1D4BABA8CA722035F3C5FA406033BB80AC75F24949EB915D9`.
+
+The rebuilt public Core installer payload SHA-256 is `99E8CC0935D1CA0DE72A091430FE5D528832DEC4F1D6A4A485E3B739F5DB6B39`.
+
+The rebuilt public package manifest SHA-256 is `7D9848C50D1C04CDAE185E262499083FA05EDC9D6162A03EAF8E03CFD6095918`.
+
+The rebuilt public release-profile marker SHA-256 is `10F33B2B8841D5FF0E41A7C8357407C151A90371A9B01F0B174258ADCE090788`.
 
 The public installer bundle now also includes `Shadowframe-ReleaseProfile.json` with `public`, so the packaged installer and staged runtime agree on which profile should boot.
+
+Validation for this handoff refresh:
+
+- `pnpm lint` passes with warnings only.
+- `pnpm build:pages` passes.
+- Public installer packaging completed successfully on August 7, 2026.
 
 ## Previous Release Candidate: 0.3.4
 

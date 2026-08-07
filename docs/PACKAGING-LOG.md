@@ -1,5 +1,28 @@
 # Shadowframe Packaging Log
 
+## Release-Ready 0.3.5 Clean Public Handoff Rebuild
+
+Goal: produce a fresh, versioned public installer handoff for `v0.3.5` directly from the current repository state.
+
+Completed:
+
+- Rebuilt the public installer bundle into `release\\Shadowframe-Installer-Public-0.3.5`.
+- Confirmed the public bundle contains only `Sample Prompts\\SFW`.
+- Confirmed the public bundle includes `Shadowframe-ReleaseProfile.json` set to `public`.
+- Re-ran `pnpm lint`; it passed with warnings only.
+- Re-ran `pnpm build:pages`; it passed successfully.
+
+Artifacts:
+
+- `Shadowframe Setup.exe` — `5D903C035503A2F1D4BABA8CA722035F3C5FA406033BB80AC75F24949EB915D9`
+- `Shadowframe-Core.tar` — `99E8CC0935D1CA0DE72A091430FE5D528832DEC4F1D6A4A485E3B739F5DB6B39`
+- `Shadowframe-Package.json` — `7D9848C50D1C04CDAE185E262499083FA05EDC9D6162A03EAF8E03CFD6095918`
+- `Shadowframe-ReleaseProfile.json` — `10F33B2B8841D5FF0E41A7C8357407C151A90371A9B01F0B174258ADCE090788`
+
+Decision:
+
+- Treat `release\\Shadowframe-Installer-Public-0.3.5` as the clean handoff folder for the `v0.3.5` GitHub release tag.
+
 ## Release-Ready 0.3.5 Public Finalization
 
 Goal: finish the public-release lane so the installer, runtime profile, prompt packaging, and release checklist all point to the same SFW public product.
