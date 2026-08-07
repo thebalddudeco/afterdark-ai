@@ -2,6 +2,13 @@
 
 Public-release finalization for Shadowframe AI.
 
+## Download this release
+
+- [GitHub release page](https://github.com/thebalddudeco/shadowframe-ai/releases/tag/v0.3.5) — release notes, checksums, and companion files
+- [Full public installer bundle on Hugging Face](https://huggingface.co/datasets/TheBaldDudeCo/shadowframe-ai-public-release/tree/main) — the complete required Windows download
+
+Use the Hugging Face bundle as the main install download. GitHub is the release overview and checksum reference.
+
 ## Highlights
 
 - Finalized the dedicated public-release packaging lane.
@@ -42,6 +49,10 @@ Public-release finalization for Shadowframe AI.
 Folder:
 
 - `release\\Shadowframe-Installer-Public-0.3.5`
+
+Primary end-user download:
+
+- [Full public installer bundle on Hugging Face](https://huggingface.co/datasets/TheBaldDudeCo/shadowframe-ai-public-release/tree/main)
 
 SHA-256:
 

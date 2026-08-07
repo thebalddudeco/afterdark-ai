@@ -17,6 +17,15 @@ This repo currently supports two Shadowframe tracks:
 
 The current tagged release is `v0.3.5`.
 
+## Download the public release
+
+For the public Windows release, use these two links:
+
+- [GitHub release page](https://github.com/thebalddudeco/shadowframe-ai/releases/tag/v0.3.5) — release notes, checksums, and the lightweight setup files
+- [Full public installer bundle on Hugging Face](https://huggingface.co/datasets/TheBaldDudeCo/shadowframe-ai-public-release/tree/main) — the complete required download, including the large Core archive
+
+If you are installing Shadowframe, use the Hugging Face bundle as the primary download source.
+
 ## v0.3.5 public release summary
 
 `v0.3.5` finalizes the public-release packaging lane.
@@ -38,6 +47,11 @@ GitHub release draft text lives here:
 The clean public handoff folder is:
 
 - `release/Shadowframe-Installer-Public-0.3.5`
+
+Public download flow:
+
+- GitHub release page = release notes and small companion files
+- Hugging Face public bundle = the actual full installer bundle end users should download
 
 Key artifact checksums:
 
