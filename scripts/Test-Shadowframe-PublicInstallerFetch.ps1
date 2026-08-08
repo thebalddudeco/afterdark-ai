@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
-if (!$InstallerDirectory) { $InstallerDirectory = Join-Path $projectRoot "release\Shadowframe-Installer-Public-0.3.5" }
+if (!$InstallerDirectory) { $InstallerDirectory = Join-Path $projectRoot "release\Shadowframe-Installer-Public-0.3.6" }
 $setup = Join-Path $InstallerDirectory "Shadowframe Setup.exe"
 if (!(Test-Path -LiteralPath $setup -PathType Leaf)) {
   throw "Public installer is missing: $setup"
@@ -63,3 +63,4 @@ finally {
     }
   }
 }
+

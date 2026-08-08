@@ -39,7 +39,7 @@ The model storage root should usually be local to the GPU machine. A network sha
 
 - `release\Shadowframe-Anima-Models` — 14 model files, 10.00 GiB payload.
 - `release\Shadowframe-Wan-Models` — 10 model files, 64.33 GiB payload.
-- `release\Shadowframe-PhotoReal-Models` — 38 model files, 69.77 GiB payload, rebuilt for Core `0.3.5` with LTX installed as a checkpoint and Qwen3VL included for RedCraft.
+- `release\Shadowframe-PhotoReal-Models` — 38 model files, 69.77 GiB payload, rebuilt for Core `0.3.6` with LTX installed as a checkpoint and Qwen3VL included for RedCraft.
 
 Each folder contains its branded Setup executable, tar payload, model-pack manifest, README, third-party notices, and `SHA256SUMS.txt`. Keep all six files together when installing or transferring a pack. Core Setup discovers model-pack installers named `Install Shadowframe * Models.exe` in adjacent package folders and launches them silently with the chosen Shadowframe library location. The current rebuilt Core payload SHA-256 for this release is `9E33B16AEB04350C69639DC492997CBD2E8781D1728C76BDFD6459B99F3859BE`.
 
@@ -157,6 +157,8 @@ Downloaded LoRA filenames:
 - Wan production pack: full 64.33 GiB extraction, installed-file size checks, and production uninstall passed.
 - Both production packs: full payload SHA-256, installed byte totals, archive file counts, and exact archive-to-manifest path comparisons passed.
 - Installer project: Release build completed with zero warnings and zero errors.
+
+
 
 
 

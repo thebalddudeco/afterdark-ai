@@ -11,7 +11,7 @@ namespace Shadowframe.Installer;
 internal static class Program
 {
     public const string ProductName = "Shadowframe AI";
-    public const string ProductVersion = "0.3.5";
+    public const string ProductVersion = "0.3.6";
     public const string Publisher = "Shadowframe AI";
     public const string PayloadName = "Shadowframe-Core.tar";
     public const string ManifestName = "Shadowframe-Package.json";
@@ -938,3 +938,4 @@ internal sealed class InstallerForm : Form
             Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true });
     }
 }
+

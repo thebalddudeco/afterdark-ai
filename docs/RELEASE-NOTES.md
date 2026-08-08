@@ -8,23 +8,23 @@ The CatVTON custom node is vendored under `vendor/custom_nodes/Comfyui-CatVTON`,
 
 Current verification status: the web app build passes and the CatVTON custom node registers without startup-time dependency crashes. Full generation is not yet release-verified because Python 3.12 cannot build Detectron2/DensePose on this machine without Microsoft C++ Build Tools or a prebuilt compatible dependency pack. Do not publish this Outfit Replace update as a completed user release until CatVTON dependency packaging is resolved.
 
-## Release Candidate: 0.3.5
+## Release Candidate: 0.3.6
 
-This distro refresh versions Shadowframe as `0.3.5` and finalizes the public-release packaging lane. The public package is now clearly separated from the creator/private build: it starts in `public` profile mode, ships SFW sample prompts only, labels itself as the public edition in the installer, and validates uploads before they ever reach ComfyUI.
+This distro refresh versions Shadowframe as `0.3.6` and finalizes the public-release packaging lane. The public package is now clearly separated from the creator/private build: it starts in `public` profile mode, ships SFW sample prompts only, labels itself as the public edition in the installer, and validates uploads before they ever reach ComfyUI.
 
 The current clean public handoff folder is:
 
-- `release\\Shadowframe-Installer-Public-0.3.5`
+- `release\\Shadowframe-Installer-Public-0.3.6`
 
-The rebuilt public installer executable SHA-256 is `C4279AD600A13A7B5CA73E4B09CC5CB959D673DDAB0DB81F9DC329BE10B8D96D`.
+The rebuilt public installer executable SHA-256 is `DFD17BAA9FF61E0575C927542B56EE3C0C562EAE89938540AA3284D5FC3F7754`.
 
-The rebuilt public Core installer payload SHA-256 is `84091BA13BF8803436E4D665DF509CC3A59AB97C9B566EA29A888D2D4B24FE83`.
+The rebuilt public Core installer payload SHA-256 is `BF358E37533433E6B9213D4D99F5E5B17CB79040778217215341A3B7C3A59F0F`.
 
-The rebuilt public package manifest SHA-256 is `C7169AA83A172011D162DBAC4FC3283E4FE6AE07541850AF0241A63EB4E61117`.
+The rebuilt public package manifest SHA-256 is `ED9C612B18E415CA9A6ECEB8DA047B92D6269413B10C675706D7A94EF8FD2DBE`.
 
 The rebuilt public release-profile marker SHA-256 is `10F33B2B8841D5FF0E41A7C8357407C151A90371A9B01F0B174258ADCE090788`.
 
-The public installer bundle now also includes `Shadowframe-ReleaseProfile.json` with `public`, so the packaged installer and staged runtime agree on which profile should boot.
+The public installer bundle now also includes `Shadowframe-ReleaseProfile.json` with `public`, so the packaged installer and staged runtime agree on which profile should boot. This release is versioned as `0.3.6` as the next clean public patch release after the original `v0.3.5` handoff.
 
 Validation for this handoff refresh:
 
@@ -57,7 +57,7 @@ The rebuilt local Core setup executable SHA-256 is `19173AD9BAED241221B8334CF755
 
 The rebuilt local Core payload SHA-256 is `9E33B16AEB04350C69639DC492997CBD2E8781D1728C76BDFD6459B99F3859BE`.
 
-The rebuilt PhotoReal model-pack payload remains `4A3249B1A003704FF0FFB51ABBA756784321EB70B7F525FB78A56F0264A379F3`, and its minimum supported Core version is now `0.3.5`.
+The rebuilt PhotoReal model-pack payload remains `4A3249B1A003704FF0FFB51ABBA756784321EB70B7F525FB78A56F0264A379F3`, and its minimum supported Core version is now `0.3.6`.
 
 ## Release Candidate: 0.3.3
 
@@ -138,7 +138,7 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 - Beta handoff package builder completed and produced `release\Shadowframe-Beta-Handoff`.
 - Beta installation verifier runs and reports actionable install readiness checks.
 - Starter prompt folders were added to the current local installer distro and the Core beta handoff folder.
-- Version metadata updated to `0.3.5` across package, Core manifest, launcher, installer, and model-pack minimum Core metadata.
+- Version metadata updated to `0.3.6` across package, Core manifest, launcher, installer, and model-pack minimum Core metadata.
 - LTX Image → Video workflow validation passed in ComfyUI, including an LTX LoRA selection.
 - RedCraft Krea2 workflow validation passed in ComfyUI after upgrading the local runtime to `0.30.0`.
 - Release build hides Outfit Replace by default until its clean-install local runtime package is finalized.
@@ -157,6 +157,13 @@ The `release` folder is intentionally ignored by Git. These files are release ar
 GitHub is appropriate for source code, documentation, and small installer metadata. Large model payloads should be hosted separately because the current model archives are approximately 10.00 GiB and 64.33 GiB.
 
 The Wan pack uses sources identified as Apache-2.0. The Anima pack is marked private-use until explicit redistribution permission is confirmed.
+
+
+
+
+
+
+
 
 
 

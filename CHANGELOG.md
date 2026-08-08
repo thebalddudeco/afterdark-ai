@@ -2,7 +2,7 @@
 
 All notable Shadowframe AI packaging and application changes are tracked here.
 
-## 0.3.5 - Public Release Finalization
+## 0.3.6 - Public Release Finalization
 
 ### Added
 
@@ -12,7 +12,7 @@ All notable Shadowframe AI packaging and application changes are tracked here.
 
 ### Changed
 
-- Bumped Shadowframe Core, installer, launcher, package metadata, and model-pack minimum Core metadata to `0.3.5`.
+- Bumped Shadowframe Core, installer, launcher, package metadata, and model-pack minimum Core metadata to `0.3.6`.
 - Updated the Windows installer UI so the public package clearly identifies itself as the public edition and uses safer prompt-folder wording.
 - Updated the public installer package to ship SFW sample prompts only.
 - Updated release notes and packaging documentation so the public-release build path and handoff folder are explicit.
@@ -137,3 +137,7 @@ All notable Shadowframe AI packaging and application changes are tracked here.
 - Run real generation acceptance tests for txt-img, img-img, img-vid, and txt-vid.
 - Decide external storage for large model payloads. Do not commit model archives to Git.
 - Code-sign production EXEs before broad distribution.
+
+
+
+

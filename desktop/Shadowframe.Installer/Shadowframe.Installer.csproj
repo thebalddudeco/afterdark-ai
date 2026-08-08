@@ -14,9 +14,10 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <PublishTrimmed>false</PublishTrimmed>
     <DebugType>embedded</DebugType>
-    <Version>0.3.5</Version>
+    <Version>0.3.6</Version>
     <Authors>Shadowframe AI</Authors>
     <Product>Shadowframe AI Setup</Product>
     <Description>Installs and repairs the private Shadowframe AI Core runtime.</Description>
   </PropertyGroup>
 </Project>
+

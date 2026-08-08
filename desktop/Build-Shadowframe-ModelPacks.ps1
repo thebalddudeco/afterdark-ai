@@ -226,7 +226,7 @@ if ($PublicRelease) {
     [pscustomobject]@{
       Selector = "Anima"
       Name = "Anima Public"; PackId = "anima-models-public"; DisplayName = "Anima Public Image Models"; Version = "1.0.0"
-      OutputName = "Shadowframe-Anima-Models-Public-0.3.5"; Payload = "Shadowframe-Anima-Models-Public.tar"; Files = $animaPublicFiles
+      OutputName = "Shadowframe-Anima-Models-Public-0.3.6"; Payload = "Shadowframe-Anima-Models-Public.tar"; Files = $animaPublicFiles
       DistributionPolicy = "public-release-candidate"
       Sources = @(
         [ordered]@{ name = "Anima Aesthetic"; url = "https://civitai.com/models/2458426/anima"; license = "Pending creator redistribution confirmation for public hosting" }
@@ -240,7 +240,7 @@ if ($PublicRelease) {
     [pscustomobject]@{
       Selector = "Wan"
       Name = "Wan Public"; PackId = "wan-models-public"; DisplayName = "Wan 2.2 Public Video Models"; Version = "1.0.0"
-      OutputName = "Shadowframe-Wan-Models-Public-0.3.5"; Payload = "Shadowframe-Wan-Models-Public.tar"; Files = $wanPublicFiles
+      OutputName = "Shadowframe-Wan-Models-Public-0.3.6"; Payload = "Shadowframe-Wan-Models-Public.tar"; Files = $wanPublicFiles
       DistributionPolicy = "redistributable"
       Sources = @(
         [ordered]@{ name = "Wan 2.2 ComfyUI Repackaged"; url = "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged"; license = "Apache-2.0" }
@@ -250,7 +250,7 @@ if ($PublicRelease) {
     [pscustomobject]@{
       Selector = "PhotoReal"
       Name = "PhotoReal Public"; PackId = "photoreal-models-public"; DisplayName = "PhotoReal Public Image and Video Models"; Version = "1.0.0"
-      OutputName = "Shadowframe-PhotoReal-Models-Public-0.3.5"; Payload = "Shadowframe-PhotoReal-Models-Public.tar"; Files = $photoRealPublicFiles
+      OutputName = "Shadowframe-PhotoReal-Models-Public-0.3.6"; Payload = "Shadowframe-PhotoReal-Models-Public.tar"; Files = $photoRealPublicFiles
       DistributionPolicy = "public-release-candidate"
       Sources = @(
         [ordered]@{ name = "RedCraft 2/3"; url = "https://civitai.red/models/958009/redcraft-or-2-or-3-int8int4fp8-scaled"; license = "Pending creator redistribution confirmation for public hosting" }
@@ -346,7 +346,7 @@ foreach ($definition in $definitions) {
       packId = $definition.PackId
       displayName = $definition.DisplayName
       version = $definition.Version
-      minimumCoreVersion = "0.3.5"
+      minimumCoreVersion = "0.3.6"
       payloadFile = $definition.Payload
       sha256 = $payloadHash
       installedBytes = $installedBytes
@@ -418,3 +418,4 @@ $compatibilityReadme
     if ($temporaryPayload -and (Test-Path -LiteralPath $temporaryPayload)) { Remove-Item -LiteralPath $temporaryPayload -Force }
   }
 }
+

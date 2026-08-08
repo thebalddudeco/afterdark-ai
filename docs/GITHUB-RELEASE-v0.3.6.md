@@ -1,10 +1,10 @@
-# Shadowframe AI v0.3.5
+# Shadowframe AI v0.3.6
 
 Public-release finalization for Shadowframe AI.
 
 ## Download this release
 
-- [GitHub release page](https://github.com/thebalddudeco/shadowframe-ai/releases/tag/v0.3.5) — release notes, checksums, and companion files
+- [GitHub release page](https://github.com/thebalddudeco/shadowframe-ai/releases/tag/v0.3.6) — release notes, checksums, and companion files
 - [Full public installer bundle on Hugging Face](https://huggingface.co/datasets/TheBaldDudeCo/shadowframe-ai-public-release/tree/main) — the complete required Windows download
 
 Use the Hugging Face bundle as the main install download. GitHub is the release overview and checksum reference.
@@ -23,7 +23,7 @@ Use the Hugging Face bundle as the main install download. GitHub is the release 
 ### Public release packaging
 
 - Added explicit release-profile markers to both the staged Core bundle and the final installer bundle.
-- Rebuilt the clean public handoff package in `release\\Shadowframe-Installer-Public-0.3.5`.
+- Rebuilt the clean public handoff package in `release\\Shadowframe-Installer-Public-0.3.6`.
 - Wired the public setup flow so model packs no longer need to be manually staged beside the installer for a normal end-user install.
 - Kept creator/private and public packaging paths separated so the public edition stays aligned with the intended safer product surface.
 
@@ -35,7 +35,7 @@ Use the Hugging Face bundle as the main install download. GitHub is the release 
 
 ### Documentation and release readiness
 
-- Updated release notes, packaging log, changelog, and release checklist for the `0.3.5` public handoff.
+- Updated release notes, packaging log, changelog, and release checklist for the `0.3.6` public handoff.
 - Kept the repo aligned with the packaged public output and current release flow.
 
 ## Validation
@@ -51,7 +51,7 @@ Use the Hugging Face bundle as the main install download. GitHub is the release 
 
 Folder:
 
-- `release\\Shadowframe-Installer-Public-0.3.5`
+- `release\\Shadowframe-Installer-Public-0.3.6`
 
 Primary end-user download:
 
@@ -59,9 +59,9 @@ Primary end-user download:
 
 SHA-256:
 
-- `Shadowframe Setup.exe` — `C4279AD600A13A7B5CA73E4B09CC5CB959D673DDAB0DB81F9DC329BE10B8D96D`
-- `Shadowframe-Core.tar` — `84091BA13BF8803436E4D665DF509CC3A59AB97C9B566EA29A888D2D4B24FE83`
-- `Shadowframe-Package.json` — `C7169AA83A172011D162DBAC4FC3283E4FE6AE07541850AF0241A63EB4E61117`
+- `Shadowframe Setup.exe` — `DFD17BAA9FF61E0575C927542B56EE3C0C562EAE89938540AA3284D5FC3F7754`
+- `Shadowframe-Core.tar` — `BF358E37533433E6B9213D4D99F5E5B17CB79040778217215341A3B7C3A59F0F`
+- `Shadowframe-Package.json` — `ED9C612B18E415CA9A6ECEB8DA047B92D6269413B10C675706D7A94EF8FD2DBE`
 - `Shadowframe-ReleaseProfile.json` — `10F33B2B8841D5FF0E41A7C8357407C151A90371A9B01F0B174258ADCE090788`
 
 ## Notes
@@ -70,3 +70,9 @@ SHA-256:
 - The public bundle contains `Sample Prompts\\SFW` and does not include `Sample Prompts\\NSFW`.
 - Large model payloads remain separate from GitHub-friendly source distribution.
 - GitHub remains the release-notes/checksum hub; Hugging Face is the primary full-bundle download for end users.
+
+
+
+
+
+

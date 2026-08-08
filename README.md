@@ -15,20 +15,20 @@ This repo currently supports two Shadowframe tracks:
 - Public release track — safer packaged release flow intended for broader distribution
 - Creator/private track — the fuller local studio workflow used for development and internal testing
 
-The current tagged release is `v0.3.5`.
+The current tagged release is `v0.3.6`.
 
 ## Download the public release
 
 For the public Windows release, use these two links:
 
-- [GitHub release page](https://github.com/thebalddudeco/shadowframe-ai/releases/tag/v0.3.5) — release notes, checksums, and the lightweight setup files
+- [GitHub release page](https://github.com/thebalddudeco/shadowframe-ai/releases/tag/v0.3.6) — release notes, checksums, and the lightweight setup files
 - [Full public installer bundle on Hugging Face](https://huggingface.co/datasets/TheBaldDudeCo/shadowframe-ai-public-release/tree/main) — the complete required download, including the large Core archive
 
 If you are installing Shadowframe, use the Hugging Face bundle as the primary download source.
 
-## v0.3.5 public release summary
+## v0.3.6 public release summary
 
-`v0.3.5` finalizes the public-release packaging lane.
+`v0.3.6` finalizes the public-release packaging lane.
 
 Highlights:
 
@@ -40,13 +40,13 @@ Highlights:
 
 GitHub release draft text lives here:
 
-- [docs/GITHUB-RELEASE-v0.3.5.md](docs/GITHUB-RELEASE-v0.3.5.md)
+- [docs/GITHUB-RELEASE-v0.3.6.md](docs/GITHUB-RELEASE-v0.3.6.md)
 
 ## Public release artifacts
 
 The clean public handoff folder is:
 
-- `release/Shadowframe-Installer-Public-0.3.5`
+- `release/Shadowframe-Installer-Public-0.3.6`
 
 Public download flow:
 
@@ -55,9 +55,9 @@ Public download flow:
 
 Key artifact checksums:
 
-- `Shadowframe Setup.exe` — `C4279AD600A13A7B5CA73E4B09CC5CB959D673DDAB0DB81F9DC329BE10B8D96D`
-- `Shadowframe-Core.tar` — `84091BA13BF8803436E4D665DF509CC3A59AB97C9B566EA29A888D2D4B24FE83`
-- `Shadowframe-Package.json` — `C7169AA83A172011D162DBAC4FC3283E4FE6AE07541850AF0241A63EB4E61117`
+- `Shadowframe Setup.exe` — `DFD17BAA9FF61E0575C927542B56EE3C0C562EAE89938540AA3284D5FC3F7754`
+- `Shadowframe-Core.tar` — `BF358E37533433E6B9213D4D99F5E5B17CB79040778217215341A3B7C3A59F0F`
+- `Shadowframe-Package.json` — `ED9C612B18E415CA9A6ECEB8DA047B92D6269413B10C675706D7A94EF8FD2DBE`
 - `Shadowframe-ReleaseProfile.json` — `10F33B2B8841D5FF0E41A7C8357407C151A90371A9B01F0B174258ADCE090788`
 
 ## How Shadowframe is packaged
@@ -197,3 +197,11 @@ Keep the following out of commits:
 - machine-specific environment files
 
 Release artifacts under `release/` are intentionally treated as packaging output, not normal source files.
+
+
+
+
+
+
+
+

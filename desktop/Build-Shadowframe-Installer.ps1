@@ -116,7 +116,7 @@ $files = Get-ChildItem -LiteralPath $coreRoot -File -Recurse
 $bytes = ($files | Measure-Object Length -Sum).Sum
 $hash = Get-Sha256 $payload
 $manifest = [ordered]@{
-  version = "0.3.5"
+  version = "0.3.6"
   payloadFile = "Shadowframe-Core.tar"
   sha256 = $hash
   uncompressedBytes = $bytes
@@ -202,3 +202,5 @@ Skip automatic model packs:
 
 Write-Host "Installer payload SHA-256: $hash"
 Write-Host "Shadowframe installer created at: $output" -ForegroundColor Green
+
+
