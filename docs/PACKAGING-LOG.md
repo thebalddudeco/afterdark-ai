@@ -56,6 +56,25 @@ Decision:
 
 - Treat `release\\Shadowframe-Installer-Public-0.3.6` as the clean handoff folder for the `v0.3.6` GitHub release tag.
 
+## 2026-08-08 - Public release cleanup for v0.3.7
+
+Goal: simplify the public-facing release page so the intended user download is one installer file instead of a mixed set of reference assets.
+
+Actions completed:
+
+- created GitHub tag/release `v0.3.7`
+- attached only `Shadowframe.Setup.exe` as the intended user-facing asset
+- updated README public download guidance to point directly to `v0.3.7`
+- added refreshed public release docs for:
+  - install guide
+  - announcement
+  - first-time user journey
+
+Result:
+
+- the public GitHub release page now presents a much cleaner Windows install flow
+- the installer still performs the automatic public model-pack download from Hugging Face during setup
+
 ## Release-Ready 0.3.6 Public Finalization
 
 Goal: finish the public-release lane so the installer, runtime profile, prompt packaging, and release checklist all point to the same SFW public product.

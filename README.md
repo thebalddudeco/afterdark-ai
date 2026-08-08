@@ -41,6 +41,9 @@ Highlights:
 GitHub release draft text lives here:
 
 - [docs/GITHUB-RELEASE-v0.3.7.md](docs/GITHUB-RELEASE-v0.3.7.md)
+- [docs/INSTALL-GUIDE-v0.3.7.md](docs/INSTALL-GUIDE-v0.3.7.md)
+- [docs/ANNOUNCEMENT-v0.3.7.md](docs/ANNOUNCEMENT-v0.3.7.md)
+- [docs/USER-JOURNEY-v0.3.7.md](docs/USER-JOURNEY-v0.3.7.md)
 
 ## Public release artifacts
 
