@@ -15,24 +15,24 @@ This repo currently supports two Shadowframe tracks:
 - Public release track — safer packaged release flow intended for broader distribution
 - Creator/private track — the fuller local studio workflow used for development and internal testing
 
-The current tagged release is `v0.3.6`.
+The current tagged release is `v0.3.7`.
 
 ## Download the public release
 
-For the public Windows release, use these two links:
+For the public Windows release, use this link:
 
-- [GitHub release page](https://github.com/thebalddudeco/shadowframe-ai/releases/tag/v0.3.6) — release notes, checksums, and the lightweight setup files
-- [Full public installer bundle on Hugging Face](https://huggingface.co/datasets/TheBaldDudeCo/shadowframe-ai-public-release/tree/main) — the complete required download, including the large Core archive
+- [GitHub release page](https://github.com/thebalddudeco/shadowframe-ai/releases/tag/v0.3.7) — download `Shadowframe.Setup.exe`
 
-If you are installing Shadowframe, use the Hugging Face bundle as the primary download source.
+If you are installing Shadowframe, download the single Windows setup app from the release page and run it. The setup app handles the public model-pack download automatically during install.
 
-## v0.3.6 public release summary
+## v0.3.7 public release summary
 
-`v0.3.6` finalizes the public-release packaging lane.
+`v0.3.7` is the cleaned-up one-file public release.
 
 Highlights:
 
-- dedicated `public` release profile
+- one public installer file on the release page: `Shadowframe.Setup.exe`
+- setup installs Shadowframe Core and downloads the required public packs automatically
 - public installer ships SFW sample prompts only
 - public uploads are validated before they reach ComfyUI
 - installer UI clearly identifies the package as the public edition
@@ -40,7 +40,7 @@ Highlights:
 
 GitHub release draft text lives here:
 
-- [docs/GITHUB-RELEASE-v0.3.6.md](docs/GITHUB-RELEASE-v0.3.6.md)
+- [docs/GITHUB-RELEASE-v0.3.7.md](docs/GITHUB-RELEASE-v0.3.7.md)
 
 ## Public release artifacts
 
@@ -50,15 +50,12 @@ The clean public handoff folder is:
 
 Public download flow:
 
-- GitHub release page = release notes and small companion files
-- Hugging Face public bundle = the actual full installer bundle end users should download
+- GitHub release page = one-file Windows installer for end users
+- Hugging Face public bundle = backend payload source used by Setup during install
 
 Key artifact checksums:
 
-- `Shadowframe Setup.exe` — `DFD17BAA9FF61E0575C927542B56EE3C0C562EAE89938540AA3284D5FC3F7754`
-- `Shadowframe-Core.tar` — `BF358E37533433E6B9213D4D99F5E5B17CB79040778217215341A3B7C3A59F0F`
-- `Shadowframe-Package.json` — `ED9C612B18E415CA9A6ECEB8DA047B92D6269413B10C675706D7A94EF8FD2DBE`
-- `Shadowframe-ReleaseProfile.json` — `10F33B2B8841D5FF0E41A7C8357407C151A90371A9B01F0B174258ADCE090788`
+- `Shadowframe Setup.exe` — `B9C91EF2FFDC1EFB17B6E7B1372BD4EFE2102209761AC65F6FEACBFF0C8F2577`
 
 ## How Shadowframe is packaged
 
@@ -89,7 +86,7 @@ Core Setup is the main entry point for users.
 It can:
 
 - install Shadowframe Core
-- let the user choose app, data, and output locations
+- let the user choose the install location
 - in the public release, automatically pull the public Anima, Wan, and PhotoReal packs from Hugging Face during setup
 - in creator/private builds, chain adjacent model-pack installers automatically
 - expose bundled sample prompt folders at the end of setup

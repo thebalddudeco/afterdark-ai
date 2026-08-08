@@ -424,12 +424,6 @@ internal sealed class MainForm : Form
         var previousStatus = string.Empty;
         while (!process.HasExited)
         {
-            if (DateTime.UtcNow >= deadline)
-            {
-                process.Kill(true);
-                throw new TimeoutException("Shadowframe startup exceeded five minutes. Check that ComfyUI can start normally, then try again.");
-            }
-
             if (!string.IsNullOrWhiteSpace(statusFile) && File.Exists(statusFile))
             {
                 try
@@ -440,8 +434,20 @@ internal sealed class MainForm : Form
                         previousStatus = currentStatus;
                         statusChanged?.Invoke(currentStatus);
                     }
+
+                    if (currentStatus.Contains("Private runtime ready", StringComparison.OrdinalIgnoreCase) ||
+                        currentStatus.Contains("Shadowframe Bridge ready", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new ProcessResult(0);
+                    }
                 }
                 catch (IOException) { }
+            }
+
+            if (DateTime.UtcNow >= deadline)
+            {
+                process.Kill(true);
+                throw new TimeoutException("Shadowframe startup exceeded five minutes. Check that ComfyUI can start normally, then try again.");
             }
             await Task.Delay(250);
         }

@@ -67,6 +67,31 @@ function Join-ProcessArguments([string[]]$Arguments) {
   }) -join ' '
 }
 
+function Get-ListeningProcessInfo([int]$Port) {
+  $listener = Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -First 1
+  if (!$listener) { return $null }
+  $process = Get-Process -Id $listener.OwningProcess -ErrorAction SilentlyContinue
+  if (!$process) { return $null }
+  return [pscustomobject]@{
+    Port = $Port
+    ProcessId = $listener.OwningProcess
+    Path = $process.Path
+    Name = $process.ProcessName
+  }
+}
+
+function Stop-ManagedPortProcess([int]$Port) {
+  $info = Get-ListeningProcessInfo $Port
+  if (!$info) { return $false }
+  $path = [string]$info.Path
+  if ($path -and ($path.StartsWith($coreRoot, [StringComparison]::OrdinalIgnoreCase) -or $path.StartsWith($dataRoot, [StringComparison]::OrdinalIgnoreCase))) {
+    Stop-Process -Id $info.ProcessId -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Milliseconds 500
+    return $true
+  }
+  return $false
+}
+
 function Stop-RecordedProcesses {
   if (!(Test-Path -LiteralPath $statePath)) { return }
   try {
@@ -107,7 +132,9 @@ Stop-RecordedProcesses
 foreach ($port in @($bridgePort, $comfyPort)) {
   $listener = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue | Select-Object -First 1
   if ($listener) {
-    throw "Port $port is already in use. Close the program using it, then start Shadowframe again."
+    if (!(Stop-ManagedPortProcess $port)) {
+      throw "Port $port is already in use. Close the program using it, then start Shadowframe again."
+    }
   }
 }
 
@@ -145,6 +172,15 @@ for ($attempt = 0; $attempt -lt 180; $attempt += 1) {
   try {
     $response = Invoke-WebRequest -Uri "http://127.0.0.1:$comfyPort/system_stats" -UseBasicParsing -TimeoutSec 3
     if ($response.StatusCode -eq 200) { $comfyReady = $true; break }
+  } catch {}
+  try {
+    if ((Get-ListeningProcessInfo $comfyPort)?.ProcessId -eq $comfyProcess.Id -and (Test-Path -LiteralPath $comfyErrorLog)) {
+      $logTail = Get-Content -LiteralPath $comfyErrorLog -Tail 40 -ErrorAction SilentlyContinue
+      if ($logTail -match 'To see the GUI go to:') {
+        $comfyReady = $true
+        break
+      }
+    }
   } catch {}
 }
 if (!$comfyReady) {
@@ -194,6 +230,15 @@ for ($attempt = 0; $attempt -lt 80; $attempt += 1) {
   try {
     $response = Invoke-WebRequest -Uri "http://127.0.0.1:$bridgePort/" -UseBasicParsing -TimeoutSec 2
     if ($response.StatusCode -eq 200) { $bridgeReady = $true; break }
+  } catch {}
+  try {
+    if ((Get-ListeningProcessInfo $bridgePort)?.ProcessId -and (Test-Path -LiteralPath $serverLog)) {
+      $bridgeTail = Get-Content -LiteralPath $serverLog -Tail 40 -ErrorAction SilentlyContinue
+      if ($bridgeTail -match 'Production server running at') {
+        $bridgeReady = $true
+        break
+      }
+    }
   } catch {}
 }
 if (!$bridgeReady) {
