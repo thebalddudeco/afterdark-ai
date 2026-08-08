@@ -19,5 +19,11 @@
     <Product>Shadowframe AI Setup</Product>
     <Description>Installs and repairs the private Shadowframe AI Core runtime.</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Generated\Shadowframe-Package.json" LogicalName="InstallerAssets/Shadowframe-Package.json" Condition="Exists('Generated\\Shadowframe-Package.json')" />
+    <EmbeddedResource Include="Generated\Shadowframe-ReleaseProfile.json" LogicalName="InstallerAssets/Shadowframe-ReleaseProfile.json" Condition="Exists('Generated\\Shadowframe-ReleaseProfile.json')" />
+    <EmbeddedResource Include="Generated\Sample-Prompts.zip" LogicalName="InstallerAssets/Sample-Prompts.zip" Condition="Exists('Generated\\Sample-Prompts.zip')" />
+  </ItemGroup>
 </Project>
 

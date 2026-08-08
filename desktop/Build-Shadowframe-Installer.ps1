@@ -2,6 +2,7 @@ param(
   [switch]$SkipCoreBuild,
   [switch]$ReuseExistingPayload,
   [switch]$PublicRelease,
+  [switch]$KeepPayload,
   [string]$OutputDirectory = ""
 )
 
@@ -9,6 +10,7 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $releaseRoot = Join-Path $projectRoot "release"
 $coreRoot = Join-Path $releaseRoot "Shadowframe-Core"
+$publicCorePayloadUrl = "https://huggingface.co/datasets/TheBaldDudeCo/shadowframe-ai-public-release/resolve/main/Shadowframe-Core.tar?download=1"
 if (!$OutputDirectory) { $OutputDirectory = Join-Path $releaseRoot "Shadowframe-Installer" }
 $output = [IO.Path]::GetFullPath($OutputDirectory).TrimEnd('\')
 $allowedRoot = [IO.Path]::GetFullPath($releaseRoot).TrimEnd('\')
@@ -80,6 +82,7 @@ function Get-Sha256([string]$Path) {
 }
 
 $payload = Join-Path $output "Shadowframe-Core.tar"
+$generatedRoot = Join-Path $PSScriptRoot "Shadowframe.Installer\Generated"
 if (Test-Path -LiteralPath $output) {
   if ($ReuseExistingPayload -and (Test-Path -LiteralPath $payload)) {
     Get-ChildItem -LiteralPath $output -Force |
@@ -90,14 +93,8 @@ if (Test-Path -LiteralPath $output) {
   }
 }
 New-Item -ItemType Directory -Path $output -Force | Out-Null
-
-Write-Host "Building the Shadowframe Setup application..."
-$project = Join-Path $PSScriptRoot "Shadowframe.Installer\Shadowframe.Installer.csproj"
-$publish = Join-Path $releaseRoot "installer-publish"
-if (Test-Path -LiteralPath $publish) { Remove-Item -LiteralPath $publish -Recurse -Force }
-dotnet publish $project -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o $publish
-if ($LASTEXITCODE -ne 0) { throw "Shadowframe Setup could not be built." }
-Copy-Item -LiteralPath (Join-Path $publish "Shadowframe Setup.exe") -Destination (Join-Path $output "Shadowframe Setup.exe") -Force
+if (Test-Path -LiteralPath $generatedRoot) { Remove-Item -LiteralPath $generatedRoot -Recurse -Force }
+New-Item -ItemType Directory -Path $generatedRoot -Force | Out-Null
 
 Write-Host "Packing the verified Shadowframe Core payload..."
 if (!($ReuseExistingPayload -and (Test-Path -LiteralPath $payload))) {
@@ -121,9 +118,12 @@ $manifest = [ordered]@{
   sha256 = $hash
   uncompressedBytes = $bytes
   fileCount = $files.Count
+  payloadUrl = if ($PublicRelease) { $publicCorePayloadUrl } else { $null }
 }
-$manifest | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output "Shadowframe-Package.json") -Encoding UTF8
-@{ profile = if ($PublicRelease) { "public" } else { "creator" } } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output "Shadowframe-ReleaseProfile.json") -Encoding UTF8
+$manifestPath = Join-Path $output "Shadowframe-Package.json"
+$profilePath = Join-Path $output "Shadowframe-ReleaseProfile.json"
+$manifest | ConvertTo-Json | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+@{ profile = if ($PublicRelease) { "public" } else { "creator" } } | ConvertTo-Json | Set-Content -LiteralPath $profilePath -Encoding UTF8
 
 function Copy-SamplePrompts([string]$SourceRoot, [string]$DestinationRoot, [bool]$PublicOnly) {
   if (!(Test-Path -LiteralPath $SourceRoot)) { return }
@@ -164,43 +164,72 @@ Folders are separated so new users can quickly choose safer showcase prompts or 
   }
 }
 
+function New-ZipArchive([string]$SourceDirectory, [string]$ArchivePath) {
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  if (Test-Path -LiteralPath $ArchivePath) { Remove-Item -LiteralPath $ArchivePath -Force }
+  [System.IO.Compression.ZipFile]::CreateFromDirectory($SourceDirectory, $ArchivePath)
+}
+
 Copy-SamplePrompts (Join-Path $projectRoot "samples") (Join-Path $output "Sample Prompts") $PublicRelease
+$samplePromptsPath = Join-Path $output "Sample Prompts"
+
+Copy-Item -LiteralPath $manifestPath -Destination (Join-Path $generatedRoot "Shadowframe-Package.json") -Force
+Copy-Item -LiteralPath $profilePath -Destination (Join-Path $generatedRoot "Shadowframe-ReleaseProfile.json") -Force
+if (Test-Path -LiteralPath $samplePromptsPath) {
+  New-ZipArchive $samplePromptsPath (Join-Path $generatedRoot "Sample-Prompts.zip")
+}
+
+Write-Host "Building the Shadowframe Setup application..."
+$project = Join-Path $PSScriptRoot "Shadowframe.Installer\Shadowframe.Installer.csproj"
+$publish = Join-Path $releaseRoot "installer-publish"
+$installerBuildRoot = Join-Path $PSScriptRoot "Shadowframe.Installer"
+if (Test-Path -LiteralPath $publish) { Remove-Item -LiteralPath $publish -Recurse -Force }
+foreach ($stalePath in @((Join-Path $installerBuildRoot "bin"), (Join-Path $installerBuildRoot "obj"))) {
+  if (Test-Path -LiteralPath $stalePath) { Remove-Item -LiteralPath $stalePath -Recurse -Force }
+}
+dotnet publish $project -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o $publish
+if ($LASTEXITCODE -ne 0) { throw "Shadowframe Setup could not be built." }
+Copy-Item -LiteralPath (Join-Path $publish "Shadowframe Setup.exe") -Destination (Join-Path $output "Shadowframe Setup.exe") -Force
 
 $setupHash = Get-Sha256 (Join-Path $output "Shadowframe Setup.exe")
-$manifestHash = Get-Sha256 (Join-Path $output "Shadowframe-Package.json")
-$profileHash = Get-Sha256 (Join-Path $output "Shadowframe-ReleaseProfile.json")
 @(
-  "$setupHash  Shadowframe Setup.exe",
-  "$hash  Shadowframe-Core.tar",
-  "$manifestHash  Shadowframe-Package.json",
-  "$profileHash  Shadowframe-ReleaseProfile.json"
+  "$setupHash  Shadowframe Setup.exe"
 ) | Set-Content -LiteralPath (Join-Path $output "SHA256SUMS.txt") -Encoding ASCII
 
 @"
 Shadowframe AI — Windows installer
 
-Keep these three files together:
+Everything required for setup is packaged inside:
   Shadowframe Setup.exe
-  Shadowframe-Core.tar
-  Shadowframe-Package.json
-  Shadowframe-ReleaseProfile.json
 
-SHA256SUMS.txt contains optional download-integrity checksums.
+SHA256SUMS.txt contains optional integrity checks.
 
 Run Shadowframe Setup.exe. Public builds automatically fetch the public Anima, Wan, and PhotoReal model packs from Hugging Face during setup when they are not already bundled beside the installer. Creator/private builds can still chain adjacent model-pack installers automatically.
-Sample Prompts contains $(if ($PublicRelease) { "SFW" } else { "SFW and NSFW" }) starter prompt folders that users can copy into Shadowframe.
+The installer also includes $(if ($PublicRelease) { "SFW" } else { "SFW and NSFW" }) starter sample prompts and places them into the installed Shadowframe folder automatically.
 
 Silent install:
   "Shadowframe Setup.exe" /SILENT
 
 Custom folder:
-  "Shadowframe Setup.exe" /SILENT /INSTALLDIR="D:\Apps\Shadowframe AI" /DATAROOT="X:\Shadowframe" /OUTPUTROOT="D:\Shadowframe Output"
+  "Shadowframe Setup.exe" /SILENT /INSTALLDIR="D:\Apps\Shadowframe AI"
 
 Skip automatic model packs:
   "Shadowframe Setup.exe" /SILENT /NOMODELPACKS
 "@ | Set-Content -LiteralPath (Join-Path $output "README.txt") -Encoding UTF8
 
 Write-Host "Installer payload SHA-256: $hash"
+
+foreach ($path in @(
+  $(if ($KeepPayload) { $null } else { $payload }),
+  $manifestPath,
+  $profilePath,
+  $samplePromptsPath
+)) {
+  if ($path -and (Test-Path -LiteralPath $path)) {
+    Remove-Item -LiteralPath $path -Recurse -Force
+  }
+}
+
 Write-Host "Shadowframe installer created at: $output" -ForegroundColor Green
 
 

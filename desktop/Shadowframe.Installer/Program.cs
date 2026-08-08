@@ -36,7 +36,7 @@ internal static class Program
 
             if (options.Silent)
             {
-                var checks = PrerequisiteChecker.Run(options.InstallDirectory, LoadManifest());
+                var checks = PrerequisiteChecker.Run(options, LoadManifest());
                 if (checks.Blockers.Count > 0 && !options.AllowUnsupported)
                     throw new InvalidOperationException(string.Join(Environment.NewLine, checks.Blockers));
                 InstallerEngine.Install(options, LoadManifest(), null);
@@ -63,19 +63,15 @@ internal static class Program
 
     public static PackageManifest LoadManifest()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, ManifestName);
-        if (!File.Exists(path)) throw new FileNotFoundException($"{ManifestName} must be beside Setup.", path);
-        return JsonSerializer.Deserialize<PackageManifest>(File.ReadAllText(path), JsonOptions.Default)
+        return JsonSerializer.Deserialize<PackageManifest>(InstallerAssets.ReadText(ManifestName), JsonOptions.Default)
                ?? throw new InvalidDataException("The Shadowframe package manifest is invalid.");
     }
 
     public static string LoadReleaseProfile()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, ReleaseProfileName);
-        if (!File.Exists(path)) return "creator";
         try
         {
-            var document = JsonDocument.Parse(File.ReadAllText(path));
+            var document = JsonDocument.Parse(InstallerAssets.ReadText(ReleaseProfileName, required: false) ?? "{ \"profile\": \"creator\" }");
             if (document.RootElement.TryGetProperty("profile", out var profile) && profile.ValueKind == JsonValueKind.String)
             {
                 var value = profile.GetString();
@@ -87,7 +83,37 @@ internal static class Program
     }
 }
 
-internal sealed record PackageManifest(string Version, string PayloadFile, string Sha256, long UncompressedBytes, int FileCount);
+internal static class InstallerAssets
+{
+    private const string ResourcePrefix = "InstallerAssets/";
+
+    public static string ReadText(string fileName, bool required = true)
+    {
+        var bytes = ReadBytes(fileName, required);
+        if (bytes is null) return string.Empty;
+        return System.Text.Encoding.UTF8.GetString(bytes).TrimStart('\uFEFF');
+    }
+
+    public static byte[]? ReadBytes(string fileName, bool required = true)
+    {
+        var diskPath = Path.Combine(AppContext.BaseDirectory, fileName);
+        if (File.Exists(diskPath))
+            return File.ReadAllBytes(diskPath);
+
+        using var stream = typeof(InstallerAssets).Assembly.GetManifestResourceStream(ResourcePrefix + fileName.Replace('\\', '/'));
+        if (stream is null)
+        {
+            if (required) throw new FileNotFoundException($"{fileName} was not found in the setup package.", diskPath);
+            return null;
+        }
+
+        using var memory = new MemoryStream();
+        stream.CopyTo(memory);
+        return memory.ToArray();
+    }
+}
+
+internal sealed record PackageManifest(string Version, string PayloadFile, string Sha256, long UncompressedBytes, int FileCount, string? PayloadUrl = null);
 
 internal static class JsonOptions
 {
@@ -111,9 +137,23 @@ internal sealed class InstallOptions
     public static InstallOptions Parse(IEnumerable<string> args)
     {
         var values = args.ToArray();
+        var publicRelease = Program.LoadReleaseProfile().Equals("public", StringComparison.OrdinalIgnoreCase);
         string? installDirectory = values.FirstOrDefault(value => value.StartsWith("/INSTALLDIR=", StringComparison.OrdinalIgnoreCase));
         string? dataRoot = values.FirstOrDefault(value => value.StartsWith("/DATAROOT=", StringComparison.OrdinalIgnoreCase));
         string? outputRoot = values.FirstOrDefault(value => value.StartsWith("/OUTPUTROOT=", StringComparison.OrdinalIgnoreCase));
+        var resolvedInstallDirectory = installDirectory is null
+            ? DefaultInstallDirectory(publicRelease)
+            : Path.GetFullPath(installDirectory[(installDirectory.IndexOf('=') + 1)..].Trim('"'));
+        var resolvedDataRoot = publicRelease
+            ? resolvedInstallDirectory
+            : dataRoot is null
+                ? DefaultDataRoot()
+                : Path.GetFullPath(dataRoot[(dataRoot.IndexOf('=') + 1)..].Trim('"'));
+        var resolvedOutputRoot = publicRelease
+            ? resolvedInstallDirectory
+            : outputRoot is null
+                ? DefaultOutputRoot()
+                : Path.GetFullPath(outputRoot[(outputRoot.IndexOf('=') + 1)..].Trim('"'));
         return new InstallOptions
         {
             Silent = values.Any(value => value.Equals("/SILENT", StringComparison.OrdinalIgnoreCase) || value.Equals("/VERYSILENT", StringComparison.OrdinalIgnoreCase)),
@@ -124,24 +164,20 @@ internal sealed class InstallOptions
             NoShortcuts = values.Any(value => value.Equals("/NOSHORTCUTS", StringComparison.OrdinalIgnoreCase)),
             AllowUnsupported = values.Any(value => value.Equals("/ALLOWUNSUPPORTED", StringComparison.OrdinalIgnoreCase)),
             InstallModelPacks = !values.Any(value => value.Equals("/NOMODELPACKS", StringComparison.OrdinalIgnoreCase)),
-            InstallDirectory = installDirectory is null
-                ? DefaultInstallDirectory()
-                : Path.GetFullPath(installDirectory[(installDirectory.IndexOf('=') + 1)..].Trim('"')),
-            DataRoot = dataRoot is null
-                ? DefaultDataRoot()
-                : Path.GetFullPath(dataRoot[(dataRoot.IndexOf('=') + 1)..].Trim('"')),
-            OutputRoot = outputRoot is null
-                ? DefaultOutputRoot()
-                : Path.GetFullPath(outputRoot[(outputRoot.IndexOf('=') + 1)..].Trim('"'))
+            InstallDirectory = resolvedInstallDirectory,
+            DataRoot = resolvedDataRoot,
+            OutputRoot = resolvedOutputRoot
         };
     }
 
-    private static string DefaultInstallDirectory()
+    private static string DefaultInstallDirectory(bool publicRelease = false)
     {
         using var key = Registry.CurrentUser.OpenSubKey(Program.UninstallKey);
         return key?.GetValue("InstallLocation") is string existing && !string.IsNullOrWhiteSpace(existing)
             ? existing
-            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Shadowframe AI");
+            : publicRelease
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Shadowframe AI")
+                : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Shadowframe AI");
     }
 
     private static string DefaultDataRoot()
@@ -173,7 +209,7 @@ internal sealed record PrerequisiteResults(List<string> Passed, List<string> War
 
 internal static class PrerequisiteChecker
 {
-    public static PrerequisiteResults Run(string installDirectory, PackageManifest manifest)
+    public static PrerequisiteResults Run(InstallOptions options, PackageManifest manifest)
     {
         var passed = new List<string>();
         var warnings = new List<string>();
@@ -190,15 +226,22 @@ internal static class PrerequisiteChecker
         if (HasWebView2()) passed.Add("Microsoft Edge WebView2 Runtime detected");
         else blockers.Add("Microsoft Edge WebView2 Runtime is required. Install it from Microsoft, then run Setup again.");
 
-        var root = Path.GetPathRoot(Path.GetFullPath(installDirectory)) ?? "C:\\";
+        var root = Path.GetPathRoot(Path.GetFullPath(options.InstallDirectory)) ?? "C:\\";
         var drive = new DriveInfo(root);
         var required = manifest.UncompressedBytes + 5L * 1024 * 1024 * 1024;
+        var releaseProfile = Program.LoadReleaseProfile();
+        if (releaseProfile.Equals("public", StringComparison.OrdinalIgnoreCase) && options.InstallModelPacks)
+        {
+            required += InstallerEngine.GetRequiredPublicPackFreeSpace();
+            warnings.Add($"Public model packs are large. Setup will download about {FormatBytes(InstallerEngine.GetPublicPackDownloadBytes())} and reserve extra space while installing.");
+        }
+
         if (drive.AvailableFreeSpace >= required)
             passed.Add($"Enough disk space ({FormatBytes(drive.AvailableFreeSpace)} available)");
         else
             blockers.Add($"At least {FormatBytes(required)} of free space is required on {drive.Name}.");
 
-        if (File.Exists(Path.Combine(installDirectory, "Shadowframe.exe")))
+        if (File.Exists(Path.Combine(options.InstallDirectory, "Shadowframe.exe")))
             warnings.Add("An existing installation will be repaired or updated; models and generations are preserved.");
 
         return new PrerequisiteResults(passed, warnings, blockers);
@@ -249,84 +292,157 @@ internal static class InstallerEngine
             "anima-public",
             "Anima public models",
             "Install Shadowframe Anima Public Models.exe",
-            "TheBaldDudeCo/shadowframe-anima-public-models"),
+            "TheBaldDudeCo/shadowframe-anima-public-models",
+            6052657990),
         new(
             "wan-public",
             "Wan public models",
             "Install Shadowframe Wan Public Models.exe",
-            "TheBaldDudeCo/shadowframe-wan-public-models"),
+            "TheBaldDudeCo/shadowframe-wan-public-models",
+            69074964839),
         new(
             "photoreal-public",
             "PhotoReal public models",
             "Install Shadowframe PhotoReal Public Models.exe",
-            "TheBaldDudeCo/shadowframe-photoreal-public-models")
+            "TheBaldDudeCo/shadowframe-photoreal-public-models",
+            72870622674)
     };
+
+    public static long GetPublicPackDownloadBytes() => PublicModelPacks.Sum(pack => pack.PayloadBytes);
+
+    public static long GetRequiredPublicPackFreeSpace()
+    {
+        const long extraHeadroomBytes = 8L * 1024 * 1024 * 1024;
+        return PublicModelPacks.Sum(pack => pack.PayloadBytes * 2) + extraHeadroomBytes;
+    }
 
     public static void Install(InstallOptions options, PackageManifest manifest, IProgress<InstallProgress>? progress)
     {
-        var payloadPath = Path.Combine(AppContext.BaseDirectory, manifest.PayloadFile);
-        if (!File.Exists(payloadPath)) throw new FileNotFoundException("The Shadowframe Core payload must remain beside Setup.", payloadPath);
+        progress?.Report(new(1, "Preparing the Core package…"));
+        var payloadPath = MaterializePayload(manifest, progress);
 
         progress?.Report(new(2, "Verifying the Core package…"));
-        using (var stream = File.OpenRead(payloadPath))
-        {
-            var hash = Convert.ToHexString(SHA256.HashData(stream));
-            if (!hash.Equals(manifest.Sha256, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException("The Core package failed its integrity check. Download the installer again.");
-        }
-
-        var installRoot = Path.GetFullPath(options.InstallDirectory).TrimEnd(Path.DirectorySeparatorChar);
-        var parent = Directory.GetParent(installRoot)?.FullName ?? throw new InvalidOperationException("The installation folder is invalid.");
-        Directory.CreateDirectory(parent);
-        StopInstalledRuntime(installRoot);
-
-        var staging = Path.Combine(parent, $".shadowframe-staging-{Guid.NewGuid():N}");
-        var backup = Path.Combine(parent, $".shadowframe-backup-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(staging);
-        var replacedExisting = false;
         try
         {
-            progress?.Report(new(8, "Installing the private AI runtime…"));
-            ExtractPayload(payloadPath, staging, manifest.FileCount, progress);
-            ValidateStaging(staging);
-
-            if (Directory.Exists(installRoot))
+            using (var stream = File.OpenRead(payloadPath))
             {
-                Directory.Move(installRoot, backup);
-                replacedExisting = true;
+                var hash = Convert.ToHexString(SHA256.HashData(stream));
+                if (!hash.Equals(manifest.Sha256, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidDataException("The Core package failed its integrity check. Download the installer again.");
             }
-            Directory.Move(staging, installRoot);
 
-            var uninstaller = Path.Combine(installRoot, "Shadowframe Uninstaller.exe");
-            File.Copy(Environment.ProcessPath!, uninstaller, true);
-            File.WriteAllText(Path.Combine(installRoot, "install-receipt.json"), JsonSerializer.Serialize(new
+            var installRoot = Path.GetFullPath(options.InstallDirectory).TrimEnd(Path.DirectorySeparatorChar);
+            var parent = Directory.GetParent(installRoot)?.FullName ?? throw new InvalidOperationException("The installation folder is invalid.");
+            Directory.CreateDirectory(parent);
+            StopInstalledRuntime(installRoot);
+
+            var staging = Path.Combine(parent, $".shadowframe-staging-{Guid.NewGuid():N}");
+            var backup = Path.Combine(parent, $".shadowframe-backup-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(staging);
+            var replacedExisting = false;
+            try
             {
-                product = Program.ProductName,
-                version = manifest.Version,
-                installedAt = DateTimeOffset.Now,
-                dataRoot = Path.GetFullPath(options.DataRoot),
-                outputRoot = Path.GetFullPath(options.OutputRoot)
-            }, JsonOptions.Default));
+                progress?.Report(new(8, "Installing the private AI runtime…"));
+                ExtractPayload(payloadPath, staging, manifest.FileCount, progress);
+                ValidateStaging(staging);
 
-            if (!options.NoShortcuts) CreateShortcuts(installRoot, options.DesktopShortcut);
-            WriteUninstallRegistration(installRoot, manifest, options);
-            PrepareDataFolders(options);
-            CopySamplePrompts(options.DataRoot);
-            if (options.InstallModelPacks)
-                InstallAdjacentModelPacks(options, progress);
-            progress?.Report(new(100, "Shadowframe AI is ready."));
+                if (Directory.Exists(installRoot))
+                {
+                    Directory.Move(installRoot, backup);
+                    replacedExisting = true;
+                }
+                Directory.Move(staging, installRoot);
 
-            if (Directory.Exists(backup)) Directory.Delete(backup, true);
+                var uninstaller = Path.Combine(installRoot, "Shadowframe Uninstaller.exe");
+                File.Copy(Environment.ProcessPath!, uninstaller, true);
+                File.WriteAllText(Path.Combine(installRoot, "install-receipt.json"), JsonSerializer.Serialize(new
+                {
+                    product = Program.ProductName,
+                    version = manifest.Version,
+                    installedAt = DateTimeOffset.Now,
+                    dataRoot = Path.GetFullPath(options.DataRoot),
+                    outputRoot = Path.GetFullPath(options.OutputRoot)
+                }, JsonOptions.Default));
+
+                if (!options.NoShortcuts) CreateShortcuts(installRoot, options.DesktopShortcut);
+                WriteUninstallRegistration(installRoot, manifest, options);
+                PrepareDataFolders(options);
+                CopySamplePrompts(options.DataRoot);
+                if (options.InstallModelPacks)
+                    InstallAdjacentModelPacks(options, progress);
+                progress?.Report(new(100, "Shadowframe AI is ready."));
+
+                if (Directory.Exists(backup)) Directory.Delete(backup, true);
+            }
+            catch
+            {
+                if (Directory.Exists(staging)) Directory.Delete(staging, true);
+                if (replacedExisting && Directory.Exists(backup))
+                {
+                    if (Directory.Exists(installRoot)) Directory.Delete(installRoot, true);
+                    Directory.Move(backup, installRoot);
+                }
+                throw;
+            }
         }
-        catch
+        finally
         {
-            if (Directory.Exists(staging)) Directory.Delete(staging, true);
-            if (replacedExisting && Directory.Exists(backup))
+            DeleteMaterializedPayload(payloadPath);
+        }
+    }
+
+    private static string MaterializePayload(PackageManifest manifest, IProgress<InstallProgress>? progress)
+    {
+        var sidecarPath = Path.Combine(AppContext.BaseDirectory, manifest.PayloadFile);
+        if (File.Exists(sidecarPath)) return sidecarPath;
+
+        var embeddedBytes = InstallerAssets.ReadBytes(manifest.PayloadFile, required: false);
+        if (embeddedBytes is { Length: > 0 })
+        {
+            var embeddedTempPath = Path.Combine(Path.GetTempPath(), $"shadowframe-core-{Guid.NewGuid():N}.tar");
+            File.WriteAllBytes(embeddedTempPath, embeddedBytes);
+            return embeddedTempPath;
+        }
+
+        if (string.IsNullOrWhiteSpace(manifest.PayloadUrl))
+            throw new FileNotFoundException("The Shadowframe Core package is missing and no download source was included with Setup.", sidecarPath);
+
+        progress?.Report(new(3, "Downloading the Shadowframe Core runtime…"));
+        var downloadPath = Path.Combine(Path.GetTempPath(), $"shadowframe-core-download-{Guid.NewGuid():N}.tar");
+        DownloadFile(manifest.PayloadUrl!, downloadPath, progress);
+        return downloadPath;
+    }
+
+    private static void DeleteMaterializedPayload(string payloadPath)
+    {
+        try
+        {
+            if (!payloadPath.StartsWith(AppContext.BaseDirectory, StringComparison.OrdinalIgnoreCase) && File.Exists(payloadPath))
+                File.Delete(payloadPath);
+        }
+        catch { }
+    }
+
+    private static void DownloadFile(string url, string destinationPath, IProgress<InstallProgress>? progress)
+    {
+        using var response = DownloadClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead).GetAwaiter().GetResult();
+        response.EnsureSuccessStatusCode();
+        var totalBytes = response.Content.Headers.ContentLength;
+
+        using var responseStream = response.Content.ReadAsStream();
+        using var fileStream = File.Create(destinationPath);
+        var buffer = new byte[1024 * 1024];
+        long totalRead = 0;
+        int bytesRead;
+        while ((bytesRead = responseStream.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            fileStream.Write(buffer, 0, bytesRead);
+            totalRead += bytesRead;
+            if (totalBytes is > 0)
             {
-                if (Directory.Exists(installRoot)) Directory.Delete(installRoot, true);
-                Directory.Move(backup, installRoot);
+                var percent = 3 + (int)Math.Min(4, Math.Round(totalRead / (double)totalBytes.Value * 4));
+                progress?.Report(new(percent, $"Downloading the Shadowframe Core runtime… {Math.Round(totalRead / 1024d / 1024d):N0} MB of {Math.Round(totalBytes.Value / 1024d / 1024d):N0} MB"));
             }
-            throw;
         }
     }
 
@@ -425,10 +541,29 @@ internal static class InstallerEngine
     private static void CopySamplePrompts(string dataRoot)
     {
         var source = Path.Combine(AppContext.BaseDirectory, "Sample Prompts");
-        if (!Directory.Exists(source)) return;
         var target = Path.Combine(Path.GetFullPath(dataRoot), "Sample Prompts");
+        if (Directory.Exists(source))
+        {
+            Directory.CreateDirectory(target);
+            CopyDirectory(source, target);
+            return;
+        }
+
+        var promptArchive = InstallerAssets.ReadBytes("Sample-Prompts.zip", required: false);
+        if (promptArchive is null || promptArchive.Length == 0) return;
+
+        if (Directory.Exists(target)) Directory.Delete(target, true);
         Directory.CreateDirectory(target);
-        CopyDirectory(source, target);
+        var tempArchive = Path.Combine(Path.GetTempPath(), $"shadowframe-prompts-{Guid.NewGuid():N}.zip");
+        try
+        {
+            File.WriteAllBytes(tempArchive, promptArchive);
+            System.IO.Compression.ZipFile.ExtractToDirectory(tempArchive, target, overwriteFiles: true);
+        }
+        finally
+        {
+            try { if (File.Exists(tempArchive)) File.Delete(tempArchive); } catch { }
+        }
     }
 
     private static void CopyDirectory(string source, string target)
@@ -509,6 +644,7 @@ internal static class InstallerEngine
             var definition = selectedPacks[index];
             var packRoot = Path.Combine(cacheRoot, definition.PackId);
             Directory.CreateDirectory(packRoot);
+            EnsureSpaceForPublicPack(packRoot, definition);
             var setupPath = Path.Combine(packRoot, definition.InstallerFileName);
             if (!File.Exists(setupPath))
                 File.Copy(Environment.ProcessPath!, setupPath, true);
@@ -533,6 +669,15 @@ internal static class InstallerEngine
         }
 
         return installers;
+    }
+
+    private static void EnsureSpaceForPublicPack(string packRoot, PublicModelPackDefinition definition)
+    {
+        var root = Path.GetPathRoot(Path.GetFullPath(packRoot)) ?? "C:\\";
+        var drive = new DriveInfo(root);
+        var required = (definition.PayloadBytes * 2) + (2L * 1024 * 1024 * 1024);
+        if (drive.AvailableFreeSpace < required)
+            throw new InvalidOperationException($"Not enough free space to install {definition.DisplayName}. Free up at least {PrerequisiteChecker.FormatBytes(required)} on {drive.Name}, then run Setup again.");
     }
 
     private static HashSet<string> LoadRequestedPublicPackIds()
@@ -694,7 +839,7 @@ internal static class InstallerEngine
     }
 }
 
-internal sealed record PublicModelPackDefinition(string PackId, string DisplayName, string InstallerFileName, string RepositoryId);
+internal sealed record PublicModelPackDefinition(string PackId, string DisplayName, string InstallerFileName, string RepositoryId, long PayloadBytes);
 
 internal static class Shortcut
 {
@@ -736,6 +881,7 @@ internal sealed class InstallerForm : Form
     private readonly Button _nsfwPrompts = new();
     private readonly CheckBox _desktop = new();
     private readonly CheckBox _modelPacks = new();
+    private readonly Label _singleRootHelp = new();
     private bool _installed;
     private readonly bool _publicRelease;
 
@@ -745,8 +891,8 @@ internal sealed class InstallerForm : Form
         _manifest = manifest;
         _publicRelease = Program.LoadReleaseProfile().Equals("public", StringComparison.OrdinalIgnoreCase);
         Text = "Shadowframe AI Setup";
-        ClientSize = new Size(760, 680);
-        MinimumSize = new Size(760, 680);
+        ClientSize = new Size(760, _publicRelease ? 608 : 680);
+        MinimumSize = new Size(760, _publicRelease ? 608 : 680);
         BackColor = Color.FromArgb(10, 10, 11);
         ForeColor = Color.White;
         Font = new Font("Segoe UI", 10);
@@ -762,7 +908,7 @@ internal sealed class InstallerForm : Form
         _checks.Size = new Size(665, 92);
         _checks.ForeColor = Color.FromArgb(210, 213, 220);
 
-        var pathLabel = new Label { Text = "App install location", AutoSize = true, Location = new Point(47, 262) };
+        var pathLabel = new Label { Text = _publicRelease ? "Shadowframe folder" : "App install location", AutoSize = true, Location = new Point(47, 262) };
         _installPath.Text = options.InstallDirectory;
         _installPath.Location = new Point(47, 287);
         _installPath.Size = new Size(575, 30);
@@ -795,28 +941,34 @@ internal sealed class InstallerForm : Form
         browseOutput.FlatAppearance.BorderColor = Color.FromArgb(65, 65, 69);
         browseOutput.Click += (_, _) => Browse(_outputRoot, "Choose where Shadowframe saves generated files", "");
 
+        _singleRootHelp.Text = "Models, prompts, input, output, temp, and app state will all be created inside this Shadowframe folder automatically.";
+        _singleRootHelp.Location = new Point(47, 330);
+        _singleRootHelp.Size = new Size(665, 42);
+        _singleRootHelp.ForeColor = Color.FromArgb(180, 185, 195);
+        _singleRootHelp.Visible = _publicRelease;
+
         _desktop.Text = "Create a Desktop shortcut";
         _desktop.Checked = options.DesktopShortcut;
         _desktop.AutoSize = true;
-        _desktop.Location = new Point(47, 470);
+        _desktop.Location = new Point(47, _publicRelease ? 398 : 470);
         _desktop.ForeColor = Color.FromArgb(205, 208, 215);
 
         _modelPacks.Text = _publicRelease ? "Install adjacent public model packs automatically" : "Install adjacent Anima, Wan, and PhotoReal model packs automatically";
         _modelPacks.Checked = options.InstallModelPacks;
         _modelPacks.AutoSize = true;
-        _modelPacks.Location = new Point(47, 500);
+        _modelPacks.Location = new Point(47, _publicRelease ? 428 : 500);
         _modelPacks.ForeColor = Color.FromArgb(205, 208, 215);
 
-        _progress.Location = new Point(47, 535);
+        _progress.Location = new Point(47, _publicRelease ? 463 : 535);
         _progress.Size = new Size(665, 10);
         _progress.Style = ProgressBarStyle.Continuous;
         _status.Text = "Ready to install";
-        _status.Location = new Point(47, 555);
+        _status.Location = new Point(47, _publicRelease ? 483 : 555);
         _status.Size = new Size(665, 28);
         _status.ForeColor = Color.FromArgb(168, 172, 182);
 
         _primary.Text = File.Exists(Path.Combine(options.InstallDirectory, "Shadowframe.exe")) ? "Repair / Update" : "Install";
-        _primary.Location = new Point(522, 610);
+        _primary.Location = new Point(522, _publicRelease ? 538 : 610);
         _primary.Size = new Size(190, 42);
         _primary.FlatStyle = FlatStyle.Flat;
         _primary.FlatAppearance.BorderSize = 0;
@@ -826,7 +978,7 @@ internal sealed class InstallerForm : Form
         _primary.Click += async (_, _) => await PrimaryAction();
 
         _cancel.Text = "Cancel";
-        _cancel.Location = new Point(412, 610);
+        _cancel.Location = new Point(412, _publicRelease ? 538 : 610);
         _cancel.Size = new Size(100, 42);
         _cancel.FlatStyle = FlatStyle.Flat;
         _cancel.FlatAppearance.BorderColor = Color.FromArgb(65, 65, 69);
@@ -835,7 +987,7 @@ internal sealed class InstallerForm : Form
         _cancel.Click += (_, _) => Close();
 
         _sfwPrompts.Text = "Open SFW prompts";
-        _sfwPrompts.Location = new Point(47, 610);
+        _sfwPrompts.Location = new Point(47, _publicRelease ? 538 : 610);
         _sfwPrompts.Size = new Size(150, 42);
         _sfwPrompts.FlatStyle = FlatStyle.Flat;
         _sfwPrompts.BackColor = Color.FromArgb(26, 26, 29);
@@ -844,7 +996,7 @@ internal sealed class InstallerForm : Form
         _sfwPrompts.Click += (_, _) => OpenPromptFolder("SFW");
 
         _nsfwPrompts.Text = "Open NSFW prompts";
-        _nsfwPrompts.Location = new Point(207, 610);
+        _nsfwPrompts.Location = new Point(207, _publicRelease ? 538 : 610);
         _nsfwPrompts.Size = new Size(160, 42);
         _nsfwPrompts.FlatStyle = FlatStyle.Flat;
         _nsfwPrompts.BackColor = Color.FromArgb(26, 26, 29);
@@ -852,7 +1004,19 @@ internal sealed class InstallerForm : Form
         _nsfwPrompts.Visible = false;
         _nsfwPrompts.Click += (_, _) => OpenPromptFolder("NSFW");
 
-        Controls.AddRange(new Control[] { title, subtitle, version, _checks, pathLabel, _installPath, browse, dataLabel, _dataRoot, browseData, outputLabel, _outputRoot, browseOutput, _desktop, _modelPacks, _progress, _status, _primary, _cancel, _sfwPrompts, _nsfwPrompts });
+        if (_publicRelease)
+        {
+            dataLabel.Visible = false;
+            _dataRoot.Visible = false;
+            browseData.Visible = false;
+            outputLabel.Visible = false;
+            _outputRoot.Visible = false;
+            browseOutput.Visible = false;
+            _installPath.TextChanged += (_, _) => SyncPublicRoots();
+            SyncPublicRoots();
+        }
+
+        Controls.AddRange(new Control[] { title, subtitle, version, _checks, pathLabel, _installPath, browse, dataLabel, _dataRoot, browseData, outputLabel, _outputRoot, browseOutput, _singleRootHelp, _desktop, _modelPacks, _progress, _status, _primary, _cancel, _sfwPrompts, _nsfwPrompts });
         RefreshPrerequisites();
     }
 
@@ -862,15 +1026,32 @@ internal sealed class InstallerForm : Form
         if (dialog.ShowDialog(this) == DialogResult.OK)
         {
             target.Text = string.IsNullOrWhiteSpace(appendFolder) ? dialog.SelectedPath : Path.Combine(dialog.SelectedPath, appendFolder);
+            if (_publicRelease && ReferenceEquals(target, _installPath))
+                SyncPublicRoots();
             RefreshPrerequisites();
         }
+    }
+
+    private void SyncPublicRoots()
+    {
+        if (!_publicRelease) return;
+        var root = _installPath.Text;
+        try { root = Path.GetFullPath(root); } catch { }
+        _dataRoot.Text = root;
+        _outputRoot.Text = root;
     }
 
     private void RefreshPrerequisites()
     {
         try
         {
-            var results = PrerequisiteChecker.Run(_installPath.Text, _manifest);
+        var results = PrerequisiteChecker.Run(new InstallOptions
+        {
+            InstallDirectory = Path.GetFullPath(_installPath.Text),
+            DataRoot = Path.GetFullPath(_dataRoot.Text),
+            OutputRoot = Path.GetFullPath(_outputRoot.Text),
+            InstallModelPacks = _modelPacks.Checked
+        }, _manifest);
             _checks.Text = results.DisplayText;
             _primary.Enabled = results.Blockers.Count == 0;
             if (results.Blockers.Count > 0) _status.Text = "Resolve the requirements above before installing.";
